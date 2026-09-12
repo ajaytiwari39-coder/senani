@@ -2254,34 +2254,35 @@ const shareOnWhatsApp = () => {
                         <!-- ========================================================= -->
                         <!-- PAGE 1: COMMERCIAL CONTRACT & INFRASTRUCTURE LOGISTICS   -->
                         <!-- ========================================================= -->
-                        <div class="print-page page-1 bg-white p-3.5 sm:p-4 print:p-0 border border-slate-300 print:border-none rounded-xl print:rounded-none space-y-1.5" style="page-break-after: always; break-after: page; page-break-inside: avoid; break-inside: avoid;">
+                        <div class="print-page page-1 bg-white p-3 print:p-0 border border-slate-300 print:border-none rounded-xl print:rounded-none space-y-1" style="page-break-after: always; break-after: page; page-break-inside: avoid; break-inside: avoid;">
                             <!-- Top Regal Letterhead -->
-                            <div class="flex items-start justify-between border-b-2 border-slate-900 pb-1.5">
-                                <div class="flex items-center gap-3">
-                                    <img src="/images/logo-dark.png" alt="Senani Hotel Pleasant View" class="h-11 sm:h-12 w-auto object-contain" />
-                                    <div class="border-l-2 border-amber-600/40 pl-2.5">
-                                        <div class="text-xs sm:text-[13px] font-serif font-black tracking-wider text-slate-950 uppercase">Hotel Pleasant View</div>
-                                        <div class="text-[9.5px] font-bold text-amber-900 tracking-wide">BANQUET & CONVENTION CONTRACT DOSSIER</div>
-                                        <div class="text-[8px] text-slate-600 font-medium">A Premium Hospitality Unit of Senani Group • Civil Lines, Raebareli, UP</div>
-                                        <div class="text-[7.5px] text-slate-500 font-mono">GSTIN: 09AAAAA0000A1Z5 • 24x7 Executive Front Desk</div>
+                            <div class="flex items-center justify-between border-b-2 border-slate-900 pb-1">
+                                <div class="flex items-center gap-2.5">
+                                    <img src="/images/logo-dark.png" alt="Senani Hotel Pleasant View" class="h-10 w-auto object-contain" />
+                                    <div class="border-l-2 border-amber-600/40 pl-2">
+                                        <div class="text-xs font-serif font-black tracking-wider text-slate-950 uppercase">Hotel Pleasant View</div>
+                                        <div class="text-[9px] font-bold text-amber-900 tracking-wide">BANQUET & CONVENTION CONTRACT DOSSIER</div>
+                                        <div class="text-[7.5px] text-slate-600 font-medium">A Premium Hospitality Unit of Senani Group • Civil Lines, Raebareli, UP • GSTIN: 09AAAAA0000A1Z5</div>
                                     </div>
                                 </div>
-                                <div class="text-right text-[8.5px] leading-tight text-slate-700 bg-slate-50 border border-slate-200 rounded p-1.5">
-                                    <div class="font-bold text-slate-900 pb-0.5 border-b border-slate-200 mb-0.5">HELPLINE & BOOKING DESK</div>
-                                    <div class="font-mono">RECEPTION: <span class="font-bold text-slate-900">+91 9794152222</span></div>
-                                    <div class="font-mono">MANAGER: <span class="font-bold text-slate-900">+91 9794152223</span></div>
-                                    <div class="font-mono">MD OFFICE: <span class="font-bold text-slate-900">+91 9794152224</span></div>
-                                    <div class="font-mono">SALES: <span class="font-bold text-slate-900">+91 9794152225</span></div>
+                                <div class="text-right text-[8px] leading-tight text-slate-700 bg-slate-50 border border-slate-200 rounded px-2 py-1">
+                                    <div class="font-bold text-slate-900 pb-0.5 border-b border-slate-200 mb-0.5 tracking-wider">HELPLINE & BOOKING DESK</div>
+                                    <div class="grid grid-cols-2 gap-x-2 font-mono text-[7.5px]">
+                                        <div>REC: <span class="font-bold text-slate-900">+91 9794152222</span></div>
+                                        <div>MGR: <span class="font-bold text-slate-900">+91 9794152223</span></div>
+                                        <div>MD: <span class="font-bold text-slate-900">+91 9794152224</span></div>
+                                        <div>SALES: <span class="font-bold text-slate-900">+91 9794152225</span></div>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Booking Reference Strip -->
-                            <div class="flex items-center justify-between py-1 px-2.5 bg-slate-900 text-white rounded font-medium text-xs">
+                            <div class="flex items-center justify-between py-0.5 px-2 bg-slate-900 text-white rounded font-medium text-[10px]">
                                 <div>
                                     <span class="text-amber-400 font-bold">VOUCHER NO:</span>
-                                    <span class="font-mono font-black ml-1 text-white text-xs sm:text-sm">#{{ form.voucherNo }}</span>
+                                    <span class="font-mono font-black ml-1 text-white text-xs">#{{ form.voucherNo }}</span>
                                 </div>
-                                <div class="text-[9px] font-mono uppercase px-2 py-0.2 rounded bg-white/10 text-amber-300 border border-white/20 font-bold">
+                                <div class="text-[8.5px] font-mono uppercase px-2 py-0.2 rounded bg-white/10 text-amber-300 border border-white/20 font-bold">
                                     {{ form.status === 'approved_md' ? 'OFFICIAL BOOKING CONFIRMATION' : 'PROVISIONAL INQUIRY QUOTATION' }}
                                 </div>
                                 <div>
@@ -2290,75 +2291,45 @@ const shareOnWhatsApp = () => {
                                 </div>
                             </div>
 
-                            <!-- Client & Event Matrix (Clean Grid) -->
-                            <div class="p-2 bg-slate-50/80 border border-slate-200 rounded-lg text-[9.5px] space-y-1">
-                                <div class="grid grid-cols-2 gap-x-3 gap-y-0.5">
-                                    <div class="flex">
-                                        <span class="w-24 font-bold text-slate-600">Client / Host:</span>
-                                        <span class="font-black text-slate-950">{{ form.guestName }}</span>
-                                    </div>
-                                    <div class="flex">
-                                        <span class="w-24 font-bold text-slate-600">Contact Number:</span>
-                                        <span class="font-mono font-bold text-slate-900">{{ form.phonePrimary }}</span>
-                                        <span v-if="form.phoneSecondary" class="font-mono ml-2 text-slate-600">, {{ form.phoneSecondary }}</span>
-                                    </div>
-                                </div>
-                                <div class="flex">
-                                    <span class="w-24 font-bold text-slate-600">Address:</span>
-                                    <span class="text-slate-800">{{ form.address || 'Civil Lines, Raebareli' }}</span>
-                                </div>
-                                <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 pt-0.5 border-t border-slate-200/70">
+                            <!-- Client & Event Matrix (Compact 3-Col Structure) -->
+                            <div class="p-1.5 bg-slate-50/90 border border-slate-200 rounded text-[9px]">
+                                <div class="grid grid-cols-3 gap-x-3 gap-y-1">
                                     <div>
-                                        <span class="w-24 inline-block font-bold text-slate-600">Function Date:</span>
-                                        <span class="font-bold text-slate-900">{{ form.functionDateFrom }}</span>
-                                        <span v-if="form.functionDateTo && form.functionDateTo !== form.functionDateFrom"> to <span class="font-bold text-slate-900">{{ form.functionDateTo }}</span></span>
+                                        <div class="text-[8px] font-bold uppercase text-slate-500">Client / Host</div>
+                                        <div class="font-black text-slate-950 truncate">{{ form.guestName }}</div>
+                                        <div class="font-mono text-slate-700 text-[8.5px]">{{ form.phonePrimary }}<span v-if="form.phoneSecondary">, {{ form.phoneSecondary }}</span></div>
+                                        <div class="text-slate-500 text-[8px] truncate">{{ form.address || 'Civil Lines, Raebareli' }}</div>
                                     </div>
                                     <div>
-                                        <span class="font-bold text-slate-600">Timing Slot:</span>
-                                        <span class="font-semibold text-slate-900 ml-1.5">{{ form.timeFrom }} to {{ form.timeTo }}</span>
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-x-3 gap-y-0.5">
-                                    <div>
-                                        <span class="w-24 inline-block font-bold text-slate-600">Event Type:</span>
-                                        <span class="font-bold text-amber-900">{{ form.eventType }}</span>
-                                    </div>
-                                    <div>
-                                        <span class="font-bold text-slate-600">Catering Tier:</span>
-                                        <span class="font-bold text-slate-900 ml-1.5">₹{{ effectiveMenuRate }}/plate ({{ currentMenuCatalog.title }})</span>
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-x-3 gap-y-0.5">
-                                    <div>
-                                        <span class="w-24 inline-block font-bold text-slate-600">Guaranteed Pax:</span>
-                                        <span class="font-black text-slate-950">{{ form.paxGuaranteed }} Persons</span>
+                                        <div class="text-[8px] font-bold uppercase text-slate-500">Event Schedule</div>
+                                        <div class="font-bold text-slate-900">
+                                            {{ form.functionDateFrom }}
+                                            <span v-if="form.functionDateTo && form.functionDateTo !== form.functionDateFrom"> to {{ form.functionDateTo }}</span>
+                                        </div>
+                                        <div class="text-slate-700 text-[8.5px] font-medium">Slot: {{ form.timeFrom }} to {{ form.timeTo }}</div>
+                                        <div class="text-amber-900 font-bold text-[8.5px]">{{ form.eventType }} ({{ form.paxGuaranteed }} Guaranteed Pax)</div>
                                     </div>
                                     <div>
-                                        <span class="font-bold text-slate-600">Allocated Area:</span>
-                                        <span v-if="form.isEngagementPackage" class="font-bold text-amber-900 ml-1.5">Engagement Package ({{ form.engagementPackageType.toUpperCase() }})</span>
-                                        <span v-else class="font-bold text-slate-900 ml-1.5">{{ form.selectedVenues.map(v => v.toUpperCase()).join(', ') }}</span>
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-x-3 gap-y-0.5">
-                                    <div>
-                                        <span class="w-24 inline-block font-bold text-slate-600">Rooms Allotted:</span>
-                                        <span class="font-bold text-slate-900">{{ form.roomsNeeded }} Executive AC Rooms</span>
-                                        <span class="text-slate-500 text-[8.5px] ml-1">(@ ₹{{ form.roomRate || 2500 }}/night)</span>
-                                    </div>
-                                    <div>
-                                        <span class="font-bold text-slate-600">Room Stay:</span>
-                                        <span class="text-slate-800 ml-1.5">{{ form.roomArrival }} to {{ form.roomDeparture }}</span>
+                                        <div class="text-[8px] font-bold uppercase text-slate-500">Venue & Stay</div>
+                                        <div class="font-bold text-slate-900 truncate">
+                                            <span v-if="form.isEngagementPackage">Engagement ({{ form.engagementPackageType.toUpperCase() }})</span>
+                                            <span v-else>{{ form.selectedVenues.map(v => v.toUpperCase()).join(', ') }}</span>
+                                        </div>
+                                        <div class="text-slate-700 text-[8.5px]">
+                                            {{ form.roomsNeeded }} Rooms (@ ₹{{ form.roomRate || 2500 }}/night)
+                                        </div>
+                                        <div class="text-slate-500 text-[8px]">Catering: ₹{{ effectiveMenuRate }}/pax ({{ currentMenuCatalog.title }})</div>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Commercial Billing & Settlement Breakdown -->
-                            <div class="border border-slate-300 rounded-lg overflow-hidden">
-                                <div class="bg-slate-100 px-2.5 py-1 border-b border-slate-300 flex items-center justify-between font-bold text-[11px] text-slate-900">
+                            <div class="border border-slate-300 rounded overflow-hidden">
+                                <div class="bg-slate-100 px-2 py-0.5 border-b border-slate-300 flex items-center justify-between font-bold text-[10px] text-slate-900">
                                     <span>COMMERCIAL INVOICE BREAKDOWN</span>
-                                    <span class="text-[9px] font-mono text-slate-500 font-normal">All amounts in INR</span>
+                                    <span class="text-[8px] font-mono text-slate-500 font-normal">All amounts in INR</span>
                                 </div>
-                                <div class="p-2 space-y-0.5 font-mono text-[9.5px]">
+                                <div class="px-2 py-1 space-y-0.2 font-mono text-[9px]">
                                     <div class="flex justify-between text-slate-700">
                                         <span>Catering Buffet ({{ form.paxGuaranteed }} Pax × ₹{{ effectiveMenuRate }}):</span>
                                         <span class="font-bold">₹{{ foodTotal.toLocaleString('en-IN') }}</span>
@@ -2391,15 +2362,15 @@ const shareOnWhatsApp = () => {
                                         <span>Authorized Management Concession ({{ calculatedDiscountPercent }}%):</span>
                                         <span>- ₹{{ calculatedDiscountAmount.toLocaleString('en-IN') }}</span>
                                     </div>
-                                    <div class="flex justify-between font-black text-xs border-t-2 border-slate-900 pt-1 pb-0.5 text-slate-950 bg-amber-50/60 -mx-2 px-2">
+                                    <div class="flex justify-between font-black text-[11px] border-t-2 border-slate-900 pt-0.5 pb-0.5 text-slate-950 bg-amber-50/70 -mx-2 px-2">
                                         <span class="uppercase tracking-wide">Net Contract Amount:</span>
                                         <span class="font-black">₹{{ netPayableAmount.toLocaleString('en-IN') }}</span>
                                     </div>
-                                    <div class="flex justify-between text-slate-800 pt-0.5">
+                                    <div class="flex justify-between text-slate-800 pt-0.2">
                                         <span>Advance Token Received:</span>
                                         <span class="font-bold text-slate-950">₹{{ form.amountPaid.toLocaleString('en-IN') }} (Mode: {{ form.paymentMode }})</span>
                                     </div>
-                                    <div class="flex justify-between font-black text-[11px] text-rose-700 border-t border-slate-200 pt-0.5">
+                                    <div class="flex justify-between font-black text-[10px] text-rose-700 border-t border-slate-200 pt-0.2">
                                         <span>Balance Due on Event Day:</span>
                                         <span>₹{{ balanceDueAmount.toLocaleString('en-IN') }}</span>
                                     </div>
@@ -2407,71 +2378,71 @@ const shareOnWhatsApp = () => {
                             </div>
 
                             <!-- Package Inclusions & Infrastructure Logistics Grid -->
-                            <div class="border border-slate-300 rounded-lg overflow-hidden">
-                                <div class="bg-slate-100 px-2.5 py-1 border-b border-slate-300 flex items-center justify-between font-bold text-[11px] text-slate-900">
+                            <div class="border border-slate-300 rounded overflow-hidden">
+                                <div class="bg-slate-100 px-2 py-0.5 border-b border-slate-300 flex items-center justify-between font-bold text-[10px] text-slate-900">
                                     <span>PACKAGE INCLUSIONS & INFRASTRUCTURE LOGISTICS</span>
-                                    <span class="text-[9px] font-mono text-slate-500 font-normal">Hotel Venue Specifications</span>
+                                    <span class="text-[8px] font-mono text-slate-500 font-normal">Hotel Venue Specifications</span>
                                 </div>
-                                <div class="p-1.5 grid grid-cols-2 gap-1.5 text-[9px]">
+                                <div class="p-1 grid grid-cols-2 gap-1 text-[8.5px]">
                                     <!-- Box 1 -->
-                                    <div class="p-1.5 rounded bg-slate-50 border border-slate-200">
-                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-0.5 mb-0.5 flex justify-between">
+                                    <div class="p-1 rounded bg-slate-50 border border-slate-200">
+                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-0.2 mb-0.2 flex justify-between">
                                             <span>1. Allocated Halls & Spaces</span>
                                             <span class="font-mono font-bold text-slate-900">₹{{ venueTotal.toLocaleString('en-IN') }}</span>
                                         </div>
-                                        <div class="text-slate-700 space-y-0.5">
+                                        <div class="text-slate-700 space-y-0.2">
                                             <div v-for="venue in selectedVenuesDetailed" :key="venue.name">• {{ venue.name }} (₹{{ venue.price.toLocaleString('en-IN') }})</div>
-                                            <div class="text-[8.5px] text-slate-500">Min Pax: {{ paxRules.minPax }} • Max: {{ paxRules.maxPax }}</div>
+                                            <div class="text-[7.5px] text-slate-500">Min: {{ paxRules.minPax }} • Max: {{ paxRules.maxPax }} Pax</div>
                                         </div>
                                     </div>
                                     <!-- Box 2 -->
-                                    <div class="p-1.5 rounded bg-slate-50 border border-slate-200">
-                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-0.5 mb-0.5 flex justify-between">
+                                    <div class="p-1 rounded bg-slate-50 border border-slate-200">
+                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-0.2 mb-0.2 flex justify-between">
                                             <span>2. Executive Deluxe Rooms</span>
                                             <span class="font-mono font-bold text-slate-900">₹{{ roomsTotal.toLocaleString('en-IN') }}</span>
                                         </div>
-                                        <div class="text-slate-700 space-y-0.5">
+                                        <div class="text-slate-700 space-y-0.2">
                                             <div>• {{ form.roomsNeeded }} AC Rooms (@ ₹{{ form.roomRate || 2500 }}/night)</div>
-                                            <div class="text-[8.5px] text-slate-500">Stay: {{ form.roomArrival }} to {{ form.roomDeparture }} • 24/7 Hot Water</div>
+                                            <div class="text-[7.5px] text-slate-500">Stay: {{ form.roomArrival }} to {{ form.roomDeparture }} • 24/7 Hot Water</div>
                                         </div>
                                     </div>
                                     <!-- Box 3 -->
-                                    <div class="p-1.5 rounded bg-slate-50 border border-slate-200">
-                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-0.5 mb-0.5 flex justify-between">
+                                    <div class="p-1 rounded bg-slate-50 border border-slate-200">
+                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-0.2 mb-0.2 flex justify-between">
                                             <span>3. Stage & Theme Decor</span>
                                             <span class="font-mono font-bold text-slate-900" v-if="selectedDecorDetails">₹{{ selectedDecorDetails.price.toLocaleString('en-IN') }}</span>
                                             <span class="text-slate-500 font-normal" v-else>Included</span>
                                         </div>
-                                        <div class="text-slate-700 text-[8.5px]">
-                                            <div v-if="selectedDecorDetails" class="font-semibold text-slate-900">{{ selectedDecorDetails.name }}: {{ selectedDecorDetails.inclusions }}</div>
+                                        <div class="text-slate-700 text-[8px]">
+                                            <div v-if="selectedDecorDetails" class="font-semibold text-slate-900 truncate">{{ selectedDecorDetails.name }}: {{ selectedDecorDetails.inclusions }}</div>
                                             <div v-else>Stage backdrop, VIP sofa seating, red carpet & lighting.</div>
                                         </div>
                                     </div>
                                     <!-- Box 4 -->
-                                    <div class="p-1.5 rounded bg-slate-50 border border-slate-200">
-                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-0.5 mb-0.5 flex justify-between">
+                                    <div class="p-1 rounded bg-slate-50 border border-slate-200">
+                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-0.2 mb-0.2 flex justify-between">
                                             <span>4. Audio-Visual & Central AC</span>
                                             <span class="font-mono font-bold text-slate-900">₹{{ selectedAvItems.reduce((s, i) => s + i.price, 0).toLocaleString('en-IN') }}</span>
                                         </div>
-                                        <div class="text-slate-700 space-y-0.5 text-[8.5px]">
-                                            <div>• Acoustic PA sound system, wireless mics & central air-conditioning.</div>
-                                            <div class="text-[8px] text-slate-500">100% DG Genset silent power backup throughout function.</div>
+                                        <div class="text-slate-700 space-y-0.2 text-[8px]">
+                                            <div>• Acoustic PA sound system, wireless mics & central AC.</div>
+                                            <div class="text-[7.5px] text-slate-500">100% DG Genset silent power backup throughout event.</div>
                                         </div>
                                     </div>
                                 </div>
                                 <!-- Deliverables & Arrangements Footer -->
-                                <div class="bg-slate-50 px-2.5 py-1 border-t border-slate-200 grid grid-cols-2 gap-2 text-[8.5px] text-slate-600">
+                                <div class="bg-slate-50 px-2 py-0.5 border-t border-slate-200 grid grid-cols-2 gap-2 text-[8px] text-slate-600">
                                     <div>
-                                        <strong class="text-slate-800">Deliverables:</strong> Fine Bone China tableware, cutlery, glassware & uniformed banquet waiters.
+                                        <strong class="text-slate-800">Deliverables:</strong> Fine Bone China tableware, cutlery, glassware & uniformed staff.
                                     </div>
                                     <div>
-                                        <strong class="text-slate-800">Guest Self-Arrangements:</strong> Photographer, Cinematography, Varmala & Personal Gift counters.
+                                        <strong class="text-slate-800">Guest Self-Arrangements:</strong> Photography, Varmala & Personal Gift counters.
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Page 1 Bottom Signature Marker -->
-                            <div class="pt-1 flex items-center justify-between text-[8.5px] text-slate-500 border-t border-slate-200">
+                            <div class="pt-0.5 flex items-center justify-between text-[8px] text-slate-500 border-t border-slate-200">
                                 <span>Hotel Pleasant View • A Unit of Senani Group • Civil Lines, Raebareli, UP</span>
                                 <span class="font-mono font-bold text-slate-700">PAGE 1 OF 2 (COMMERCIAL & INFRASTRUCTURE SPECIFICATIONS)</span>
                             </div>

@@ -16,11 +16,14 @@ targets.forEach(targetPath => {
         return;
     }
 
-    const targetCode = 'var colorFunction = SUPPORTED_COLOR_FUNCTIONS[value.name];\n            if (typeof colorFunction === \x27undefined\x27) {\n                throw new Error("Attempting to parse an unsupported color function \\"" + value.name + "\\"");\n            }\n            return colorFunction(context, value.values);';
+    const targetRegex = /var\s+colorFunction\s*=\s*SUPPORTED_COLOR_FUNCTIONS\[value\.name\];[\s\S]*?return\s+colorFunction\(context,\s*value\.values\);/;
 
     const replacementCode = `/* OKLCH_PATCH_APPLIED */
             var colorFunction = SUPPORTED_COLOR_FUNCTIONS[value.name];
             if (typeof colorFunction === "undefined") {
+                var _pack = function (r, g, b, a) {
+                    return ((r << 24) | (g << 16) | (b << 8) | (Math.round(a * 255) << 0)) >>> 0;
+                };
                 try {
                     var rawValues = value.values || [];
                     var parts = [];
@@ -45,7 +48,7 @@ targets.forEach(targetPath => {
                             ctx.fillStyle = value.name + "(" + parts.join(" ") + ")";
                             ctx.fillRect(0, 0, 1, 1);
                             var imgD = ctx.getImageData(0, 0, 1, 1).data;
-                            return pack(imgD[0], imgD[1], imgD[2], imgD[3] / 255);
+                            return _pack(imgD[0], imgD[1], imgD[2], imgD[3] / 255);
                         }
                     }
                     if (value.name === "oklch" && parts.length >= 3) {
@@ -70,7 +73,7 @@ targets.forEach(targetPath => {
                         var gamma = function(x) {
                             return x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(Math.max(0, x), 1 / 2.4) - 0.055;
                         };
-                        return pack(
+                        return _pack(
                             Math.round(Math.min(255, Math.max(0, gamma(r) * 255))),
                             Math.round(Math.min(255, Math.max(0, gamma(g) * 255))),
                             Math.round(Math.min(255, Math.max(0, gamma(b) * 255))),
@@ -78,15 +81,15 @@ targets.forEach(targetPath => {
                         );
                     }
                 } catch (e) {}
-                return pack(0, 0, 0, 1);
+                return _pack(0, 0, 0, 1);
             }
             return colorFunction(context, value.values);`;
 
-    if (content.includes(targetCode)) {
-        content = content.replace(targetCode, replacementCode);
+    if (targetRegex.test(content)) {
+        content = content.replace(targetRegex, replacementCode);
         fs.writeFileSync(targetPath, content, "utf8");
         console.log("[patch-html2canvas] Successfully patched:", path.basename(targetPath));
     } else {
-        console.warn("[patch-html2canvas] Target code not found in:", path.basename(targetPath));
+        console.warn("[patch-html2canvas] Target code regex not found in:", path.basename(targetPath));
     }
 });

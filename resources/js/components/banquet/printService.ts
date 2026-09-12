@@ -278,6 +278,15 @@ export async function downloadElementAsPdf(
             onclone: (_doc: Document, _el: HTMLElement) => {
                 // Sanitize ALL modern color functions to rgb before html2canvas parses them
                 sanitizeColorsForHtml2Canvas(_doc);
+                // Strip outer modal borders and shadows for crisp professional PDF output
+                _doc.querySelectorAll('.page-1, .page-2').forEach((p) => {
+                    if (p instanceof HTMLElement) {
+                        p.style.border = 'none';
+                        p.style.boxShadow = 'none';
+                        p.style.borderRadius = '0';
+                        p.style.margin = '0';
+                    }
+                });
             },
         };
 
