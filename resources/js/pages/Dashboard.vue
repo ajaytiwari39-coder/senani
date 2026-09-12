@@ -72,6 +72,7 @@ const toggleSidebarCollapse = () => {
     }
 };
 const searchQuery = ref('');
+const activeDateFilter = ref<'today' | 'week' | 'month'>('today');
 
 // -------------------------------------------------------------
 // Interactive Data: Room Rack Matrix
@@ -868,164 +869,216 @@ const submitCheckIn = () => {
             <!-- MAIN CONTENT AREA (Independent Native Smooth Scroll) -->
             <!-- ----------------------------------------------------- -->
             <main class="flex-1 h-full overflow-y-auto bg-[#F8F9FD] scroll-smooth custom-scrollbar">
-                <div class="max-w-[1600px] mx-auto p-4 sm:p-5 lg:p-6">
+                <div class="max-w-[1600px] mx-auto p-3 sm:p-4 lg:p-4.5">
 
                     <!-- ================================================= -->
                     <!-- VIEW 1: EXECUTIVE DASHBOARD (Overview Tab)        -->
                     <!-- ================================================= -->
-                    <div v-if="currentTab === 'dashboard'" class="space-y-5 sm:space-y-6 animate-in fade-in duration-200">
+                    <div v-if="currentTab === 'dashboard'" class="space-y-3 sm:space-y-3.5 animate-in fade-in duration-200">
 
-                    <!-- Welcome Header & Live Date Bar -->
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div>
-                            <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-                                Welcome back, {{ user.name }}
-                            </h1>
-                            <p class="text-xs sm:text-sm text-slate-500 mt-1">
-                                Real-time Hospitality, Banquet & Financial Operations Overview
-                            </p>
+                    <!-- Sleek Minimal Operational Context Bar (Space-saving replacement for large H1) -->
+                    <div class="flex flex-wrap items-center justify-between gap-2.5 py-0.5">
+                        <div class="flex items-center gap-2 sm:gap-2.5">
+                            <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white border border-slate-200/90 shadow-2xs">
+                                <span class="relative flex h-2 w-2">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </span>
+                                <span class="text-[11px] font-extrabold tracking-wider uppercase text-slate-700">Live Hotel Ops</span>
+                            </div>
+                            <span class="text-slate-300 hidden sm:inline">•</span>
+                            <div class="hidden sm:flex items-center gap-1.5 text-xs text-slate-500">
+                                <Building2 class="h-3.5 w-3.5 text-[#673DE6]" />
+                                <span class="font-medium text-slate-700">Senani Hotel Pleasant View</span>
+                            </div>
+                            <span class="text-slate-300 hidden md:inline">•</span>
+                            <span class="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-[11px] font-semibold text-[#673DE6] border border-purple-100">
+                                <Sparkles class="h-3 w-3" />
+                                {{ user.name }}
+                            </span>
                         </div>
 
-                        <!-- Date & Filter Quick Toggle -->
-                        <div class="flex items-center gap-1.5 p-1 rounded-xl bg-white border border-slate-200/80 shadow-2xs self-start sm:self-auto">
-                            <button class="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#673DE6] text-white shadow-xs">
-                                Today
-                            </button>
-                            <button class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition">
-                                This Week
-                            </button>
-                            <button class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition">
-                                This Month
-                            </button>
+                        <!-- Date Filter Pills & Realtime Pulse -->
+                        <div class="flex items-center gap-2">
+                            <div class="flex items-center p-0.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs text-xs">
+                                <button
+                                    @click="activeDateFilter = 'today'"
+                                    :class="[
+                                        'px-2.5 py-1 rounded-lg font-bold transition-all duration-200',
+                                        activeDateFilter === 'today'
+                                            ? 'bg-[#673DE6] text-white shadow-xs'
+                                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                                    ]"
+                                >
+                                    Today
+                                </button>
+                                <button
+                                    @click="activeDateFilter = 'week'"
+                                    :class="[
+                                        'px-2.5 py-1 rounded-lg font-medium transition-all duration-200',
+                                        activeDateFilter === 'week'
+                                            ? 'bg-[#673DE6] text-white shadow-xs'
+                                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                                    ]"
+                                >
+                                    This Week
+                                </button>
+                                <button
+                                    @click="activeDateFilter = 'month'"
+                                    :class="[
+                                        'px-2.5 py-1 rounded-lg font-medium transition-all duration-200',
+                                        activeDateFilter === 'month'
+                                            ? 'bg-[#673DE6] text-white shadow-xs'
+                                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                                    ]"
+                                >
+                                    This Month
+                                </button>
+                            </div>
+                            <div class="hidden lg:flex items-center gap-1.5 text-[11px] font-mono text-slate-400 bg-white border border-slate-200/80 px-2.5 py-1 rounded-lg shadow-2xs">
+                                <Activity class="h-3 w-3 text-emerald-500 animate-pulse" />
+                                <span>Realtime</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- 4 Sleek Minimal Executive Metric Cards -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+                    <!-- 4 Sleek Minimal Executive Metric Cards with Micro-Interactions & Gradients -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3">
                         <!-- Card 1: Today's Total Sales -->
-                        <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-md transition">
+                        <div class="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_10px_22px_-4px_rgba(103,61,230,0.12)] hover:border-purple-300/80 hover:-translate-y-0.5 transition-all duration-300 cursor-default">
+                            <div class="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-[#673DE6] to-indigo-500"></div>
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Sales Today</span>
-                                <div class="h-9 w-9 rounded-xl bg-purple-50 text-[#673DE6] flex items-center justify-center">
-                                    <Receipt class="h-4.5 w-4.5" />
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Sales Today</span>
+                                <div class="h-7.5 w-7.5 rounded-lg bg-gradient-to-br from-[#673DE6] to-indigo-600 text-white flex items-center justify-center shadow-xs shadow-purple-200 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                                    <Receipt class="h-4 w-4" />
                                 </div>
                             </div>
-                            <div class="mt-3 flex items-baseline gap-2">
-                                <span class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">₹1,84,500</span>
-                                <span class="inline-flex items-center text-[11px] font-bold text-emerald-600">
-                                    <TrendingUp class="h-3 w-3 mr-0.5" /> +14.8%
+                            <div class="mt-2 flex items-baseline justify-between gap-1">
+                                <span class="text-xl sm:text-2xl font-black font-mono tracking-tight text-slate-900">₹1,84,500</span>
+                                <span class="inline-flex items-center text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/70 px-1.5 py-0.5 rounded-full">
+                                    <TrendingUp class="h-3 w-3 mr-0.5 text-emerald-600" /> +14.8%
                                 </span>
                             </div>
-                            <div class="mt-2 text-[11px] text-slate-500 flex items-center justify-between border-t border-slate-100 pt-2">
+                            <div class="mt-2 pt-1.5 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between">
                                 <span>GST (CGST+SGST):</span>
-                                <span class="font-semibold text-slate-700">₹18,450 (10%)</span>
+                                <span class="font-semibold text-slate-700 font-mono">₹18,450 (10%)</span>
                             </div>
                         </div>
 
                         <!-- Card 2: Room Occupancy -->
-                        <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-md transition">
+                        <div class="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_10px_22px_-4px_rgba(14,165,233,0.12)] hover:border-sky-300/80 hover:-translate-y-0.5 transition-all duration-300 cursor-default">
+                            <div class="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-sky-500 to-blue-600"></div>
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Room Occupancy</span>
-                                <div class="h-9 w-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                                    <BedDouble class="h-4.5 w-4.5" />
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Room Occupancy</span>
+                                <div class="h-7.5 w-7.5 rounded-lg bg-gradient-to-br from-sky-500 to-blue-600 text-white flex items-center justify-center shadow-xs shadow-sky-200 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                                    <BedDouble class="h-4 w-4" />
                                 </div>
                             </div>
-                            <div class="mt-3 flex items-baseline gap-2">
-                                <span class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-                                    {{ roomStats.occupied }} / {{ roomStats.total }}
-                                </span>
-                                <span class="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-700">
+                            <div class="mt-2 flex items-baseline justify-between gap-1">
+                                <div class="flex items-baseline gap-1.5">
+                                    <span class="text-xl sm:text-2xl font-black font-mono tracking-tight text-slate-900">
+                                        {{ roomStats.occupied }}/{{ roomStats.total }}
+                                    </span>
+                                    <span class="text-[11px] text-slate-400 font-medium">rooms</span>
+                                </div>
+                                <span class="inline-flex items-center rounded-full bg-sky-50 border border-sky-200/70 px-1.5 py-0.5 text-[10px] font-bold text-sky-700">
                                     {{ roomStats.occupancyRate }}%
                                 </span>
                             </div>
-                            <div class="mt-2 text-[11px] text-slate-500 flex items-center justify-between border-t border-slate-100 pt-2">
-                                <span>Available to sell:</span>
-                                <span class="font-semibold text-emerald-600">{{ roomStats.available }} Rooms</span>
+                            <!-- Mini animated progress bar -->
+                            <div class="w-full bg-slate-100 rounded-full h-1 overflow-hidden mt-1.5">
+                                <div class="bg-gradient-to-r from-sky-500 to-blue-600 h-full rounded-full transition-all duration-700" :style="{ width: roomStats.occupancyRate + '%' }"></div>
+                            </div>
+                            <div class="mt-1.5 pt-1 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between">
+                                <span>Available:</span>
+                                <span class="font-bold text-emerald-600">{{ roomStats.available }} Rooms</span>
                             </div>
                         </div>
 
-                        <!-- Card 3: Banquet Hall Events -->
-                        <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-md transition">
+                        <!-- Card 3: Banquet Functions -->
+                        <div class="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_10px_22px_-4px_rgba(245,158,11,0.12)] hover:border-amber-300/80 hover:-translate-y-0.5 transition-all duration-300 cursor-default">
+                            <div class="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-amber-500 to-orange-500"></div>
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Banquet Functions</span>
-                                <div class="h-9 w-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                                    <Calendar class="h-4.5 w-4.5" />
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Banquet Functions</span>
+                                <div class="h-7.5 w-7.5 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 text-white flex items-center justify-center shadow-xs shadow-amber-200 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                                    <Calendar class="h-4 w-4" />
                                 </div>
                             </div>
-                            <div class="mt-3 flex items-baseline gap-2">
-                                <span class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">2 Events</span>
-                                <span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700">
+                            <div class="mt-2 flex items-baseline justify-between gap-1">
+                                <span class="text-xl sm:text-2xl font-black font-mono tracking-tight text-slate-900">2 Events</span>
+                                <span class="inline-flex items-center rounded-full bg-amber-50 border border-amber-200/70 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
                                     590 Pax Total
                                 </span>
                             </div>
-                            <div class="mt-2 text-[11px] text-slate-500 flex items-center justify-between border-t border-slate-100 pt-2">
+                            <div class="mt-2 pt-1.5 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between truncate">
                                 <span>Grand Ballroom:</span>
-                                <span class="font-semibold text-purple-700">Evening Reception</span>
+                                <span class="font-semibold text-purple-700 truncate">Evening Reception</span>
                             </div>
                         </div>
 
                         <!-- Card 4: Active Folio / Unbilled -->
-                        <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] hover:shadow-md transition">
+                        <div class="group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_10px_22px_-4px_rgba(16,185,129,0.12)] hover:border-emerald-300/80 hover:-translate-y-0.5 transition-all duration-300 cursor-default">
+                            <div class="absolute top-0 left-0 right-0 h-[2.5px] bg-gradient-to-r from-emerald-500 to-teal-600"></div>
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Pending Folio Dues</span>
-                                <div class="h-9 w-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                                    <CreditCard class="h-4.5 w-4.5" />
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pending Folio Dues</span>
+                                <div class="h-7.5 w-7.5 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-xs shadow-emerald-200 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                                    <CreditCard class="h-4 w-4" />
                                 </div>
                             </div>
-                            <div class="mt-3 flex items-baseline gap-2">
-                                <span class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">₹42,800</span>
-                                <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-bold text-emerald-700">
-                                    Healthy
+                            <div class="mt-2 flex items-baseline justify-between gap-1">
+                                <span class="text-xl sm:text-2xl font-black font-mono tracking-tight text-slate-900">₹42,800</span>
+                                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/70 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Healthy
                                 </span>
                             </div>
-                            <div class="mt-2 text-[11px] text-slate-500 flex items-center justify-between border-t border-slate-100 pt-2">
-                                <span>Settlement on Check-out:</span>
-                                <span class="font-semibold text-slate-700">4 checkouts today</span>
+                            <div class="mt-2 pt-1.5 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between">
+                                <span>Check-out settlements:</span>
+                                <span class="font-semibold text-slate-700">4 today</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- 2-Column Operational Grid: Room Rack & Today's Events -->
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-3.5">
 
                         <!-- Left (7 Cols): Live Room Matrix Quick Rack -->
-                        <div class="lg:col-span-7 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                        <div class="lg:col-span-7 rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
                                 <div>
-                                    <h2 class="text-base font-bold text-slate-900">Front Desk Room Rack</h2>
-                                    <p class="text-xs text-slate-500">Live room occupancy status & quick folio management</p>
+                                    <h2 class="text-sm sm:text-base font-bold text-slate-900">Front Desk Room Rack</h2>
+                                    <p class="text-[11px] text-slate-500">Live room occupancy status & quick folio management</p>
                                 </div>
                                 <button
                                     @click="currentTab = 'rooms'"
-                                    class="text-xs font-bold text-[#673DE6] hover:text-[#5025d1] flex items-center gap-1"
+                                    class="text-xs font-bold text-[#673DE6] hover:text-[#5025d1] flex items-center gap-1 self-start sm:self-auto"
                                 >
                                     View All Rooms <ChevronRight class="h-3.5 w-3.5" />
                                 </button>
                             </div>
 
                             <!-- Quick Status Legend Pills -->
-                            <div class="flex flex-wrap items-center gap-3 pb-4 mb-4 border-b border-slate-100 text-xs">
+                            <div class="flex flex-wrap items-center gap-2.5 pb-2 mb-2.5 border-b border-slate-100 text-[11px]">
                                 <span class="flex items-center gap-1.5 text-slate-600">
-                                    <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span> Available ({{ roomStats.available }})
+                                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span> Available ({{ roomStats.available }})
                                 </span>
                                 <span class="flex items-center gap-1.5 text-slate-600">
-                                    <span class="h-2.5 w-2.5 rounded-full bg-[#673DE6]"></span> Occupied ({{ roomStats.occupied }})
+                                    <span class="h-2 w-2 rounded-full bg-[#673DE6]"></span> Occupied ({{ roomStats.occupied }})
                                 </span>
                                 <span class="flex items-center gap-1.5 text-slate-600">
-                                    <span class="h-2.5 w-2.5 rounded-full bg-amber-500"></span> Cleaning ({{ roomStats.cleaning }})
+                                    <span class="h-2 w-2 rounded-full bg-amber-500"></span> Cleaning ({{ roomStats.cleaning }})
                                 </span>
                                 <span class="flex items-center gap-1.5 text-slate-600">
-                                    <span class="h-2.5 w-2.5 rounded-full bg-blue-500"></span> Reserved ({{ roomStats.reserved }})
+                                    <span class="h-2 w-2 rounded-full bg-blue-500"></span> Reserved ({{ roomStats.reserved }})
                                 </span>
                             </div>
 
                             <!-- Mini Room Grid -->
-                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 <div
                                     v-for="room in rooms.slice(0, 12)"
                                     :key="room.id"
                                     :class="[
-                                        'rounded-xl border p-3 transition flex flex-col justify-between text-left',
+                                        'rounded-xl border p-2.5 transition flex flex-col justify-between text-left cursor-pointer hover:shadow-xs',
                                         room.status === 'available' ? 'border-emerald-200 bg-emerald-50/40 hover:border-emerald-400' :
                                         room.status === 'occupied' ? 'border-purple-200 bg-purple-50/40 hover:border-[#673DE6]' :
                                         room.status === 'cleaning' ? 'border-amber-200 bg-amber-50/40 hover:border-amber-400' :
@@ -1033,7 +1086,7 @@ const submitCheckIn = () => {
                                     ]"
                                 >
                                     <div class="flex items-center justify-between">
-                                        <span class="text-sm font-extrabold text-slate-900">{{ room.number }}</span>
+                                        <span class="text-xs sm:text-sm font-extrabold text-slate-900">{{ room.number }}</span>
                                         <span
                                             :class="[
                                                 'h-2 w-2 rounded-full',
@@ -1043,7 +1096,7 @@ const submitCheckIn = () => {
                                             ]"
                                         ></span>
                                     </div>
-                                    <div class="mt-2">
+                                    <div class="mt-1.5">
                                         <p class="text-[10px] font-semibold text-slate-500 truncate">{{ room.category }}</p>
                                         <p v-if="room.guestName" class="text-[11px] font-bold text-slate-900 truncate mt-0.5">
                                             {{ room.guestName }}
@@ -1057,12 +1110,12 @@ const submitCheckIn = () => {
                         </div>
 
                         <!-- Right (5 Cols): Today's Banquet Function Schedule -->
-                        <div class="lg:col-span-5 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+                        <div class="lg:col-span-5 rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col justify-between">
                             <div>
-                                <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center justify-between mb-2.5">
                                     <div>
-                                        <h2 class="text-base font-bold text-slate-900">Today's Banquet Schedule</h2>
-                                        <p class="text-xs text-slate-500">Hall reservations, slots & catering details</p>
+                                        <h2 class="text-sm sm:text-base font-bold text-slate-900">Today's Banquet Schedule</h2>
+                                        <p class="text-[11px] text-slate-500">Hall reservations, slots & catering details</p>
                                     </div>
                                     <button
                                         @click="currentTab = 'banquet'"
@@ -1072,11 +1125,11 @@ const submitCheckIn = () => {
                                     </button>
                                 </div>
 
-                                <div class="space-y-3">
+                                <div class="space-y-2">
                                     <div
                                         v-for="bk in banquetBookings.slice(0, 2)"
                                         :key="bk.id"
-                                        class="rounded-xl border border-slate-200/80 p-3.5 bg-[#F8F9FD] hover:bg-white hover:border-[#673DE6]/40 transition"
+                                        class="rounded-xl border border-slate-200/80 p-2.5 sm:p-3 bg-[#F8F9FD] hover:bg-white hover:border-[#673DE6]/40 transition"
                                     >
                                         <div class="flex items-center justify-between mb-1.5">
                                             <span class="text-xs font-bold text-[#673DE6]">{{ bk.hallName }}</span>
@@ -1114,55 +1167,55 @@ const submitCheckIn = () => {
                     </div>
 
                     <!-- Recent Fast GST Invoices Table -->
-                    <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
+                    <div class="rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
                             <div>
-                                <h2 class="text-base font-bold text-slate-900">Recent GST Tax Invoices</h2>
-                                <p class="text-xs text-slate-500">Official GST bills generated with CGST / SGST split</p>
+                                <h2 class="text-sm sm:text-base font-bold text-slate-900">Recent GST Tax Invoices</h2>
+                                <p class="text-[11px] text-slate-500">Official GST bills generated with CGST / SGST split</p>
                             </div>
                             <button
                                 @click="currentTab = 'invoices'"
-                                class="text-xs font-bold text-[#673DE6] hover:text-[#5025d1] flex items-center gap-1"
+                                class="text-xs font-bold text-[#673DE6] hover:text-[#5025d1] flex items-center gap-1 self-start sm:self-auto"
                             >
                                 View All Invoices <ChevronRight class="h-3.5 w-3.5" />
                             </button>
                         </div>
 
                         <div class="overflow-x-auto">
-                            <table class="w-full text-left text-xs">
+                            <table class="w-full text-left text-xs whitespace-nowrap">
                                 <thead>
-                                    <tr class="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                                        <th class="pb-3 font-semibold">Invoice No</th>
-                                        <th class="pb-3 font-semibold">Date & Time</th>
-                                        <th class="pb-3 font-semibold">Customer / Corporate</th>
-                                        <th class="pb-3 font-semibold">Service Description</th>
-                                        <th class="pb-3 font-semibold text-right">Taxable</th>
-                                        <th class="pb-3 font-semibold text-right">GST</th>
-                                        <th class="pb-3 font-semibold text-right">Total Amount</th>
-                                        <th class="pb-3 font-semibold">Payment Mode</th>
-                                        <th class="pb-3 font-semibold text-center">Status</th>
-                                        <th class="pb-3 font-semibold text-right">Action</th>
+                                    <tr class="border-b border-slate-100 text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                        <th class="pb-2 pr-3 font-semibold">Invoice No</th>
+                                        <th class="pb-2 pr-3 font-semibold">Date & Time</th>
+                                        <th class="pb-2 pr-3 font-semibold">Customer / Corporate</th>
+                                        <th class="pb-2 pr-3 font-semibold">Service Description</th>
+                                        <th class="pb-2 pr-3 font-semibold text-right">Taxable</th>
+                                        <th class="pb-2 pr-4 font-semibold text-right">GST</th>
+                                        <th class="pb-2 pr-4 font-semibold text-right">Total Amount</th>
+                                        <th class="pb-2 px-3 font-semibold">Payment Mode</th>
+                                        <th class="pb-2 px-2 font-semibold text-center">Status</th>
+                                        <th class="pb-2 pl-2 font-semibold text-right">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody class="divide-y divide-slate-100 text-slate-600 font-medium">
+                                <tbody class="divide-y divide-slate-100 text-slate-600 font-medium text-xs">
                                     <tr v-for="inv in recentInvoices" :key="inv.invoiceNo" class="hover:bg-slate-50/80 transition">
-                                        <td class="py-3 font-bold text-[#673DE6]">{{ inv.invoiceNo }}</td>
-                                        <td class="py-3 text-slate-500">{{ inv.date }}</td>
-                                        <td class="py-3 font-semibold text-slate-900">{{ inv.customerName }}</td>
-                                        <td class="py-3 text-slate-500 truncate max-w-xs">{{ inv.serviceType }}</td>
-                                        <td class="py-3 text-right">₹{{ inv.taxableAmount.toLocaleString('en-IN') }}</td>
-                                        <td class="py-3 text-right text-purple-700 font-semibold">
+                                        <td class="py-2.5 pr-3 font-bold text-[#673DE6] font-mono">{{ inv.invoiceNo }}</td>
+                                        <td class="py-2.5 pr-3 text-slate-500">{{ inv.date }}</td>
+                                        <td class="py-2.5 pr-3 font-semibold text-slate-900">{{ inv.customerName }}</td>
+                                        <td class="py-2.5 pr-3 text-slate-500 truncate max-w-xs">{{ inv.serviceType }}</td>
+                                        <td class="py-2.5 pr-3 text-right font-mono">₹{{ inv.taxableAmount.toLocaleString('en-IN') }}</td>
+                                        <td class="py-2.5 pr-4 text-right text-purple-700 font-semibold font-mono">
                                             ₹{{ inv.gstAmount.toLocaleString('en-IN') }} ({{ inv.gstRate }}%)
                                         </td>
-                                        <td class="py-3 text-right font-bold text-slate-900">
+                                        <td class="py-2.5 pr-4 text-right font-bold text-slate-900 font-mono">
                                             ₹{{ inv.totalAmount.toLocaleString('en-IN') }}
                                         </td>
-                                        <td class="py-3">
+                                        <td class="py-2.5 px-3">
                                             <span class="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">
                                                 {{ inv.paymentMode }}
                                             </span>
                                         </td>
-                                        <td class="py-3 text-center">
+                                        <td class="py-2.5 px-2 text-center">
                                             <span
                                                 :class="[
                                                     'px-2 py-0.5 rounded-full text-[10px] font-bold uppercase',
@@ -1174,7 +1227,7 @@ const submitCheckIn = () => {
                                                 {{ inv.status }}
                                             </span>
                                         </td>
-                                        <td class="py-3 text-right">
+                                        <td class="py-2.5 pl-2 text-right">
                                             <button
                                                 @click="openInvoicePreview(inv)"
                                                 class="rounded-lg bg-purple-50 text-[#673DE6] hover:bg-[#673DE6] hover:text-white px-2.5 py-1 text-[11px] font-bold transition inline-flex items-center gap-1"
