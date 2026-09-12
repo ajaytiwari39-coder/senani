@@ -217,6 +217,7 @@ const banquetBookings = ref<BanquetBooking[]>([
 // -------------------------------------------------------------
 const queryInquiry = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('inquiry') === 'true';
 const queryStep = typeof window !== 'undefined' ? Number(new URLSearchParams(window.location.search).get('step')) || 1 : 1;
+const queryPrint = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('print') === 'true';
 const showInquiryModal = ref(queryInquiry);
 const selectedInquiry = ref<BanquetInquiry | null>(null);
 const inquiryDefaultStep = ref(queryStep);
@@ -375,16 +376,24 @@ const banquetInquiries = ref<BanquetInquiry[]>([
     },
 ]);
 
+const inquiryOpenPrintPreview = ref(queryPrint);
+
 const openNewInquiry = (step: number = 1) => {
     selectedInquiry.value = null;
     inquiryDefaultStep.value = step;
+    inquiryOpenPrintPreview.value = false;
     showInquiryModal.value = true;
 };
 
-const openExistingInquiry = (inq: BanquetInquiry, step: number = 1) => {
+const openExistingInquiry = (inq: BanquetInquiry, step: number = 1, printPreview: boolean = false) => {
     selectedInquiry.value = inq;
     inquiryDefaultStep.value = step;
+    inquiryOpenPrintPreview.value = printPreview;
     showInquiryModal.value = true;
+};
+
+const openAndPrintInquiry = (inq: BanquetInquiry) => {
+    openExistingInquiry(inq, 3, true);
 };
 
 const handleSaveInquiry = (inq: BanquetInquiry) => {
@@ -1656,6 +1665,14 @@ const submitCheckIn = () => {
                                         <td class="py-3 text-right">
                                             <div class="flex items-center justify-end gap-1.5">
                                                 <button
+                                                    @click="openAndPrintInquiry(inq)"
+                                                    class="rounded-lg bg-purple-50 text-[#673DE6] hover:bg-[#673DE6] hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-purple-200 shadow-2xs"
+                                                    title="Print Full Voucher, Package & Menu"
+                                                >
+                                                    <Printer class="h-3 w-3" />
+                                                    <span>Print</span>
+                                                </button>
+                                                <button
                                                     v-if="inq.status === 'draft_reception'"
                                                     @click="openExistingInquiry(inq, 2)"
                                                     class="rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-600 hover:text-white px-2.5 py-1 text-[11px] font-bold transition"
@@ -2362,7 +2379,8 @@ const submitCheckIn = () => {
             :show="showInquiryModal"
             :initialInquiry="selectedInquiry"
             :defaultStep="inquiryDefaultStep"
-            @close="showInquiryModal = false"
+            :openPrintPreview="inquiryOpenPrintPreview"
+            @close="showInquiryModal = false; inquiryOpenPrintPreview = false"
             @save="handleSaveInquiry"
         />
 

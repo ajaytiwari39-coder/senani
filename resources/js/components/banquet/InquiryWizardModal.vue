@@ -99,11 +99,13 @@ const props = withDefaults(
         show: boolean;
         initialInquiry?: BanquetInquiry | null;
         defaultStep?: number;
+        openPrintPreview?: boolean;
     }>(),
     {
         show: false,
         initialInquiry: null,
         defaultStep: 1,
+        openPrintPreview: false,
     }
 );
 
@@ -114,8 +116,16 @@ const emit = defineEmits<{
 
 // Wizard active step: 1 (Reception) | 2 (Manager) | 3 (MD / Authority Approval)
 const currentStep = ref(props.defaultStep || 1);
-const showPrintPreview = ref(false);
+const showPrintPreview = ref(props.openPrintPreview || false);
 const activeMenuPreviewTier = ref<499 | 799 | 999 | 1199>(799);
+
+watch(
+    () => props.openPrintPreview,
+    (val) => {
+        if (val) showPrintPreview.value = true;
+    },
+    { immediate: true }
+);
 
 // -------------------------------------------------------------
 // Official Venue Rates from Hotel Pleasant View Management
@@ -665,6 +675,91 @@ const saveAndClose = () => {
     emit('save', { ...form.value });
     emit('close');
 };
+
+// -------------------------------------------------------------
+// Print Preview Computed Helpers (Every single detail for voucher)
+// -------------------------------------------------------------
+const currentMenuCatalog = computed<MenuCatalogTier>(() => {
+    const tier = effectiveMenuRate.value;
+    if (tier === 499 || tier === 799 || tier === 999 || tier === 1199) {
+        return menuCatalogs[tier];
+    }
+    return menuCatalogs[799];
+});
+
+const selectedVenuesDetailed = computed(() => {
+    if (form.value.isEngagementPackage) {
+        if (form.value.engagementPackageType === 'swarnim') {
+            return [{ name: 'Swarnim Hall with Decoration + DJ Setup', price: 45000, type: 'Engagement Package' }];
+        }
+        if (form.value.engagementPackageType === 'swarnmahal') {
+            return [{ name: 'Swarnmahal Hall with Decoration + DJ Setup', price: 40000, type: 'Engagement Package' }];
+        }
+    }
+    return form.value.selectedVenues.map(vId => {
+        const found = venueOptions.find(opt => opt.id === vId);
+        return found || { id: vId, name: vId.toUpperCase(), floor: 'Banquet Level', price: 35000, capacityType: 'single' };
+    });
+});
+
+const selectedDecorDetails = computed(() => {
+    const type = form.value.decorPackageType;
+    if (type === 'standard') {
+        return { name: 'Standard Decor Package', price: 30000, inclusions: 'DJ Setup + Stage Backdrop + Floral Ambience + Entrance Arch + Selfie Zone' };
+    }
+    if (type === 'wedding') {
+        return { name: 'Wedding Mandap Package', price: 48000, inclusions: 'Floral Walkway + Side Gardening + Dual DJ (₹45,000) + Mandap Decor (₹3,000)' };
+    }
+    if (type === 'grand') {
+        return { name: 'Grand Royal Theme Package', price: 60000, inclusions: 'Ambient Lights + Canopy Tent + Fresh Flower Decor + Royal Stage + Acoustic Setup + Fooding Decor' };
+    }
+    return null;
+});
+
+const selectedAvItems = computed(() => {
+    const items: { name: string; price: number }[] = [];
+    if (form.value.soundMicSetup) items.push({ name: 'Professional Sound & Cordless Mic Setup', price: AV_RATES.soundMic });
+    if (form.value.projectorSetup) items.push({ name: 'HD Video Projector & High-Gain Screen', price: AV_RATES.projector });
+    if (form.value.ledWallSetup) items.push({ name: 'High-Density LED Video Wall Setup', price: AV_RATES.ledWall });
+    return items;
+});
+
+const extraFoodingItemsDetailed = computed(() => {
+    const items: { name: string; qty: string; rate: string; total: number }[] = [];
+    if (Number(form.value.engagementBreakfastPax) > 0) {
+        items.push({
+            name: 'Engagement Breakfast (Old Menu)',
+            qty: `${form.value.engagementBreakfastPax} Pax`,
+            rate: `₹${FOODING_RATES.engagementBreakfast}/pax`,
+            total: form.value.engagementBreakfastPax * FOODING_RATES.engagementBreakfast
+        });
+    }
+    if (Number(form.value.regularBreakfastPax) > 0) {
+        items.push({
+            name: 'Regular Indian / Continental Breakfast',
+            qty: `${form.value.regularBreakfastPax} Pax`,
+            rate: `₹${FOODING_RATES.regularBreakfast}/pax`,
+            total: form.value.regularBreakfastPax * FOODING_RATES.regularBreakfast
+        });
+    }
+    if (Number(form.value.bainaBoxes) > 0) {
+        items.push({
+            name: 'Baina Traditional Pentagon Gift Boxes',
+            qty: `${form.value.bainaBoxes} Boxes`,
+            rate: `₹${FOODING_RATES.bainaBox}/box`,
+            total: form.value.bainaBoxes * FOODING_RATES.bainaBox
+        });
+    }
+    if (Number(form.value.mandapServingsPax) > 0) {
+        items.push({
+            name: 'Mandap Ritual Catering Servings',
+            qty: `${form.value.mandapServingsPax} Servings`,
+            rate: `₹${FOODING_RATES.mandapServing}/serving`,
+            total: form.value.mandapServingsPax * FOODING_RATES.mandapServing
+        });
+    }
+    return items;
+});
 
 const triggerPrint = () => {
     window.print();
@@ -1646,149 +1741,516 @@ const triggerPrint = () => {
             </div>
 
             <!-- ===================================================== -->
-            <!-- PRINTABLE VOUCHER MODAL OVERLAY (Matches Physical Form) -->
+            <!-- PRINTABLE VOUCHER MODAL OVERLAY (Invoice + Package + Menu) -->
             <!-- ===================================================== -->
             <div
                 v-if="showPrintPreview"
                 class="fixed inset-0 z-60 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto"
             >
-                <div class="relative w-full max-w-3xl bg-white rounded-xl shadow-2xl p-6 sm:p-8 text-slate-900 border border-slate-300 print:border-none print:shadow-none print:p-0 my-auto">
-                    <!-- Close button in preview -->
-                    <div class="flex items-center justify-between pb-3 mb-4 border-b border-slate-200 print:hidden">
-                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Official Booking Voucher Slip Replica</span>
+                <div class="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl p-4 sm:p-6 text-slate-900 border border-slate-300 print:border-none print:shadow-none print:p-0 my-auto max-h-[95vh] overflow-y-auto custom-scrollbar">
+                    <!-- Close & Action Bar in Preview (Hidden during print) -->
+                    <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-200 print:hidden sticky top-0 bg-white z-10">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-black text-slate-900 tracking-tight uppercase">Banquet Booking Voucher & Full Contract Dossier</span>
+                            <span class="rounded-full bg-purple-100 text-[#673DE6] text-[10px] font-bold px-2 py-0.5 border border-purple-200">#{{ form.voucherNo }}</span>
+                        </div>
                         <div class="flex items-center gap-2">
                             <button
                                 type="button"
                                 @click="triggerPrint"
-                                class="h-7 px-3 rounded-lg bg-[#673DE6] text-white text-xs font-bold flex items-center gap-1.5 hover:bg-[#5832D0]"
+                                class="h-8 px-4 rounded-lg bg-[#673DE6] text-white text-xs font-bold flex items-center gap-1.5 hover:bg-[#5832D0] shadow-xs transition"
                             >
-                                <Printer class="h-3 w-3" />
-                                <span>Print Now</span>
+                                <Printer class="h-3.5 w-3.5" />
+                                <span>Print Full Voucher (Invoice + Inclusions + Menu)</span>
                             </button>
                             <button
                                 type="button"
                                 @click="showPrintPreview = false"
-                                class="h-7 w-7 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center"
+                                class="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition"
                             >
                                 <X class="h-4 w-4" />
                             </button>
                         </div>
                     </div>
 
-                    <!-- ACTUAL PHYSICAL SLIP REPLICA -->
-                    <div class="border border-slate-400 p-4 sm:p-6 bg-white text-[12px] font-sans">
-                        <!-- Top Header Contacts & Logo -->
-                        <div class="flex items-start justify-between border-b border-slate-400 pb-3">
-                            <div class="flex items-center gap-2">
-                                <img src="/images/logo-dark.png" alt="Senani Hotel Pleasant View" class="h-9 w-auto" />
+                    <!-- COMPLETE PRINTABLE DOCUMENT REPLICA -->
+                    <div id="printable-voucher" class="space-y-4 bg-white text-slate-900 text-[11px] font-sans">
+                        
+                        <!-- ========================================================= -->
+                        <!-- PART 1: COMMERCIAL INVOICE SLIP (User's Current Invoice)   -->
+                        <!-- ========================================================= -->
+                        <div class="border border-slate-400 p-4 sm:p-5 bg-white print-avoid-break">
+                            <!-- Top Header Contacts & Logo -->
+                            <div class="flex items-start justify-between border-b border-slate-400 pb-2.5">
+                                <div class="flex items-center gap-2.5">
+                                    <img src="/images/logo-dark.png" alt="Senani Hotel Pleasant View" class="h-9 w-auto object-contain" />
+                                    <div>
+                                        <div class="text-[13px] font-black tracking-tight text-slate-900 leading-tight">SENANI HOTEL PLEASANT VIEW</div>
+                                        <div class="text-[9px] text-slate-500 font-medium">Luxury Rooms • Banquet Halls • Lawn • Pisces Rooftop</div>
+                                    </div>
+                                </div>
+                                <div class="text-right text-[10px] leading-tight text-slate-700 font-mono">
+                                    <div>RECEPTION : +91 9794152222</div>
+                                    <div>MANAGER : +91 9794152223</div>
+                                    <div class="font-bold text-slate-900">MANAGING DIRECTOR : +91 9794152224</div>
+                                    <div>BANQUET SALES : +91 9794152225</div>
+                                </div>
                             </div>
-                            <div class="text-right text-[10px] leading-tight text-slate-700 font-mono">
-                                <div>RECEPTION : +91 9794152222</div>
-                                <div>MANAGER : +91 9794152223</div>
-                                <div class="font-bold text-slate-900">MANAGING DIRECTOR : +91 9794152224</div>
-                                <div>BANQUET MANAGER : +91 9794152225</div>
-                            </div>
-                        </div>
 
-                        <!-- Tagline banner -->
-                        <div class="text-center font-bold text-xs tracking-wider py-1.5 border-b border-slate-400 bg-slate-100">
-                            PLEASE COLLECT RECEIPT OF ALL PAYMENT
-                        </div>
-
-                        <!-- Sl No. & Date -->
-                        <div class="flex justify-between py-1.5 border-b border-slate-300 font-bold text-sm">
-                            <span>Voucher No. : <span class="font-mono text-[#673DE6]">{{ form.voucherNo }}</span></span>
-                            <span>Date: <span class="font-mono">{{ form.inquiryDate }}</span></span>
-                        </div>
-
-                        <!-- Guest Fields -->
-                        <div class="py-2 space-y-1.5 border-b border-slate-300 text-xs">
-                            <div class="flex"><span class="w-32 font-bold text-slate-600">Guest Name:</span> <span class="font-bold">{{ form.guestName }}</span></div>
-                            <div class="flex"><span class="w-32 font-bold text-slate-600">Phone No.:</span> <span class="font-mono font-semibold">{{ form.phonePrimary }}</span> <span v-if="form.phoneSecondary" class="font-mono ml-4">, {{ form.phoneSecondary }}</span></div>
-                            <div class="flex"><span class="w-32 font-bold text-slate-600">Address:</span> <span>{{ form.address }}</span></div>
-                            <div class="flex justify-between">
-                                <div><span class="w-32 inline-block font-bold text-slate-600">Function Date:</span> <span class="font-semibold">{{ form.functionDateFrom }}</span> to <span class="font-semibold">{{ form.functionDateTo }}</span></div>
-                                <div><span class="font-bold text-slate-600">Time:</span> {{ form.timeFrom }} to {{ form.timeTo }}</div>
+                            <!-- Tagline banner -->
+                            <div class="text-center font-bold text-[11px] tracking-wider py-1 border-b border-slate-400 bg-slate-100">
+                                PLEASE COLLECT RECEIPT OF ALL PAYMENT
                             </div>
-                            <div class="flex justify-between">
-                                <div><span class="w-32 inline-block font-bold text-slate-600">Event Type:</span> <span class="font-bold text-[#673DE6]">{{ form.eventType }}</span></div>
-                                <div><span class="font-bold text-slate-600">Menu Tier:</span> ₹{{ effectiveMenuRate }}/plate <span v-if="form.isMeetingSetup" class="text-[10px] text-purple-700 font-bold">(Meeting Setup)</span></div>
+
+                            <!-- Sl No. & Date -->
+                            <div class="flex justify-between py-1.5 border-b border-slate-300 font-bold text-xs">
+                                <span>Voucher No. : <span class="font-mono text-[#673DE6]">#{{ form.voucherNo }}</span></span>
+                                <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
+                                    {{ form.status === 'approved_md' ? 'OFFICIAL BOOKING VOUCHER' : 'PROVISIONAL INQUIRY QUOTATION' }}
+                                </span>
+                                <span>Date: <span class="font-mono">{{ form.inquiryDate }}</span></span>
                             </div>
-                            <div class="flex justify-between">
-                                <div><span class="w-32 inline-block font-bold text-slate-600">No. of person:</span> <span class="font-bold">(Guaranteed) {{ form.paxGuaranteed }} Pax</span></div>
+
+                            <!-- Guest Fields -->
+                            <div class="py-2 space-y-1.5 border-b border-slate-300 text-[11px]">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="flex"><span class="w-28 font-bold text-slate-600">Guest Name:</span> <span class="font-bold text-slate-900">{{ form.guestName }}</span></div>
+                                    <div class="flex"><span class="w-28 font-bold text-slate-600">Phone No.:</span> <span class="font-mono font-bold">{{ form.phonePrimary }}</span> <span v-if="form.phoneSecondary" class="font-mono ml-2">, {{ form.phoneSecondary }}</span></div>
+                                </div>
+                                <div class="flex"><span class="w-28 font-bold text-slate-600">Address:</span> <span class="text-slate-800">{{ form.address }}</span></div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div><span class="w-28 inline-block font-bold text-slate-600">Function Date:</span> <span class="font-bold text-slate-900">{{ form.functionDateFrom }}</span> to <span class="font-bold text-slate-900">{{ form.functionDateTo }}</span></div>
+                                    <div><span class="font-bold text-slate-600">Timing Slot:</span> <span class="font-semibold">{{ form.timeFrom }} to {{ form.timeTo }}</span></div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div><span class="w-28 inline-block font-bold text-slate-600">Event Type:</span> <span class="font-bold text-[#673DE6]">{{ form.eventType }}</span></div>
+                                    <div>
+                                        <span class="font-bold text-slate-600">Catering Tier:</span>
+                                        <span class="font-bold">₹{{ effectiveMenuRate }}/plate</span>
+                                        <span v-if="form.isMeetingSetup" class="text-[9px] text-purple-700 font-bold bg-purple-50 px-1 py-0.5 rounded ml-1 border border-purple-200">Meeting Setup</span>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <span class="w-28 inline-block font-bold text-slate-600">No. of person:</span>
+                                        <span class="font-black text-slate-900">(Guaranteed) {{ form.paxGuaranteed }} Pax</span>
+                                    </div>
+                                    <div>
+                                        <span class="font-bold text-slate-600">Allocated Area:</span>
+                                        <span v-if="form.isEngagementPackage" class="font-bold text-purple-700">Engagement Package ({{ form.engagementPackageType.toUpperCase() }})</span>
+                                        <span v-else class="font-bold text-slate-800">{{ form.selectedVenues.map(v => v.toUpperCase()).join(', ') }}</span>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <span class="w-28 inline-block font-bold text-slate-600">Rooms Needed:</span>
+                                        <span class="font-bold">{{ form.roomsNeeded }} Rooms</span> (@ ₹{{ form.roomRate || 2500 }}/night)
+                                    </div>
+                                    <div>
+                                        <span class="font-bold text-slate-600">Room Stay:</span>
+                                        <span>{{ form.roomArrival }} to {{ form.roomDeparture }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Financials / Breakdown (Amount in Numbers!) -->
+                            <div class="py-2.5 border-b border-slate-400 bg-slate-50/80 p-2.5 font-mono text-[11px] space-y-1 my-2 rounded-xs">
+                                <div class="flex justify-between text-slate-600 text-[10px]">
+                                    <span>Fooding ({{ form.paxGuaranteed }} Pax × ₹{{ effectiveMenuRate }}):</span>
+                                    <span>₹{{ foodTotal.toLocaleString('en-IN') }}</span>
+                                </div>
+                                <div v-if="extraFoodingTotal > 0" class="flex justify-between text-slate-600 text-[10px]">
+                                    <span>Extra Fooding & Ritual Servings:</span>
+                                    <span>₹{{ extraFoodingTotal.toLocaleString('en-IN') }}</span>
+                                </div>
+                                <div v-if="venueTotal > 0" class="flex justify-between text-slate-600 text-[10px]">
+                                    <span>Hall / Venue Charges:</span>
+                                    <span>₹{{ venueTotal.toLocaleString('en-IN') }}</span>
+                                </div>
+                                <div v-if="roomsTotal > 0" class="flex justify-between text-slate-600 text-[10px]">
+                                    <span>Room Accommodations ({{ form.roomsNeeded }} Rms):</span>
+                                    <span>₹{{ roomsTotal.toLocaleString('en-IN') }}</span>
+                                </div>
+                                <div v-if="decorAvTotal > 0" class="flex justify-between text-slate-600 text-[10px]">
+                                    <span>Decoration & AV Equipment:</span>
+                                    <span>₹{{ decorAvTotal.toLocaleString('en-IN') }}</span>
+                                </div>
+                                <div v-if="otherAddonsTotal > 0" class="flex justify-between text-slate-600 text-[10px]">
+                                    <span>Add-ons / Meeting Pax Surcharge:</span>
+                                    <span>₹{{ otherAddonsTotal.toLocaleString('en-IN') }}</span>
+                                </div>
+                                <div class="flex justify-between font-bold border-t border-slate-200 pt-1 text-slate-900 text-xs">
+                                    <span>Total Estimated Baseline Amount:</span>
+                                    <span>₹{{ totalGrossAmount.toLocaleString('en-IN') }}</span>
+                                </div>
+                                <div v-if="calculatedDiscountAmount > 0" class="flex justify-between text-emerald-700 font-bold">
+                                    <span>{{ authorityLevel.title }} Concession ({{ calculatedDiscountPercent }}%):</span>
+                                    <span>- ₹{{ calculatedDiscountAmount.toLocaleString('en-IN') }}</span>
+                                </div>
+                                <div class="flex justify-between font-black text-sm border-t border-slate-300 pt-1 text-slate-900">
+                                    <span>Net Payable Amount:</span>
+                                    <span>₹{{ netPayableAmount.toLocaleString('en-IN') }}</span>
+                                </div>
+                                <div class="flex justify-between text-slate-700 pt-0.5 text-xs">
+                                    <span>Advance Token Paid:</span>
+                                    <span class="font-bold">₹{{ form.amountPaid.toLocaleString('en-IN') }} ({{ form.paymentMode }})</span>
+                                </div>
+                                <div class="flex justify-between font-black text-xs text-rose-600 border-t border-slate-200 pt-1">
+                                    <span>Balance Due on Event Day:</span>
+                                    <span>₹{{ balanceDueAmount.toLocaleString('en-IN') }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Signatures Box: Dynamic Authority Designation -->
+                            <div class="pt-4 pb-1 grid grid-cols-2 gap-8 text-center text-[11px]">
                                 <div>
-                                    <span class="font-bold text-slate-600">Allocated Area:</span>
-                                    <span v-if="form.isEngagementPackage" class="font-bold text-purple-700">Engagement Package ({{ form.engagementPackageType.toUpperCase() }})</span>
-                                    <span v-else>{{ form.selectedVenues.join(', ').toUpperCase() }}</span>
+                                    <div class="border-t border-slate-400 pt-1 font-bold text-slate-700">Guest / Client Signature</div>
+                                    <div class="text-[9px] text-slate-500 font-mono">{{ form.guestName }}</div>
                                 </div>
-                            </div>
-                            <div class="flex justify-between">
-                                <div><span class="w-32 inline-block font-bold text-slate-600">Rooms Needed:</span> <span class="font-bold">{{ form.roomsNeeded }} Rooms</span> (@ ₹{{ form.roomRate }})</div>
-                                <div><span class="font-bold text-slate-600">Timings:</span> {{ form.roomArrival }} to {{ form.roomDeparture }}</div>
-                            </div>
-                        </div>
-
-                        <!-- Package Inclusions & Self Arrangements -->
-                        <div class="py-2 border-b border-slate-300 grid grid-cols-2 gap-4 text-xs">
-                            <div>
-                                <span class="font-bold text-slate-700 block mb-1">Included in Package:</span>
-                                <ul class="list-disc list-inside text-[11px] text-slate-600 space-y-0.5">
-                                    <li v-for="inc in form.packageIncludes" :key="inc">{{ inc }}</li>
-                                    <li v-if="form.decorPackageType !== 'none'">Decor Package: {{ form.decorPackageType.toUpperCase() }}</li>
-                                </ul>
-                            </div>
-                            <div>
-                                <span class="font-bold text-slate-700 block mb-1">Self Arrangement (Guest):</span>
-                                <ul class="list-disc list-inside text-[11px] text-slate-600 space-y-0.5">
-                                    <li v-for="self in form.selfArrangements" :key="self">{{ self }}</li>
-                                </ul>
-                            </div>
-                        </div>
-
-                        <!-- Financials / Breakdown (Amount in Numbers!) -->
-                        <div class="py-2.5 border-b border-slate-400 bg-slate-50/70 p-2 font-mono text-xs space-y-1">
-                            <div class="flex justify-between font-bold">
-                                <span>Total Estimated Amount:</span>
-                                <span>₹{{ totalGrossAmount.toLocaleString('en-IN') }}</span>
-                            </div>
-                            <div v-if="calculatedDiscountAmount > 0" class="flex justify-between text-emerald-700 font-semibold">
-                                <span>{{ authorityLevel.title }} Discount ({{ calculatedDiscountPercent }}%):</span>
-                                <span>- ₹{{ calculatedDiscountAmount.toLocaleString('en-IN') }}</span>
-                            </div>
-                            <div class="flex justify-between font-extrabold text-sm border-t border-slate-300 pt-1">
-                                <span>Payable Amount:</span>
-                                <span>₹{{ netPayableAmount.toLocaleString('en-IN') }}</span>
-                            </div>
-                            <div class="flex justify-between text-slate-700 pt-0.5">
-                                <span>Amount Paid (Advance):</span>
-                                <span class="font-bold">₹{{ form.amountPaid.toLocaleString('en-IN') }} ({{ form.paymentMode }})</span>
-                            </div>
-                            <div class="flex justify-between font-bold text-rose-600">
-                                <span>Balance Due on Event:</span>
-                                <span>₹{{ balanceDueAmount.toLocaleString('en-IN') }}</span>
-                            </div>
-                        </div>
-
-                        <!-- Signatures Box: Dynamic Authority Designation -->
-                        <div class="pt-6 pb-2 grid grid-cols-2 gap-8 text-center text-xs">
-                            <div>
-                                <div class="border-t border-slate-400 pt-1 font-bold text-slate-700">Guest Signature</div>
-                                <div class="text-[10px] text-slate-400 font-mono">{{ form.guestName }}</div>
-                            </div>
-                            <div>
-                                <div class="border-t border-slate-400 pt-1 font-bold text-slate-700">
-                                    {{ authorityLevel.signatureLabel }}
-                                </div>
-                                <div class="text-[10px] text-emerald-600 font-bold">
-                                    {{ form.status === 'approved_md' ? '✔ DIGITALLY AUTHORIZED' : 'PENDING AUTHORIZATION' }}
+                                <div>
+                                    <div class="border-t border-slate-400 pt-1 font-bold text-slate-700">
+                                        {{ authorityLevel.signatureLabel }}
+                                    </div>
+                                    <div class="text-[9px] text-emerald-700 font-bold">
+                                        {{ form.status === 'approved_md' ? '✔ DIGITALLY AUTHORIZED' : 'PENDING AUTHORIZATION' }}
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Footer Address -->
-                        <div class="text-center text-[10px] text-slate-500 pt-3 border-t border-slate-300 mt-3">
-                            Hotel Pleasant View, Manika Cinema Road, Gandhi Nagar, Civil Lines - Raebareli 229001
+                        <!-- ========================================================= -->
+                        <!-- PART 2: PACKAGE INCLUSIONS & LOGISTICS SPECIFICATIONS      -->
+                        <!-- ("bus neeche kya hai package me wo add ho jay")           -->
+                        <!-- ========================================================= -->
+                        <div class="border border-slate-400 p-4 sm:p-5 bg-white print-avoid-break">
+                            <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-300 bg-slate-50 p-2 rounded-xs">
+                                <div class="flex items-center gap-2">
+                                    <Building2 class="h-4 w-4 text-[#673DE6]" />
+                                    <span class="font-black text-xs uppercase tracking-wider text-slate-900">Package Inclusions & Infrastructure Logistics</span>
+                                </div>
+                                <span class="text-[10px] font-mono text-slate-500 font-semibold">Official Venue & Hospitality Breakdown</span>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
+                                <!-- 1. Venue & Halls Booked -->
+                                <div class="p-2.5 rounded border border-slate-200 bg-slate-50/50 space-y-1.5">
+                                    <div class="font-bold text-slate-800 text-xs flex items-center justify-between border-b border-slate-200 pb-1">
+                                        <span>1. Allocated Halls & Spaces</span>
+                                        <span class="font-mono text-purple-700 font-extrabold">₹{{ venueTotal.toLocaleString('en-IN') }}</span>
+                                    </div>
+                                    <div v-if="form.isEngagementPackage" class="text-xs">
+                                        <p class="font-bold text-purple-800">
+                                            {{ form.engagementPackageType === 'swarnim' ? 'Swarnim Hall with Decoration + DJ Setup' : 'Swarnmahal Hall with Decoration + DJ Setup' }}
+                                        </p>
+                                        <p class="text-[10px] text-slate-500">Standalone Engagement Combo Package</p>
+                                    </div>
+                                    <ul v-else class="space-y-1">
+                                        <li v-for="venue in selectedVenuesDetailed" :key="venue.name" class="flex justify-between items-center text-[10px]">
+                                            <span class="font-medium text-slate-700">• {{ venue.name }}</span>
+                                            <span class="font-mono font-bold text-slate-900">₹{{ venue.price.toLocaleString('en-IN') }}</span>
+                                        </li>
+                                    </ul>
+                                    <div class="text-[10px] text-slate-500 pt-1 border-t border-slate-200 space-y-0.5">
+                                        <div>Capacity: <span class="font-semibold">{{ paxRules.minPax }} Min Guaranteed Pax</span> (Max {{ paxRules.maxPax }} Pax)</div>
+                                        <div v-if="form.isMeetingSetup" class="text-purple-700 font-semibold">
+                                            Meeting Setup 6-hr Slot (Below min pax surcharge: ₹20k Banquet / ₹5k Mandap)
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 2. Room Accommodations -->
+                                <div class="p-2.5 rounded border border-slate-200 bg-slate-50/50 space-y-1.5">
+                                    <div class="font-bold text-slate-800 text-xs flex items-center justify-between border-b border-slate-200 pb-1">
+                                        <span>2. Deluxe Room Stays</span>
+                                        <span class="font-mono text-purple-700 font-extrabold">₹{{ roomsTotal.toLocaleString('en-IN') }}</span>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <div class="flex justify-between">
+                                            <span class="text-slate-600">Rooms Allocated:</span>
+                                            <span class="font-bold text-slate-900">{{ form.roomsNeeded }} Executive AC Rooms</span>
+                                        </div>
+                                        <div class="flex justify-between text-[10px]">
+                                            <span class="text-slate-600">Standard Room Tariff:</span>
+                                            <span class="font-mono font-semibold">₹{{ form.roomRate || 2500 }} / room / night</span>
+                                        </div>
+                                        <div class="flex justify-between text-[10px]">
+                                            <span class="text-slate-600">Check-in / Check-out:</span>
+                                            <span class="font-medium">{{ form.roomArrival }} to {{ form.roomDeparture }}</span>
+                                        </div>
+                                        <p class="text-[9px] text-slate-500 pt-1 border-t border-slate-200">
+                                            Includes: Air Conditioning, Attached Bath, 24/7 Hot Water, Daily Housekeeping & Room Service.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- 3. Stage & Theme Decor Setup -->
+                                <div class="p-2.5 rounded border border-slate-200 bg-slate-50/50 space-y-1.5">
+                                    <div class="font-bold text-slate-800 text-xs flex items-center justify-between border-b border-slate-200 pb-1">
+                                        <span>3. Stage & Floral Decor</span>
+                                        <span class="font-mono text-purple-700 font-extrabold" v-if="selectedDecorDetails">₹{{ selectedDecorDetails.price.toLocaleString('en-IN') }}</span>
+                                        <span class="text-[10px] text-slate-400" v-else>Included</span>
+                                    </div>
+                                    <div v-if="selectedDecorDetails">
+                                        <p class="font-bold text-slate-900 text-[11px]">{{ selectedDecorDetails.name }}</p>
+                                        <p class="text-[10px] text-slate-600 mt-0.5 leading-tight">{{ selectedDecorDetails.inclusions }}</p>
+                                    </div>
+                                    <div v-else class="text-[10px] text-slate-600">
+                                        Stage backdrop, seating & ambient lighting arranged as per package.
+                                    </div>
+                                    <p class="text-[9px] text-slate-500 pt-1 border-t border-slate-200">
+                                        Includes: VIP Sofa Seating, Red Carpet Walkway, Round Tables with Satin Linen & Banquet Chair Covers.
+                                    </p>
+                                </div>
+
+                                <!-- 4. AV & Sound Technology -->
+                                <div class="p-2.5 rounded border border-slate-200 bg-slate-50/50 space-y-1.5">
+                                    <div class="font-bold text-slate-800 text-xs flex items-center justify-between border-b border-slate-200 pb-1">
+                                        <span>4. Audio-Visual & Tech Setup</span>
+                                        <span class="font-mono text-purple-700 font-extrabold">
+                                            ₹{{ selectedAvItems.reduce((s, i) => s + i.price, 0).toLocaleString('en-IN') }}
+                                        </span>
+                                    </div>
+                                    <ul v-if="selectedAvItems.length" class="space-y-1">
+                                        <li v-for="av in selectedAvItems" :key="av.name" class="flex justify-between items-center text-[10px]">
+                                            <span class="text-slate-700">• {{ av.name }}</span>
+                                            <span class="font-mono font-bold text-slate-900">₹{{ av.price.toLocaleString('en-IN') }}</span>
+                                        </li>
+                                    </ul>
+                                    <p v-else class="text-[10px] text-slate-500 italic">
+                                        Standard acoustic PA system included. Projector / LED wall available on request.
+                                    </p>
+                                    <p class="text-[9px] text-slate-500 pt-1 border-t border-slate-200">
+                                        100% DG Genset Silent Power Backup & Central AC throughout the function.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Hotel Deliverables vs Self Arrangements -->
+                            <div class="mt-3 pt-2.5 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3 text-[10px]">
+                                <div>
+                                    <span class="font-bold text-slate-700 uppercase tracking-wider block mb-1">Hotel Hospitality Deliverables:</span>
+                                    <ul class="list-disc list-inside text-slate-600 space-y-0.5">
+                                        <li>Fine Bone China Tableware, Cutlery, Glassware & Stainless Food Warmers</li>
+                                        <li>Service Captains, Uniformed Banquet Waiters & Housekeeping Staff</li>
+                                        <li>Continuous DG Generator Backup for Air-Conditioning & Stage Lighting</li>
+                                        <li>Hygienic RO Filtered Drinking Water Dispensary</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <span class="font-bold text-slate-700 uppercase tracking-wider block mb-1">Guest Self-Arrangements:</span>
+                                    <ul class="list-disc list-inside text-slate-600 space-y-0.5">
+                                        <li v-for="self in form.selfArrangements" :key="self">{{ self }}</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- ========================================================= -->
+                        <!-- PART 3: DETAILED CATERING & DOCX FOOD MENU DOSSIER         -->
+                        <!-- ("every singal detail kya menuhai etc sab kuch page me")   -->
+                        <!-- ========================================================= -->
+                        <div class="border border-slate-400 p-4 sm:p-5 bg-white print-avoid-break">
+                            <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-300 bg-slate-50 p-2 rounded-xs">
+                                <div class="flex items-center gap-2">
+                                    <Utensils class="h-4 w-4 text-[#673DE6]" />
+                                    <div>
+                                        <span class="font-black text-xs uppercase tracking-wider text-slate-900">Official Catering Menu Specifications</span>
+                                        <span class="ml-2 text-[10px] font-bold text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded">
+                                            {{ currentMenuCatalog.title }} (@ ₹{{ effectiveMenuRate }}/pax)
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="text-right font-mono text-[11px] font-bold text-slate-900">
+                                    <span>{{ form.paxGuaranteed }} Pax × ₹{{ effectiveMenuRate }} = ₹{{ foodTotal.toLocaleString('en-IN') }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Menu Courses Grid (Extracted from official hotel docx catalog) -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 text-[10px]">
+                                <!-- Welcome Drinks -->
+                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
+                                        <span>🍹 Welcome Drinks</span>
+                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.welcomeDrinksCount }} Choices</span>
+                                    </div>
+                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.welcomeDrinks.join(' • ') }}</p>
+                                </div>
+
+                                <!-- Hot Drinks -->
+                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
+                                        <span>☕ Hot Beverages</span>
+                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.hotDrinksCount }} Choices</span>
+                                    </div>
+                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.hotDrinks.join(' • ') }}</p>
+                                </div>
+
+                                <!-- Soups (if present) -->
+                                <div v-if="currentMenuCatalog.soups.length" class="p-2 rounded border border-slate-200 bg-slate-50/40">
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
+                                        <span>🍲 Soups</span>
+                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.soupsCount }} Choices</span>
+                                    </div>
+                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.soups.join(' • ') }}</p>
+                                </div>
+
+                                <!-- Starters / Appetizers -->
+                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
+                                        <span>🍢 Starters & Snacks</span>
+                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.startersCount }} Choices</span>
+                                    </div>
+                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.starters.join(' • ') }}</p>
+                                </div>
+
+                                <!-- Dal Preparation -->
+                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
+                                        <span>🍲 Dal Preparation</span>
+                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.dalCount }} Choice</span>
+                                    </div>
+                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.dal.join(' • ') }}</p>
+                                </div>
+
+                                <!-- Paneer Delicacies -->
+                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
+                                        <span>🧀 Paneer Specialty</span>
+                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.paneerCount }} Choice(s)</span>
+                                    </div>
+                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.paneer.join(' • ') }}</p>
+                                </div>
+
+                                <!-- Seasonal Dry Veg -->
+                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
+                                        <span>🥦 Dry Seasonal Veg</span>
+                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.dryVegCount }} Choice</span>
+                                    </div>
+                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.dryVeg.join(' • ') }}</p>
+                                </div>
+
+                                <!-- Gravy Veg (if present) -->
+                                <div v-if="currentMenuCatalog.gravyVeg.length" class="p-2 rounded border border-slate-200 bg-slate-50/40">
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
+                                        <span>🥘 Rich Gravy Veg</span>
+                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.gravyVegCount }} Choice</span>
+                                    </div>
+                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.gravyVeg.join(' • ') }}</p>
+                                </div>
+
+                                <!-- Basmati Rice & Pulao -->
+                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
+                                        <span>🍚 Basmati Rice & Pulao</span>
+                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.riceCount }} Choice(s)</span>
+                                    </div>
+                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.rice.join(' • ') }}</p>
+                                </div>
+
+                                <!-- Curd & Raita -->
+                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
+                                        <span>🥣 Curd & Raita</span>
+                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.raitaCount }} Choice</span>
+                                    </div>
+                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.raita.join(' • ') }}</p>
+                                </div>
+
+                                <!-- Assorted Tandoori Breads -->
+                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
+                                        <span>🫓 Assorted Tandoor Breads</span>
+                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.breadsCount }} Choices</span>
+                                    </div>
+                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.breads.join(' • ') }}</p>
+                                </div>
+
+                                <!-- Desserts & Sweets -->
+                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
+                                        <span>🍨 Desserts & Halwas</span>
+                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.dessertsCount }} Choices</span>
+                                    </div>
+                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.desserts.join(' • ') }}</p>
+                                </div>
+
+                                <!-- Salads & Accompaniments -->
+                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
+                                        <span>🥗 Salads & Accompaniments</span>
+                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">Included</span>
+                                    </div>
+                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.salads.join(' • ') }}</p>
+                                </div>
+
+                                <!-- Live Cooking Counters -->
+                                <div v-if="currentMenuCatalog.liveCounters.length" class="p-2 rounded border border-slate-200 bg-slate-50/40 sm:col-span-2">
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
+                                        <span>🍳 Live Cooking Counters</span>
+                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.liveCountersCount }} Live Stations</span>
+                                    </div>
+                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.liveCounters.join(' • ') }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Extra Fooding / Ritual Catering Table -->
+                            <div v-if="extraFoodingItemsDetailed.length" class="mt-3 pt-2.5 border-t border-slate-200">
+                                <span class="font-bold text-slate-800 text-[11px] block mb-1">Extra Fooding & Ritual Catering Add-ons:</span>
+                                <table class="w-full text-left text-[10px] font-mono">
+                                    <thead>
+                                        <tr class="border-b border-slate-200 text-slate-500 font-bold">
+                                            <th class="pb-1">Item Description</th>
+                                            <th class="pb-1 text-center">Quantity / Pax</th>
+                                            <th class="pb-1 text-right">Unit Rate</th>
+                                            <th class="pb-1 text-right">Total (₹)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">
+                                        <tr v-for="item in extraFoodingItemsDetailed" :key="item.name">
+                                            <td class="py-1 font-sans text-slate-800">{{ item.name }}</td>
+                                            <td class="py-1 text-center">{{ item.qty }}</td>
+                                            <td class="py-1 text-right">{{ item.rate }}</td>
+                                            <td class="py-1 text-right font-bold text-slate-900">₹{{ item.total.toLocaleString('en-IN') }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- ========================================================= -->
+                        <!-- PART 4: CONTRACT TERMS & FINAL SIGN-OFF                   -->
+                        <!-- ========================================================= -->
+                        <div class="border border-slate-400 p-4 bg-white print-avoid-break text-[10px] text-slate-600 space-y-2">
+                            <div class="font-bold text-slate-800 text-xs border-b border-slate-200 pb-1 flex items-center justify-between">
+                                <span>Official Booking Terms & Conditions</span>
+                                <span class="font-mono text-[9px] text-slate-400">Hotel Pleasant View Policy</span>
+                            </div>
+                            <ol class="list-decimal list-inside space-y-0.5 leading-tight">
+                                <li><strong>Guaranteed Attendance Billing</strong>: Billed for contracted guaranteed pax ({{ form.paxGuaranteed }} Pax) even if actual attendance is lower. Extra pax billed at contracted per-plate rate.</li>
+                                <li><strong>Slot Timings</strong>: Event timings ({{ form.timeFrom }} to {{ form.timeTo }}) must be strictly adhered to. Extension requires management approval and incurs hourly overtime charges.</li>
+                                <li><strong>Prohibitions</strong>: Outside food/liquor, commercial firecrackers, and illegal substances strictly barred on hotel premises without statutory municipal/excise permits.</li>
+                                <li><strong>Cancellation Policy</strong>: Advance token deposit is strictly non-refundable and non-transferable under any circumstances.</li>
+                                <li><strong>Settlement</strong>: 100% net balance (₹{{ balanceDueAmount.toLocaleString('en-IN') }}) must be cleared before event commencement prior to hall key handover.</li>
+                            </ol>
+
+                            <!-- Final Signatures -->
+                            <div class="pt-4 grid grid-cols-2 gap-8 text-center text-[11px] border-t border-slate-200 mt-2">
+                                <div>
+                                    <div class="border-t border-slate-400 pt-1 font-bold text-slate-800">Accepted & Confirmed By (Guest)</div>
+                                    <div class="text-[9px] text-slate-500 font-mono">{{ form.guestName }} (Ph: {{ form.phonePrimary }})</div>
+                                </div>
+                                <div>
+                                    <div class="border-t border-slate-400 pt-1 font-bold text-slate-800">For Hotel Pleasant View (Authorized Officer)</div>
+                                    <div class="text-[9px] text-emerald-700 font-bold font-mono">{{ authorityLevel.signatureLabel }}</div>
+                                </div>
+                            </div>
+
+                            <div class="text-center text-[9px] text-slate-400 pt-1 border-t border-slate-100">
+                                Hotel Pleasant View, Manika Cinema Road, Gandhi Nagar, Civil Lines, Raebareli, UP - 229001 • info@hotelpleasantview.com
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>
