@@ -19,6 +19,7 @@ export interface CompactGuestPayload {
     mb?: number;           // mandapServingsPax
     notes?: string;        // specialArrangements
     sig?: string;          // digitalSignature
+    qm?: boolean;          // isQuotationMode
 }
 
 /**
@@ -45,6 +46,7 @@ export function encodeGuestPayload(inquiry: BanquetInquiry): string {
             mb: inquiry.mandapServingsPax,
             notes: inquiry.specialArrangements,
             sig: inquiry.digitalSignature,
+            qm: inquiry.isQuotationMode,
         };
         const jsonStr = JSON.stringify(payload);
         if (typeof window !== 'undefined' && typeof window.btoa === 'function') {

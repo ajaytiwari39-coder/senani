@@ -81,6 +81,7 @@ export interface BanquetInquiry {
     effectiveMenuRate: number;
     menuRate?: number;
     menuTitle: string;
+    isQuotationMode?: boolean;
     selectedMenuCatalogItems: string[];
     // Additional Fooding
     engagementBreakfastPax: number;
@@ -227,6 +228,7 @@ const form = ref<BanquetInquiry>({
     menuRateTier: 799,
     effectiveMenuRate: 799,
     menuTitle: 'Royal Deluxe Buffet',
+    isQuotationMode: false,
     selectedMenuCatalogItems: [],
     engagementBreakfastPax: 0,
     regularBreakfastPax: 0,
@@ -267,6 +269,7 @@ watch(
         if (val) {
             form.value = JSON.parse(JSON.stringify(val));
             if (form.value.isLocked === undefined) form.value.isLocked = false;
+            if (form.value.isQuotationMode === undefined) form.value.isQuotationMode = false;
             if (!form.value.selectedMenuCatalogItems) form.value.selectedMenuCatalogItems = [];
             if (!form.value.auditLog) form.value.auditLog = [];
             sanitizeCatalogSelections();
@@ -708,32 +711,71 @@ const isCategoryFull = (items: string[], maxCount: number) => {
     return getCategorySelectedCount(items) >= maxCount;
 };
 
+// Full Courses Catalog with Quotas
+const allCoursesList = computed(() => {
+    const cat = currentMenuCatalog.value;
+    return [
+        { key: 'welcomeDrinks', label: 'Welcome Drinks & Mocktails', icon: '🍹', items: cat.welcomeDrinks || [], count: cat.welcomeDrinksCount },
+        { key: 'hotDrinks', label: 'Hot Beverages', icon: '☕', items: cat.hotDrinks || [], count: cat.hotDrinksCount },
+        { key: 'soups', label: 'Gourmet Soups', icon: '🍲', items: cat.soups || [], count: cat.soupsCount },
+        { key: 'starters', label: 'Starters & Finger Food', icon: '🍢', items: cat.starters || [], count: cat.startersCount },
+        { key: 'paneer', label: 'Paneer Specialty', icon: '🥘', items: cat.paneer || [], count: cat.paneerCount },
+        { key: 'dal', label: 'Dal Preparation', icon: '🍲', items: cat.dal || [], count: cat.dalCount },
+        { key: 'dryVeg', label: 'Dry Seasonal Veg', icon: '🥦', items: cat.dryVeg || [], count: cat.dryVegCount },
+        { key: 'gravyVeg', label: 'Rich Gravy Specialties', icon: '🍛', items: cat.gravyVeg || [], count: cat.gravyVegCount },
+        { key: 'rice', label: 'Basmati Rice & Pulao', icon: '🍚', items: cat.rice || [], count: cat.riceCount },
+        { key: 'raita', label: 'Curd & Raita', icon: '🥣', items: cat.raita || [], count: cat.raitaCount },
+        { key: 'breads', label: 'Assorted Tandoor Breads', icon: '🍞', items: cat.breads || [], count: cat.breadsCount },
+        { key: 'desserts', label: 'Royal Desserts & Halwas', icon: '🍨', items: cat.desserts || [], count: cat.dessertsCount },
+        { key: 'salads', label: 'Salads & Accompaniments', icon: '🥗', items: cat.salads && cat.salads.length ? cat.salads : ['Sirka Pyaaz', 'Green Salad', 'Achaar', 'Chutney'], count: 4 },
+        { key: 'liveCounters', label: 'Live Chef Counters', icon: '🍳', items: cat.liveCounters || [], count: cat.liveCountersCount },
+    ].filter(c => c.items && c.items.length > 0);
+});
+
+const totalCatalogItemsCount = computed(() => {
+    return allCoursesList.value.reduce((sum, c) => sum + c.items.length, 0);
+});
+
+const setQuotationMode = (active: boolean) => {
+    if (form.value.isLocked) return;
+    form.value.isQuotationMode = active;
+    if (active) {
+        // "kuch select nhi rhega": in quotation mode, clear selected items
+        form.value.selectedMenuCatalogItems = [];
+    }
+};
+
 // Culinary Tasting Menu (Clean, without unchecked clutter) for the Luxury Voucher
 const confirmedMenuCategories = computed(() => {
     const catalog = currentMenuCatalog.value;
     const selected = form.value.selectedMenuCatalogItems || [];
+    const isQuotation = !!form.value.isQuotationMode;
     
     const getItems = (catalogList: string[] = [], quota: number = 1) => {
-        const picked = catalogList.filter(item => selected.includes(item));
+        if (isQuotation) {
+            // In quotation mode, show ALL food items!
+            return catalogList || [];
+        }
+        const picked = (catalogList || []).filter(item => selected.includes(item));
         if (picked.length > 0) return picked;
-        return catalogList.slice(0, Math.max(1, quota));
+        return (catalogList || []).slice(0, Math.max(1, quota));
     };
 
     const categories = [
-        { key: 'welcomeDrinks', label: 'Welcome Drinks & Mocktails', icon: '🍹', items: getItems(catalog.welcomeDrinks, catalog.welcomeDrinksCount) },
-        { key: 'hotDrinks', label: 'Hot Beverages', icon: '☕', items: getItems(catalog.hotDrinks, catalog.hotDrinksCount) },
-        { key: 'soups', label: 'Gourmet Soups', icon: '🍲', items: getItems(catalog.soups, catalog.soupsCount) },
-        { key: 'starters', label: 'Starters & Finger Food', icon: '🍢', items: getItems(catalog.starters, catalog.startersCount) },
-        { key: 'paneer', label: 'Paneer Specialty', icon: '🥘', items: getItems(catalog.paneer, catalog.paneerCount) },
-        { key: 'dal', label: 'Dal Preparation', icon: '🍲', items: getItems(catalog.dal, catalog.dalCount) },
-        { key: 'dryVeg', label: 'Dry Seasonal Veg', icon: '🥦', items: getItems(catalog.dryVeg, catalog.dryVegCount) },
-        { key: 'gravyVeg', label: 'Rich Gravy Specialties', icon: '🍛', items: getItems(catalog.gravyVeg, catalog.gravyVegCount) },
-        { key: 'rice', label: 'Basmati Rice & Pulao', icon: '🍚', items: getItems(catalog.rice, catalog.riceCount) },
-        { key: 'raita', label: 'Curd & Raita', icon: '🥣', items: getItems(catalog.raita, catalog.raitaCount) },
-        { key: 'breads', label: 'Assorted Tandoor Breads', icon: '🍞', items: getItems(catalog.breads, catalog.breadsCount) },
-        { key: 'desserts', label: 'Royal Desserts & Halwas', icon: '🍨', items: getItems(catalog.desserts, catalog.dessertsCount) },
-        { key: 'salads', label: 'Salads & Accompaniments', icon: '🥗', items: catalog.salads && catalog.salads.length ? catalog.salads.slice(0, 4) : ['Sirka Pyaaz', 'Green Salad', 'Achaar', 'Chutney'] },
-        { key: 'liveCounters', label: 'Live Chef Counters', icon: '🍳', items: getItems(catalog.liveCounters, catalog.liveCountersCount) },
+        { key: 'welcomeDrinks', label: 'Welcome Drinks & Mocktails', icon: '🍹', quota: catalog.welcomeDrinksCount, items: getItems(catalog.welcomeDrinks, catalog.welcomeDrinksCount) },
+        { key: 'hotDrinks', label: 'Hot Beverages', icon: '☕', quota: catalog.hotDrinksCount, items: getItems(catalog.hotDrinks, catalog.hotDrinksCount) },
+        { key: 'soups', label: 'Gourmet Soups', icon: '🍲', quota: catalog.soupsCount, items: getItems(catalog.soups, catalog.soupsCount) },
+        { key: 'starters', label: 'Starters & Finger Food', icon: '🍢', quota: catalog.startersCount, items: getItems(catalog.starters, catalog.startersCount) },
+        { key: 'paneer', label: 'Paneer Specialty', icon: '🥘', quota: catalog.paneerCount, items: getItems(catalog.paneer, catalog.paneerCount) },
+        { key: 'dal', label: 'Dal Preparation', icon: '🍲', quota: catalog.dalCount, items: getItems(catalog.dal, catalog.dalCount) },
+        { key: 'dryVeg', label: 'Dry Seasonal Veg', icon: '🥦', quota: catalog.dryVegCount, items: getItems(catalog.dryVeg, catalog.dryVegCount) },
+        { key: 'gravyVeg', label: 'Rich Gravy Specialties', icon: '🍛', quota: catalog.gravyVegCount, items: getItems(catalog.gravyVeg, catalog.gravyVegCount) },
+        { key: 'rice', label: 'Basmati Rice & Pulao', icon: '🍚', quota: catalog.riceCount, items: getItems(catalog.rice, catalog.riceCount) },
+        { key: 'raita', label: 'Curd & Raita', icon: '🥣', quota: catalog.raitaCount, items: getItems(catalog.raita, catalog.raitaCount) },
+        { key: 'breads', label: 'Assorted Tandoor Breads', icon: '🍞', quota: catalog.breadsCount, items: getItems(catalog.breads, catalog.breadsCount) },
+        { key: 'desserts', label: 'Royal Desserts & Halwas', icon: '🍨', quota: catalog.dessertsCount, items: getItems(catalog.desserts, catalog.dessertsCount) },
+        { key: 'salads', label: 'Salads & Accompaniments', icon: '🥗', quota: 4, items: isQuotation ? (catalog.salads || ['Sirka Pyaaz', 'Green Salad', 'Achaar', 'Chutney']) : (catalog.salads && catalog.salads.length ? catalog.salads.slice(0, 4) : ['Sirka Pyaaz', 'Green Salad', 'Achaar', 'Chutney']) },
+        { key: 'liveCounters', label: 'Live Chef Counters', icon: '🍳', quota: catalog.liveCountersCount, items: getItems(catalog.liveCounters, catalog.liveCountersCount) },
     ];
 
     return categories.filter(c => c.items.length > 0);
@@ -1292,8 +1334,42 @@ const shareOnWhatsApp = () => {
 
                             <div class="hidden sm:block text-slate-300">|</div>
 
-                            <!-- Selected Dishes Counter -->
-                            <div class="flex items-center gap-1.5 text-[11px] text-slate-700">
+                            <!-- Mode Selector Switcher: Quotation Mode vs Confirmed Selection -->
+                            <div class="inline-flex p-0.5 bg-slate-200/90 rounded-lg border border-slate-300 text-xs shadow-2xs">
+                                <button
+                                    type="button"
+                                    @click="setQuotationMode(true)"
+                                    :disabled="form.isLocked"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-md font-bold transition cursor-pointer"
+                                    :class="form.isQuotationMode 
+                                        ? 'bg-purple-700 text-white shadow-xs' 
+                                        : 'text-slate-700 hover:text-purple-900 hover:bg-white/60'"
+                                    title="Quotation Mode: Prospective offer with all catalog items shown without dish selection"
+                                >
+                                    <FileText class="h-3.5 w-3.5" />
+                                    <span>📋 Quotation Mode (All Food Items)</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    @click="setQuotationMode(false)"
+                                    :disabled="form.isLocked"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-md font-bold transition cursor-pointer"
+                                    :class="!form.isQuotationMode 
+                                        ? 'bg-[#673DE6] text-white shadow-xs' 
+                                        : 'text-slate-700 hover:text-purple-900 hover:bg-white/60'"
+                                    title="Confirmed Menu Mode: Select specific dishes according to tier quota"
+                                >
+                                    <CheckCircle2 class="h-3.5 w-3.5" />
+                                    <span>🎯 Confirmed Menu Mode</span>
+                                </button>
+                            </div>
+
+                            <!-- Selected Status / Counter -->
+                            <div v-if="form.isQuotationMode" class="flex items-center gap-1.5 text-[11px] text-purple-900 font-bold bg-purple-100 px-2.5 py-1 rounded-lg border border-purple-200">
+                                <Sparkles class="h-3.5 w-3.5 text-purple-600 shrink-0" />
+                                <span>All {{ totalCatalogItemsCount }} Items Displayed (0 Selected)</span>
+                            </div>
+                            <div v-else class="flex items-center gap-1.5 text-[11px] text-slate-700">
                                 <Utensils class="h-3.5 w-3.5 text-[#673DE6]" />
                                 <span>Dishes Picked:</span>
                                 <strong class="font-mono text-purple-700 font-black">{{ form.selectedMenuCatalogItems?.length || 0 }} Items</strong>
@@ -1301,24 +1377,26 @@ const shareOnWhatsApp = () => {
                         </div>
 
                         <div class="flex items-center gap-2">
-                            <button
-                                type="button"
-                                @click="selectAllDefaults"
-                                :disabled="form.isLocked"
-                                class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                                title="Auto-select recommended dishes according to official tier quotas"
-                            >
-                                ✨ Pick Recommended
-                            </button>
-                            <button
-                                type="button"
-                                @click="clearMenuSelection"
-                                :disabled="form.isLocked"
-                                class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-rose-50 hover:text-rose-700 text-slate-500 text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                                title="Clear all chosen items"
-                            >
-                                Clear
-                            </button>
+                            <template v-if="!form.isQuotationMode">
+                                <button
+                                    type="button"
+                                    @click="selectAllDefaults"
+                                    :disabled="form.isLocked"
+                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                    title="Auto-select recommended dishes according to official tier quotas"
+                                >
+                                    ✨ Pick Recommended
+                                </button>
+                                <button
+                                    type="button"
+                                    @click="clearMenuSelection"
+                                    :disabled="form.isLocked"
+                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-rose-50 hover:text-rose-700 text-slate-500 text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                    title="Clear all chosen items"
+                                >
+                                    Clear
+                                </button>
+                            </template>
                             <button
                                 type="button"
                                 @click="showShareModal = true"
@@ -1604,224 +1682,105 @@ const shareOnWhatsApp = () => {
                                 <!-- Official Docx Menu Selection Panel (Interactive Checkboxes for Manager) -->
                                 <div class="pt-2 border-t border-slate-100 flex-1 flex flex-col min-h-0">
                                     <div class="flex items-center justify-between mb-2">
-                                        <div class="flex items-center gap-1.5">
-                                            <span class="text-[11px] font-bold text-slate-900">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs font-bold text-slate-900">
                                                 Catering Courses & Dish Selection
                                             </span>
                                             <span class="text-[10px] text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded font-bold border border-purple-200">
                                                 Tier ₹{{ effectiveMenuRate }}
                                             </span>
+                                            <span v-if="form.isQuotationMode" class="text-[10px] bg-purple-100 text-purple-900 px-2 py-0.5 rounded font-black border border-purple-300 flex items-center gap-1">
+                                                <Sparkles class="h-3 w-3 text-purple-600" />
+                                                QUOTATION MODE
+                                            </span>
                                         </div>
-                                        <div class="text-[10px] font-mono font-bold text-purple-700">
-                                            {{ form.selectedMenuCatalogItems?.length || 0 }} Dishes Selected
+                                        <div class="flex items-center gap-2">
+                                            <span v-if="form.isQuotationMode" class="text-[10px] font-mono font-bold text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                                                All {{ totalCatalogItemsCount }} Food Items Displayed
+                                            </span>
+                                            <span v-else class="text-[10px] font-mono font-bold text-purple-700">
+                                                {{ form.selectedMenuCatalogItems?.length || 0 }} Dishes Selected
+                                            </span>
+                                            <button
+                                                type="button"
+                                                @click="setQuotationMode(!form.isQuotationMode)"
+                                                :disabled="form.isLocked"
+                                                class="px-2 py-0.5 rounded text-[10.5px] font-bold border transition cursor-pointer"
+                                                :class="form.isQuotationMode ? 'bg-purple-100 text-purple-900 border-purple-300 hover:bg-purple-200' : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'"
+                                            >
+                                                {{ form.isQuotationMode ? '🎯 Pick Dishes' : '📋 Quotation Mode' }}
+                                            </button>
                                         </div>
+                                    </div>
+
+                                    <!-- Quotation Mode Banner -->
+                                    <div v-if="form.isQuotationMode" class="p-2.5 rounded-lg bg-gradient-to-r from-purple-50 via-indigo-50 to-purple-50 border border-purple-200 text-xs flex items-center justify-between gap-2 mb-2 shadow-2xs">
+                                        <div class="flex items-center gap-2 text-purple-950">
+                                            <Sparkles class="h-4 w-4 text-purple-600 shrink-0" />
+                                            <div>
+                                                <span class="font-bold text-purple-900">Quotation Mode Active:</span>
+                                                <span class="text-purple-800 ml-1">Kuch select nahi rahega — proposal quotation me catalog ke sabhi {{ totalCatalogItemsCount }} food items display honge.</span>
+                                            </div>
+                                        </div>
+                                        <span class="shrink-0 text-[10px] font-mono font-bold bg-white text-purple-900 px-2 py-0.5 rounded border border-purple-300">
+                                            0 Required / Open Quota
+                                        </span>
                                     </div>
 
                                     <!-- Full-Height Expandable Scrollable Course Container (No Empty Gap) -->
                                     <div class="flex-1 min-h-[460px] max-h-[660px] overflow-y-auto p-2.5 rounded-lg bg-slate-50/80 border border-slate-200 text-[11px] space-y-3 custom-scrollbar">
-                                        <!-- Welcome Drinks -->
-                                        <div class="p-2 rounded bg-white border border-slate-200/80">
+                                        <div
+                                            v-for="course in allCoursesList"
+                                            :key="course.key"
+                                            class="p-2 rounded bg-white border border-slate-200/80 shadow-2xs"
+                                        >
                                             <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
-                                                <span>🍹 Welcome Drinks</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.welcomeDrinks, currentMenuCatalog.welcomeDrinksCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.welcomeDrinks) }}/{{ currentMenuCatalog.welcomeDrinksCount }} {{ isCategoryFull(currentMenuCatalog.welcomeDrinks, currentMenuCatalog.welcomeDrinksCount) ? 'Max' : 'Picked' }}
+                                                <span class="flex items-center gap-1.5">
+                                                    <span>{{ course.icon }}</span>
+                                                    <span>{{ course.label }}</span>
+                                                </span>
+                                                <!-- Quotation Mode Badge vs Selection Badge -->
+                                                <span
+                                                    v-if="form.isQuotationMode"
+                                                    class="text-[9.5px] font-bold px-2 py-0.5 rounded bg-purple-50 text-purple-800 border border-purple-200 font-mono"
+                                                >
+                                                    All {{ course.items.length }} Offered • Quota: {{ course.count }}
+                                                </span>
+                                                <span
+                                                    v-else
+                                                    class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition font-mono"
+                                                    :class="isCategoryFull(course.items, course.count) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'"
+                                                >
+                                                    {{ getCategorySelectedCount(course.items) }}/{{ course.count }} {{ isCategoryFull(course.items, course.count) ? 'Max' : 'Picked' }}
                                                 </span>
                                             </div>
-                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.welcomeDrinks" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.welcomeDrinks, currentMenuCatalog.welcomeDrinksCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.welcomeDrinks, currentMenuCatalog.welcomeDrinksCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.welcomeDrinks, currentMenuCatalog.welcomeDrinksCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
-                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
-                                                </label>
-                                            </div>
-                                        </div>
 
-                                        <!-- Hot Drinks -->
-                                        <div class="p-2 rounded bg-white border border-slate-200/80">
-                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
-                                                <span>☕ Hot Beverages</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.hotDrinks, currentMenuCatalog.hotDrinksCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.hotDrinks) }}/{{ currentMenuCatalog.hotDrinksCount }} {{ isCategoryFull(currentMenuCatalog.hotDrinks, currentMenuCatalog.hotDrinksCount) ? 'Max' : 'Picked' }}
-                                                </span>
+                                            <!-- Quotation Mode: All food items displayed cleanly with purple bullets -->
+                                            <div v-if="form.isQuotationMode" class="grid grid-cols-2 gap-1 text-[10.5px]">
+                                                <div
+                                                    v-for="item in course.items"
+                                                    :key="item"
+                                                    class="flex items-center gap-1.5 py-0.5 text-slate-800"
+                                                >
+                                                    <span class="h-1.5 w-1.5 rounded-full bg-purple-600 shrink-0"></span>
+                                                    <span class="truncate font-medium text-slate-800">{{ item }}</span>
+                                                </div>
                                             </div>
-                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.hotDrinks" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.hotDrinks, currentMenuCatalog.hotDrinksCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.hotDrinks, currentMenuCatalog.hotDrinksCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.hotDrinks, currentMenuCatalog.hotDrinksCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
-                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
-                                                </label>
-                                            </div>
-                                        </div>
 
-                                        <!-- Soups -->
-                                        <div v-if="currentMenuCatalog.soups.length" class="p-2 rounded bg-white border border-slate-200/80">
-                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
-                                                <span>🍲 Soups</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.soups, currentMenuCatalog.soupsCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.soups) }}/{{ currentMenuCatalog.soupsCount }} {{ isCategoryFull(currentMenuCatalog.soups, currentMenuCatalog.soupsCount) ? 'Max' : 'Picked' }}
-                                                </span>
-                                            </div>
-                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.soups" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.soups, currentMenuCatalog.soupsCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.soups, currentMenuCatalog.soupsCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.soups, currentMenuCatalog.soupsCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
-                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
-                                                </label>
-                                            </div>
-                                        </div>
-
-                                        <!-- Starters -->
-                                        <div class="p-2 rounded bg-white border border-slate-200/80">
-                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
-                                                <span>🍢 Starters & Snacks</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.starters, currentMenuCatalog.startersCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.starters) }}/{{ currentMenuCatalog.startersCount }} {{ isCategoryFull(currentMenuCatalog.starters, currentMenuCatalog.startersCount) ? 'Max' : 'Picked' }}
-                                                </span>
-                                            </div>
-                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.starters" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.starters, currentMenuCatalog.startersCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.starters, currentMenuCatalog.startersCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.starters, currentMenuCatalog.startersCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
-                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
-                                                </label>
-                                            </div>
-                                        </div>
-
-                                        <!-- Dal -->
-                                        <div class="p-2 rounded bg-white border border-slate-200/80">
-                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
-                                                <span>🍲 Dal Preparation</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.dal, currentMenuCatalog.dalCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.dal) }}/{{ currentMenuCatalog.dalCount }} {{ isCategoryFull(currentMenuCatalog.dal, currentMenuCatalog.dalCount) ? 'Max' : 'Picked' }}
-                                                </span>
-                                            </div>
-                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.dal" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.dal, currentMenuCatalog.dalCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.dal, currentMenuCatalog.dalCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.dal, currentMenuCatalog.dalCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
-                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
-                                                </label>
-                                            </div>
-                                        </div>
-
-                                        <!-- Paneer -->
-                                        <div class="p-2 rounded bg-white border border-slate-200/80">
-                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
-                                                <span>🧀 Paneer Specialty</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.paneer, currentMenuCatalog.paneerCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.paneer) }}/{{ currentMenuCatalog.paneerCount }} {{ isCategoryFull(currentMenuCatalog.paneer, currentMenuCatalog.paneerCount) ? 'Max' : 'Picked' }}
-                                                </span>
-                                            </div>
-                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.paneer" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.paneer, currentMenuCatalog.paneerCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.paneer, currentMenuCatalog.paneerCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.paneer, currentMenuCatalog.paneerCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
-                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
-                                                </label>
-                                            </div>
-                                        </div>
-
-                                        <!-- Dry Veg -->
-                                        <div class="p-2 rounded bg-white border border-slate-200/80">
-                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
-                                                <span>🥦 Dry Seasonal Veg</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.dryVeg, currentMenuCatalog.dryVegCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.dryVeg) }}/{{ currentMenuCatalog.dryVegCount }} {{ isCategoryFull(currentMenuCatalog.dryVeg, currentMenuCatalog.dryVegCount) ? 'Max' : 'Picked' }}
-                                                </span>
-                                            </div>
-                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.dryVeg" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.dryVeg, currentMenuCatalog.dryVegCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.dryVeg, currentMenuCatalog.dryVegCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.dryVeg, currentMenuCatalog.dryVegCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
-                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
-                                                </label>
-                                            </div>
-                                        </div>
-
-                                        <!-- Gravy Veg -->
-                                        <div v-if="currentMenuCatalog.gravyVeg.length" class="p-2 rounded bg-white border border-slate-200/80">
-                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
-                                                <span>🥘 Rich Gravy Veg</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.gravyVeg, currentMenuCatalog.gravyVegCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.gravyVeg) }}/{{ currentMenuCatalog.gravyVegCount }} {{ isCategoryFull(currentMenuCatalog.gravyVeg, currentMenuCatalog.gravyVegCount) ? 'Max' : 'Picked' }}
-                                                </span>
-                                            </div>
-                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.gravyVeg" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.gravyVeg, currentMenuCatalog.gravyVegCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.gravyVeg, currentMenuCatalog.gravyVegCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.gravyVeg, currentMenuCatalog.gravyVegCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
-                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
-                                                </label>
-                                            </div>
-                                        </div>
-
-                                        <!-- Rice -->
-                                        <div class="p-2 rounded bg-white border border-slate-200/80">
-                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
-                                                <span>🍚 Basmati Rice & Pulao</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.rice, currentMenuCatalog.riceCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.rice) }}/{{ currentMenuCatalog.riceCount }} {{ isCategoryFull(currentMenuCatalog.rice, currentMenuCatalog.riceCount) ? 'Max' : 'Picked' }}
-                                                </span>
-                                            </div>
-                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.rice" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.rice, currentMenuCatalog.riceCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.rice, currentMenuCatalog.riceCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.rice, currentMenuCatalog.riceCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
-                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
-                                                </label>
-                                            </div>
-                                        </div>
-
-                                        <!-- Raita -->
-                                        <div class="p-2 rounded bg-white border border-slate-200/80">
-                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
-                                                <span>🥣 Curd & Raita</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.raita, currentMenuCatalog.raitaCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.raita) }}/{{ currentMenuCatalog.raitaCount }} {{ isCategoryFull(currentMenuCatalog.raita, currentMenuCatalog.raitaCount) ? 'Max' : 'Picked' }}
-                                                </span>
-                                            </div>
-                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.raita" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.raita, currentMenuCatalog.raitaCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.raita, currentMenuCatalog.raitaCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.raita, currentMenuCatalog.raitaCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
-                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
-                                                </label>
-                                            </div>
-                                        </div>
-
-                                        <!-- Breads -->
-                                        <div class="p-2 rounded bg-white border border-slate-200/80">
-                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
-                                                <span>🫓 Assorted Tandoor Breads</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.breads, currentMenuCatalog.breadsCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.breads) }}/{{ currentMenuCatalog.breadsCount }} {{ isCategoryFull(currentMenuCatalog.breads, currentMenuCatalog.breadsCount) ? 'Max' : 'Picked' }}
-                                                </span>
-                                            </div>
-                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.breads" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.breads, currentMenuCatalog.breadsCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.breads, currentMenuCatalog.breadsCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.breads, currentMenuCatalog.breadsCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
-                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
-                                                </label>
-                                            </div>
-                                        </div>
-
-                                        <!-- Desserts -->
-                                        <div class="p-2 rounded bg-white border border-slate-200/80">
-                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
-                                                <span>🍨 Desserts & Halwas</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.desserts, currentMenuCatalog.dessertsCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.desserts) }}/{{ currentMenuCatalog.dessertsCount }} {{ isCategoryFull(currentMenuCatalog.desserts, currentMenuCatalog.dessertsCount) ? 'Max' : 'Picked' }}
-                                                </span>
-                                            </div>
-                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.desserts" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.desserts, currentMenuCatalog.dessertsCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.desserts, currentMenuCatalog.dessertsCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.desserts, currentMenuCatalog.dessertsCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
-                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
-                                                </label>
-                                            </div>
-                                        </div>
-
-                                        <!-- Live Counters -->
-                                        <div v-if="currentMenuCatalog.liveCounters.length" class="p-2 rounded bg-white border border-slate-200/80">
-                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
-                                                <span>🍳 Live Cooking Stations</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.liveCounters, currentMenuCatalog.liveCountersCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.liveCounters) }}/{{ currentMenuCatalog.liveCountersCount }} {{ isCategoryFull(currentMenuCatalog.liveCounters, currentMenuCatalog.liveCountersCount) ? 'Max' : 'Picked' }}
-                                                </span>
-                                            </div>
-                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.liveCounters" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.liveCounters, currentMenuCatalog.liveCountersCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.liveCounters, currentMenuCatalog.liveCountersCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.liveCounters, currentMenuCatalog.liveCountersCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
+                                            <!-- Confirmed Selection Mode: Interactive Checkboxes -->
+                                            <div v-else class="grid grid-cols-2 gap-1 text-[10.5px]">
+                                                <label
+                                                    v-for="item in course.items"
+                                                    :key="item"
+                                                    :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(course.items, course.count)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        :checked="isItemSelected(item)"
+                                                        @change="toggleMenuItem(item, course.items, course.count)"
+                                                        :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(course.items, course.count))"
+                                                        class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer"
+                                                    />
                                                     <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
                                                 </label>
                                             </div>
@@ -2283,7 +2242,7 @@ const shareOnWhatsApp = () => {
                                     <span class="font-mono font-black ml-1 text-white text-xs sm:text-sm">#{{ form.voucherNo }}</span>
                                 </div>
                                 <div class="text-[11px] font-mono uppercase px-2 py-0.2 rounded bg-white/10 text-amber-300 border border-white/20 font-bold">
-                                    {{ form.status === 'approved_md' ? 'OFFICIAL BOOKING CONFIRMATION' : 'PROVISIONAL INQUIRY QUOTATION' }}
+                                    {{ form.isQuotationMode ? 'OFFICIAL BANQUET QUOTATION PROPOSAL' : (form.status === 'approved_md' ? 'OFFICIAL BOOKING CONFIRMATION' : 'PROVISIONAL INQUIRY QUOTATION') }}
                                 </div>
                                 <div>
                                     <span class="text-slate-300">DATE:</span>
@@ -2495,7 +2454,9 @@ const shareOnWhatsApp = () => {
                                     <img src="/images/logo-dark.png" alt="Senani" class="h-9 w-auto object-contain" />
                                     <div>
                                         <div class="text-xs font-serif font-black tracking-wider text-slate-950 uppercase">Hotel Pleasant View • Catering Services</div>
-                                        <div class="text-[11px] font-bold text-amber-900">OFFICIAL BANQUET CULINARY TASTING MENU SPECIFICATIONS</div>
+                                        <div class="text-[11px] font-bold text-amber-900">
+                                            {{ form.isQuotationMode ? 'OFFICIAL BANQUET CULINARY QUOTATION & COMPLETE MENU CATALOG' : 'OFFICIAL BANQUET CULINARY TASTING MENU SPECIFICATIONS' }}
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="text-right">
@@ -2508,15 +2469,17 @@ const shareOnWhatsApp = () => {
                                 </div>
                             </div>
 
-                            <!-- Executive Culinary Tasting Menu (NO UNCHECKED BOXES - ONLY CONFIRMED DISHES!) -->
+                            <!-- Executive Culinary Tasting Menu / Quotation Proposal -->
                             <div class="border border-slate-300 rounded-lg overflow-hidden">
                                 <div class="bg-amber-950 text-amber-200 px-2.5 py-1 flex items-center justify-between text-xs font-bold">
                                     <div class="flex items-center gap-2">
-                                        <span class="text-[11px]">👑 CONFIRMED ROYAL BANQUET TASTING MENU</span>
-                                        <span class="text-[10.5px] font-normal text-amber-300 font-mono">({{ confirmedMenuCategories.length }} Specialized Courses)</span>
+                                        <span class="text-[11px]">{{ form.isQuotationMode ? '📋 BANQUET MENU QUOTATION - COMPLETE CULINARY OFFER' : '👑 CONFIRMED ROYAL BANQUET TASTING MENU' }}</span>
+                                        <span class="text-[10.5px] font-normal text-amber-300 font-mono">
+                                            ({{ confirmedMenuCategories.length }} Specialized Courses{{ form.isQuotationMode ? ' • All Food Items Offered' : '' }})
+                                        </span>
                                     </div>
                                     <span class="text-[11px] font-mono bg-amber-900/80 px-2 py-0.2 rounded text-white border border-amber-700">
-                                        Catering Code: SEC-{{ form.voucherNo }}-{{ form.menuRateTier }}
+                                        {{ form.isQuotationMode ? 'OFFICIAL QUOTATION' : `Catering Code: SEC-${form.voucherNo}-${form.menuRateTier}` }}
                                     </span>
                                 </div>
 
@@ -2530,7 +2493,10 @@ const shareOnWhatsApp = () => {
                                             <span class="font-black text-slate-900 text-[11.5px] uppercase tracking-wide">
                                                 {{ cat.icon }} {{ cat.label }}
                                             </span>
-                                            <span class="text-[11.5px] font-mono font-bold px-1 py-0.1 rounded bg-amber-100 text-amber-900 border border-amber-200">
+                                            <span v-if="form.isQuotationMode" class="text-[10px] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-900 border border-purple-200">
+                                                All {{ cat.items.length }} Offered (Quota: {{ cat.quota }})
+                                            </span>
+                                            <span v-else class="text-[11.5px] font-mono font-bold px-1 py-0.1 rounded bg-amber-100 text-amber-900 border border-amber-200">
                                                 {{ cat.items.length }} Selected
                                             </span>
                                         </div>

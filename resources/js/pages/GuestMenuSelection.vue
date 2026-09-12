@@ -366,6 +366,7 @@ onMounted(async () => {
                     mandapServingsPax: decoded.mb ?? defaultInquiry.mandapServingsPax,
                     specialArrangements: decoded.notes ?? defaultInquiry.specialArrangements,
                     digitalSignature: decoded.sig ?? defaultInquiry.digitalSignature,
+                    isQuotationMode: !!decoded.qm,
                     isLocked: false,
                 };
 
