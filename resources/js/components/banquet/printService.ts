@@ -83,7 +83,7 @@ export function printElement(elementId: string, customTitle: string = 'Senani Ho
                     margin-bottom: 0 !important;
                     box-shadow: none !important;
                     border: none !important;
-                    zoom: 0.95;
+                    zoom: 1.0 !important;
                 }
                 .page-2 {
                     page-break-before: auto !important;
@@ -93,7 +93,7 @@ export function printElement(elementId: string, customTitle: string = 'Senani Ho
                     margin-top: 0 !important;
                     box-shadow: none !important;
                     border: none !important;
-                    zoom: 0.95;
+                    zoom: 1.0 !important;
                 }
                 table {
                     border-collapse: collapse !important;
@@ -101,6 +101,61 @@ export function printElement(elementId: string, customTitle: string = 'Senani Ho
                 }
                 * {
                     box-sizing: border-box !important;
+                }
+
+                /* Print Typography Enhancement: Crisp, Larger & Highly-Legible Font Scale */
+                #printable-guest-selection {
+                    font-size: 13px !important;
+                    line-height: 1.45 !important;
+                }
+                #printable-guest-selection .text-\[11px\] {
+                    font-size: 12.5px !important;
+                    line-height: 1.35 !important;
+                }
+                #printable-guest-selection .text-\[10px\] {
+                    font-size: 11.5px !important;
+                }
+                #printable-guest-selection .text-xs {
+                    font-size: 13px !important;
+                }
+                #printable-guest-selection .text-sm {
+                    font-size: 14.5px !important;
+                }
+                #printable-guest-selection .text-base {
+                    font-size: 16px !important;
+                }
+                #printable-guest-selection label span {
+                    font-size: 13px !important;
+                    font-weight: 600 !important;
+                }
+
+                #printable-voucher {
+                    font-size: 11.5px !important;
+                    line-height: 1.4 !important;
+                }
+                #printable-voucher .text-\[7px\],
+                #printable-voucher .text-\[7\.5px\],
+                #printable-voucher .text-\[8px\],
+                #printable-voucher .text-\[8\.5px\] {
+                    font-size: 10.5px !important;
+                    line-height: 1.35 !important;
+                }
+                #printable-voucher .text-\[9px\],
+                #printable-voucher .text-\[9\.5px\] {
+                    font-size: 11.5px !important;
+                    line-height: 1.4 !important;
+                }
+                #printable-voucher .text-\[10px\],
+                #printable-voucher .text-\[11px\],
+                #printable-voucher .text-xs {
+                    font-size: 13px !important;
+                    line-height: 1.4 !important;
+                }
+                #printable-voucher .text-sm {
+                    font-size: 14.5px !important;
+                }
+                #printable-voucher .text-base {
+                    font-size: 16.5px !important;
                 }
             </style>
         </head>
@@ -288,7 +343,7 @@ export async function downloadElementAsPdf(
                         p.style.boxShadow = 'none';
                         p.style.borderRadius = '0';
                         p.style.margin = '0';
-                        p.style.zoom = '0.95';
+                        p.style.zoom = '1.0';
                     }
                 });
             },

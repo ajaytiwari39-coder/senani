@@ -683,21 +683,21 @@ const handleDownloadPdf = async () => {
 
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-3.5 text-xs">
                     <div>
-                        <span class="text-[10px] font-bold text-slate-400 block">Occasion / Event</span>
-                        <span class="font-bold text-[#673DE6] text-sm">{{ currentInquiry.eventType }}</span>
+                        <span class="text-xs font-bold text-slate-400 block">Occasion / Event</span>
+                        <span class="font-black text-[#673DE6] text-base">{{ currentInquiry.eventType }}</span>
                     </div>
                     <div>
-                        <span class="text-[10px] font-bold text-slate-400 block">Function Date & Time</span>
+                        <span class="text-xs font-bold text-slate-400 block">Function Date & Time</span>
                         <span class="font-bold text-slate-800">{{ currentInquiry.functionDateFrom }}</span>
                         <span class="text-[10px] text-slate-500 block font-mono">{{ currentInquiry.timeFrom }} - {{ currentInquiry.timeTo }}</span>
                     </div>
                     <div>
-                        <span class="text-[10px] font-bold text-slate-400 block">Guaranteed Pax</span>
-                        <span class="font-bold text-slate-800 text-sm">{{ currentInquiry.paxGuaranteed }} Guests</span>
+                        <span class="text-xs font-bold text-slate-400 block">Guaranteed Pax</span>
+                        <span class="font-black text-slate-900 text-base">{{ currentInquiry.paxGuaranteed }} Guests</span>
                     </div>
                     <div>
-                        <span class="text-[10px] font-bold text-slate-400 block">Catering Package</span>
-                        <span class="font-bold text-purple-700 text-sm">₹{{ currentInquiry.effectiveMenuRate }}/pax</span>
+                        <span class="text-xs font-bold text-slate-400 block">Catering Package</span>
+                        <span class="font-black text-purple-800 text-base">₹{{ currentInquiry.effectiveMenuRate }}/pax</span>
                         <span class="text-[10px] text-slate-500 block">{{ catalog.title }}</span>
                     </div>
                 </div>
@@ -728,12 +728,12 @@ const handleDownloadPdf = async () => {
                     <!-- 1. Welcome Drinks -->
                     <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs space-y-2">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+                            <div class="flex items-center gap-1.5 font-black text-sm text-slate-900">
                                 <span>🍹 Welcome Drinks</span>
                             </div>
                             <span
                                 :class="[
-                                    'text-[10px] font-bold px-2 py-0.5 rounded-full border',
+                                    'text-xs font-bold px-2.5 py-0.5 rounded-full border',
                                     getCategoryCount(catalog.welcomeDrinks) >= catalog.welcomeDrinksCount
                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
@@ -764,7 +764,7 @@ const handleDownloadPdf = async () => {
                                     :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.welcomeDrinks, catalog.welcomeDrinksCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
-                                <span class="leading-tight text-[11px]">{{ item }}</span>
+                                <span class="leading-snug text-xs sm:text-[13px] font-semibold text-slate-800">{{ item }}</span>
                             </label>
                         </div>
                     </div>
@@ -772,12 +772,12 @@ const handleDownloadPdf = async () => {
                     <!-- 2. Hot Drinks -->
                     <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs space-y-2">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+                            <div class="flex items-center gap-1.5 font-black text-sm text-slate-900">
                                 <span>☕ Hot Beverages</span>
                             </div>
                             <span
                                 :class="[
-                                    'text-[10px] font-bold px-2 py-0.5 rounded-full border',
+                                    'text-xs font-bold px-2.5 py-0.5 rounded-full border',
                                     getCategoryCount(catalog.hotDrinks) >= catalog.hotDrinksCount
                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
@@ -809,7 +809,7 @@ const handleDownloadPdf = async () => {
                                     :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.hotDrinks, catalog.hotDrinksCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
-                                <span class="leading-tight text-[11px]">{{ item }}</span>
+                                <span class="leading-snug text-xs sm:text-[13px] font-semibold text-slate-800">{{ item }}</span>
                             </label>
                         </div>
                     </div>
@@ -817,12 +817,12 @@ const handleDownloadPdf = async () => {
                     <!-- 3. Soups -->
                     <div v-if="catalog.soups.length" class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs space-y-2">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+                            <div class="flex items-center gap-1.5 font-black text-sm text-slate-900">
                                 <span>🍲 Soups</span>
                             </div>
                             <span
                                 :class="[
-                                    'text-[10px] font-bold px-2 py-0.5 rounded-full border',
+                                    'text-xs font-bold px-2.5 py-0.5 rounded-full border',
                                     getCategoryCount(catalog.soups) >= catalog.soupsCount
                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
@@ -853,7 +853,7 @@ const handleDownloadPdf = async () => {
                                     :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.soups, catalog.soupsCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
-                                <span class="leading-tight text-[11px]">{{ item }}</span>
+                                <span class="leading-snug text-xs sm:text-[13px] font-semibold text-slate-800">{{ item }}</span>
                             </label>
                         </div>
                     </div>
@@ -861,12 +861,12 @@ const handleDownloadPdf = async () => {
                     <!-- 4. Starters & Snacks -->
                     <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs space-y-2">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+                            <div class="flex items-center gap-1.5 font-black text-sm text-slate-900">
                                 <span>🍢 Starters & Snacks</span>
                             </div>
                             <span
                                 :class="[
-                                    'text-[10px] font-bold px-2 py-0.5 rounded-full border',
+                                    'text-xs font-bold px-2.5 py-0.5 rounded-full border',
                                     getCategoryCount(catalog.starters) >= catalog.startersCount
                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
@@ -897,7 +897,7 @@ const handleDownloadPdf = async () => {
                                     :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.starters, catalog.startersCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
-                                <span class="leading-tight text-[11px]">{{ item }}</span>
+                                <span class="leading-snug text-xs sm:text-[13px] font-semibold text-slate-800">{{ item }}</span>
                             </label>
                         </div>
                     </div>
@@ -905,12 +905,12 @@ const handleDownloadPdf = async () => {
                     <!-- 5. Dal Preparation -->
                     <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs space-y-2">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+                            <div class="flex items-center gap-1.5 font-black text-sm text-slate-900">
                                 <span>🍲 Dal Preparation</span>
                             </div>
                             <span
                                 :class="[
-                                    'text-[10px] font-bold px-2 py-0.5 rounded-full border',
+                                    'text-xs font-bold px-2.5 py-0.5 rounded-full border',
                                     getCategoryCount(catalog.dal) >= catalog.dalCount
                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
@@ -941,7 +941,7 @@ const handleDownloadPdf = async () => {
                                     :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.dal, catalog.dalCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
-                                <span class="leading-tight text-[11px]">{{ item }}</span>
+                                <span class="leading-snug text-xs sm:text-[13px] font-semibold text-slate-800">{{ item }}</span>
                             </label>
                         </div>
                     </div>
@@ -949,12 +949,12 @@ const handleDownloadPdf = async () => {
                     <!-- 6. Paneer Specialty -->
                     <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs space-y-2">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+                            <div class="flex items-center gap-1.5 font-black text-sm text-slate-900">
                                 <span>🧀 Paneer Specialty</span>
                             </div>
                             <span
                                 :class="[
-                                    'text-[10px] font-bold px-2 py-0.5 rounded-full border',
+                                    'text-xs font-bold px-2.5 py-0.5 rounded-full border',
                                     getCategoryCount(catalog.paneer) >= catalog.paneerCount
                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
@@ -985,7 +985,7 @@ const handleDownloadPdf = async () => {
                                     :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.paneer, catalog.paneerCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
-                                <span class="leading-tight text-[11px]">{{ item }}</span>
+                                <span class="leading-snug text-xs sm:text-[13px] font-semibold text-slate-800">{{ item }}</span>
                             </label>
                         </div>
                     </div>
@@ -993,12 +993,12 @@ const handleDownloadPdf = async () => {
                     <!-- 7. Dry Seasonal Veg -->
                     <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs space-y-2">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+                            <div class="flex items-center gap-1.5 font-black text-sm text-slate-900">
                                 <span>🥦 Dry Seasonal Veg</span>
                             </div>
                             <span
                                 :class="[
-                                    'text-[10px] font-bold px-2 py-0.5 rounded-full border',
+                                    'text-xs font-bold px-2.5 py-0.5 rounded-full border',
                                     getCategoryCount(catalog.dryVeg) >= catalog.dryVegCount
                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
@@ -1029,7 +1029,7 @@ const handleDownloadPdf = async () => {
                                     :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.dryVeg, catalog.dryVegCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
-                                <span class="leading-tight text-[11px]">{{ item }}</span>
+                                <span class="leading-snug text-xs sm:text-[13px] font-semibold text-slate-800">{{ item }}</span>
                             </label>
                         </div>
                     </div>
@@ -1037,12 +1037,12 @@ const handleDownloadPdf = async () => {
                     <!-- 8. Rich Gravy Veg -->
                     <div v-if="catalog.gravyVeg.length" class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs space-y-2">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+                            <div class="flex items-center gap-1.5 font-black text-sm text-slate-900">
                                 <span>🥘 Rich Gravy Veg</span>
                             </div>
                             <span
                                 :class="[
-                                    'text-[10px] font-bold px-2 py-0.5 rounded-full border',
+                                    'text-xs font-bold px-2.5 py-0.5 rounded-full border',
                                     getCategoryCount(catalog.gravyVeg) >= catalog.gravyVegCount
                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
@@ -1073,7 +1073,7 @@ const handleDownloadPdf = async () => {
                                     :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.gravyVeg, catalog.gravyVegCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
-                                <span class="leading-tight text-[11px]">{{ item }}</span>
+                                <span class="leading-snug text-xs sm:text-[13px] font-semibold text-slate-800">{{ item }}</span>
                             </label>
                         </div>
                     </div>
@@ -1081,12 +1081,12 @@ const handleDownloadPdf = async () => {
                     <!-- 9. Rice & Pulao -->
                     <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs space-y-2">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+                            <div class="flex items-center gap-1.5 font-black text-sm text-slate-900">
                                 <span>🍚 Rice & Pulao</span>
                             </div>
                             <span
                                 :class="[
-                                    'text-[10px] font-bold px-2 py-0.5 rounded-full border',
+                                    'text-xs font-bold px-2.5 py-0.5 rounded-full border',
                                     getCategoryCount(catalog.rice) >= catalog.riceCount
                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
@@ -1117,7 +1117,7 @@ const handleDownloadPdf = async () => {
                                     :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.rice, catalog.riceCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
-                                <span class="leading-tight text-[11px]">{{ item }}</span>
+                                <span class="leading-snug text-xs sm:text-[13px] font-semibold text-slate-800">{{ item }}</span>
                             </label>
                         </div>
                     </div>
@@ -1125,12 +1125,12 @@ const handleDownloadPdf = async () => {
                     <!-- 10. Curd & Raita -->
                     <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs space-y-2">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+                            <div class="flex items-center gap-1.5 font-black text-sm text-slate-900">
                                 <span>🥣 Curd & Raita</span>
                             </div>
                             <span
                                 :class="[
-                                    'text-[10px] font-bold px-2 py-0.5 rounded-full border',
+                                    'text-xs font-bold px-2.5 py-0.5 rounded-full border',
                                     getCategoryCount(catalog.raita) >= catalog.raitaCount
                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
@@ -1161,7 +1161,7 @@ const handleDownloadPdf = async () => {
                                     :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.raita, catalog.raitaCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
-                                <span class="leading-tight text-[11px]">{{ item }}</span>
+                                <span class="leading-snug text-xs sm:text-[13px] font-semibold text-slate-800">{{ item }}</span>
                             </label>
                         </div>
                     </div>
@@ -1169,12 +1169,12 @@ const handleDownloadPdf = async () => {
                     <!-- 11. Assorted Tandoori Breads -->
                     <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs space-y-2">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+                            <div class="flex items-center gap-1.5 font-black text-sm text-slate-900">
                                 <span>🫓 Tandoor Breads</span>
                             </div>
                             <span
                                 :class="[
-                                    'text-[10px] font-bold px-2 py-0.5 rounded-full border',
+                                    'text-xs font-bold px-2.5 py-0.5 rounded-full border',
                                     getCategoryCount(catalog.breads) >= catalog.breadsCount
                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
@@ -1205,7 +1205,7 @@ const handleDownloadPdf = async () => {
                                     :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.breads, catalog.breadsCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
-                                <span class="leading-tight text-[11px]">{{ item }}</span>
+                                <span class="leading-snug text-xs sm:text-[13px] font-semibold text-slate-800">{{ item }}</span>
                             </label>
                         </div>
                     </div>
@@ -1213,12 +1213,12 @@ const handleDownloadPdf = async () => {
                     <!-- 12. Desserts & Sweets -->
                     <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs space-y-2">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+                            <div class="flex items-center gap-1.5 font-black text-sm text-slate-900">
                                 <span>🍨 Desserts & Halwa</span>
                             </div>
                             <span
                                 :class="[
-                                    'text-[10px] font-bold px-2 py-0.5 rounded-full border',
+                                    'text-xs font-bold px-2.5 py-0.5 rounded-full border',
                                     getCategoryCount(catalog.desserts) >= catalog.dessertsCount
                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
@@ -1249,7 +1249,7 @@ const handleDownloadPdf = async () => {
                                     :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.desserts, catalog.dessertsCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
-                                <span class="leading-tight text-[11px]">{{ item }}</span>
+                                <span class="leading-snug text-xs sm:text-[13px] font-semibold text-slate-800">{{ item }}</span>
                             </label>
                         </div>
                     </div>
@@ -1257,7 +1257,7 @@ const handleDownloadPdf = async () => {
                     <!-- 13. Salads & Accompaniments -->
                     <div class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs space-y-2">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+                            <div class="flex items-center gap-1.5 font-black text-sm text-slate-900">
                                 <span>🥗 Salads & Dips</span>
                             </div>
                             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
@@ -1279,12 +1279,12 @@ const handleDownloadPdf = async () => {
                     <!-- 14. Live Cooking Counters (if present) -->
                     <div v-if="catalog.liveCounters.length" class="bg-white rounded-xl border border-slate-200 p-3.5 shadow-2xs space-y-2 md:col-span-2">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <div class="flex items-center gap-1.5 font-bold text-xs text-slate-900">
+                            <div class="flex items-center gap-1.5 font-black text-sm text-slate-900">
                                 <span>🍳 Live Cooking Stations</span>
                             </div>
                             <span
                                 :class="[
-                                    'text-[10px] font-bold px-2 py-0.5 rounded-full border',
+                                    'text-xs font-bold px-2.5 py-0.5 rounded-full border',
                                     getCategoryCount(catalog.liveCounters) >= catalog.liveCountersCount
                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
@@ -1315,7 +1315,7 @@ const handleDownloadPdf = async () => {
                                     :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.liveCounters, catalog.liveCountersCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
-                                <span class="leading-tight text-[11px]">{{ item }}</span>
+                                <span class="leading-snug text-xs sm:text-[13px] font-semibold text-slate-800">{{ item }}</span>
                             </label>
                         </div>
                     </div>
@@ -1598,5 +1598,44 @@ const handleDownloadPdf = async () => {
 }
 .animate-fade-in {
     animation: fadeIn 0.25s ease-out forwards;
+}
+
+@media print {
+    #printable-guest-selection {
+        background: #ffffff !important;
+        padding: 0 !important;
+        font-size: 13px !important;
+        color: #0f172a !important;
+    }
+    #printable-guest-selection * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    #printable-guest-selection label span {
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        line-height: 1.4 !important;
+    }
+    #printable-guest-selection h1 {
+        font-size: 22px !important;
+        font-weight: 900 !important;
+    }
+    #printable-guest-selection h2 {
+        font-size: 18px !important;
+        font-weight: 900 !important;
+    }
+    #printable-guest-selection h3 {
+        font-size: 15px !important;
+        font-weight: 800 !important;
+    }
+    #printable-guest-selection .text-xs {
+        font-size: 13px !important;
+    }
+    #printable-guest-selection .text-\[11px\] {
+        font-size: 12.5px !important;
+    }
+    #printable-guest-selection .text-\[10px\] {
+        font-size: 11.5px !important;
+    }
 }
 </style>
