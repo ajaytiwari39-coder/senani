@@ -11,8 +11,7 @@ export function printElement(elementId: string, customTitle: string = 'Senani Ho
 
     const sourceEl = document.getElementById(elementId);
     if (!sourceEl) {
-        console.warn(`Print error: Element with ID #${elementId} not found.`);
-        window.print();
+        console.error(`Print error: Element with ID #${elementId} not found.`);
         return;
     }
 
@@ -32,7 +31,7 @@ export function printElement(elementId: string, customTitle: string = 'Senani Ho
 
     const doc = iframe.contentWindow?.document;
     if (!doc) {
-        window.print();
+        console.error('Print error: Could not access iframe document.');
         return;
     }
 
@@ -54,7 +53,7 @@ export function printElement(elementId: string, customTitle: string = 'Senani Ho
             <style>
                 @page {
                     size: A4 portrait;
-                    margin: 8mm 8mm 8mm 8mm;
+                    margin: 6mm 8mm 6mm 8mm;
                 }
                 html, body {
                     margin: 0 !important;
@@ -65,8 +64,12 @@ export function printElement(elementId: string, customTitle: string = 'Senani Ho
                     -webkit-print-color-adjust: exact !important;
                     print-color-adjust: exact !important;
                 }
-                .print-hidden, .no-print {
+                .print-hidden, .no-print, .pdf-page-break {
                     display: none !important;
+                    height: 0 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    border: none !important;
                 }
                 .print-avoid-break {
                     page-break-inside: avoid !important;
@@ -75,14 +78,20 @@ export function printElement(elementId: string, customTitle: string = 'Senani Ho
                 .page-1 {
                     page-break-after: always !important;
                     break-after: page !important;
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                    margin-bottom: 0 !important;
+                    box-shadow: none !important;
+                    border: none !important;
                 }
                 .page-2 {
-                    page-break-before: always !important;
-                    break-before: page !important;
-                }
-                .pdf-page-break {
-                    page-break-before: always !important;
-                    break-before: page !important;
+                    page-break-before: auto !important;
+                    break-before: auto !important;
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                    margin-top: 0 !important;
+                    box-shadow: none !important;
+                    border: none !important;
                 }
                 table {
                     border-collapse: collapse !important;
@@ -94,7 +103,7 @@ export function printElement(elementId: string, customTitle: string = 'Senani Ho
             </style>
         </head>
         <body>
-            <div style="width: 100%; max-width: 100%; margin: 0 auto; padding: 4px;">
+            <div style="width: 100%; max-width: 100%; margin: 0; padding: 0;">
                 ${sourceEl.outerHTML}
             </div>
         </body>
@@ -108,8 +117,7 @@ export function printElement(elementId: string, customTitle: string = 'Senani Ho
             iframe.contentWindow?.focus();
             iframe.contentWindow?.print();
         } catch (err) {
-            console.error('Error invoking iframe print, falling back to window.print():', err);
-            window.print();
+            console.error('Error invoking iframe print:', err);
         } finally {
             setTimeout(() => {
                 if (document.body.contains(iframe)) {
@@ -121,7 +129,8 @@ export function printElement(elementId: string, customTitle: string = 'Senani Ho
 }
 
 /**
- * Downloads a DOM element as a high-quality PDF using html2pdf.js.
+ * Downloads a DOM element as a high-quality PDF using native jsPDF + html2canvas.
+ * Guarantees direct .pdf file download and strictly avoids opening the browser print dialog.
  */
 export async function downloadElementAsPdf(
     elementId: string,
@@ -131,50 +140,98 @@ export async function downloadElementAsPdf(
 
     const sourceEl = document.getElementById(elementId);
     if (!sourceEl) {
-        console.warn(`PDF error: Element with ID #${elementId} not found.`);
+        console.error(`PDF error: Element with ID #${elementId} not found.`);
         return false;
     }
 
     try {
-        // Dynamically import html2pdf in client context
-        const html2pdfModule = await import('html2pdf.js');
-        const html2pdf = (html2pdfModule as any).default || html2pdfModule;
+        const { jsPDF } = await import('jspdf');
+        const html2canvasModule = await import('html2canvas');
+        const html2canvas = (html2canvasModule as any).default || html2canvasModule;
 
-        // Clone element to avoid mutating live view
-        const clone = sourceEl.cloneNode(true) as HTMLElement;
-        clone.style.width = '794px'; // standard A4 width in pixels at 96 DPI
-        clone.style.margin = '0 auto';
-        clone.style.background = '#ffffff';
-        clone.style.color = '#000000';
+        const doc = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4',
+            compress: true,
+        });
 
-        // Remove elements marked print-hidden
-        clone.querySelectorAll('.print-hidden, .no-print').forEach((el) => el.remove());
+        // A4 Dimensions: 210mm x 297mm
+        const pdfWidth = 210;
+        const pdfHeight = 297;
+        const marginX = 6;
+        const marginY = 6;
+        const printWidth = pdfWidth - marginX * 2; // 198mm
+        const maxPageHeight = pdfHeight - marginY * 2; // 285mm
 
-        const opt = {
-            margin: [8, 8, 8, 8],
-            filename,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: {
+        const page1El = sourceEl.querySelector('.page-1') as HTMLElement;
+        const page2El = sourceEl.querySelector('.page-2') as HTMLElement;
+
+        if (page1El) {
+            // Dedicated multi-page dossier export (.page-1 and .page-2)
+            const canvas1 = await html2canvas(page1El, {
                 scale: 2,
                 useCORS: true,
                 logging: false,
-                scrollX: 0,
-                scrollY: 0,
-            },
-            jsPDF: {
-                unit: 'mm',
-                format: 'a4',
-                orientation: 'portrait',
-            },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] },
-        };
+                backgroundColor: '#ffffff',
+                windowWidth: 1024,
+            });
 
-        await html2pdf().set(opt).from(clone).save();
+            const imgData1 = canvas1.toDataURL('image/jpeg', 0.96);
+            const imgHeight1 = (canvas1.height * printWidth) / canvas1.width;
+            doc.addImage(imgData1, 'JPEG', marginX, marginY, printWidth, Math.min(imgHeight1, maxPageHeight));
+
+            if (page2El) {
+                doc.addPage('a4', 'portrait');
+                const canvas2 = await html2canvas(page2El, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff',
+                    windowWidth: 1024,
+                });
+
+                const imgData2 = canvas2.toDataURL('image/jpeg', 0.96);
+                const imgHeight2 = (canvas2.height * printWidth) / canvas2.width;
+                doc.addImage(imgData2, 'JPEG', marginX, marginY, printWidth, Math.min(imgHeight2, maxPageHeight));
+            }
+        } else {
+            // Generic single/multi-page element fallback (e.g. GuestMenuSelection)
+            const canvas = await html2canvas(sourceEl, {
+                scale: 2,
+                useCORS: true,
+                logging: false,
+                backgroundColor: '#ffffff',
+                windowWidth: 1024,
+            });
+
+            const imgData = canvas.toDataURL('image/jpeg', 0.96);
+            const imgHeight = (canvas.height * printWidth) / canvas.width;
+
+            if (imgHeight <= maxPageHeight) {
+                doc.addImage(imgData, 'JPEG', marginX, marginY, printWidth, imgHeight);
+            } else {
+                // Multi-page slicing
+                let remainingHeight = imgHeight;
+                let positionY = 0;
+
+                while (remainingHeight > 0) {
+                    if (positionY > 0) {
+                        doc.addPage('a4', 'portrait');
+                    }
+                    doc.addImage(imgData, 'JPEG', marginX, marginY - positionY, printWidth, imgHeight);
+                    positionY += maxPageHeight;
+                    remainingHeight -= maxPageHeight;
+                }
+            }
+        }
+
+        // Direct file download trigger - NEVER opens print dialog
+        doc.save(filename);
         return true;
     } catch (e) {
-        console.error('Error downloading PDF via html2pdf:', e);
-        // Fallback to browser print if library fails
-        printElement(elementId, filename.replace('.pdf', ''));
+        console.error('Error generating and downloading PDF:', e);
+        alert('Could not download PDF file. Please try again or use the Print button.');
         return false;
     }
 }

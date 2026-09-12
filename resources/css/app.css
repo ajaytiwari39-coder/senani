@@ -241,16 +241,29 @@
     .page-1 {
         page-break-after: always !important;
         break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-bottom: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
     }
 
     .page-2 {
-        page-break-before: always !important;
-        break-before: page !important;
+        page-break-before: auto !important;
+        break-before: auto !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-top: 0 !important;
+        box-shadow: none !important;
+        border: none !important;
     }
 
     .pdf-page-break {
-        page-break-before: always !important;
-        break-before: page !important;
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
     }
 
     /* Ensure tables render correctly */
