@@ -129,8 +129,106 @@ export function printElement(elementId: string, customTitle: string = 'Senani Ho
 }
 
 /**
+ * Walks a cloned DOM tree and neutralizes ALL oklch()/oklab()/lch()/lab()/color()
+ * CSS color values so html2canvas (which only supports rgb/rgba/hsl/hsla/#hex)
+ * can render without crashing.
+ *
+ * Two-pronged approach:
+ * 1. Walk all <style> elements and replace oklch(...) patterns in the raw CSS text
+ *    with Canvas-2D-resolved rgb() values.
+ * 2. Walk all elements and inline computed style overrides for any properties that
+ *    the browser resolved from oklch.
+ */
+function sanitizeColorsForHtml2Canvas(clonedDoc: Document): void {
+    // ── Phase 1: Rewrite raw CSS text in all <style> tags ──
+    const oklchPatternGlobal = /oklch\([^)]*\)/gi;
+
+    clonedDoc.querySelectorAll('style').forEach((styleEl) => {
+        if (styleEl.textContent && oklchPatternGlobal.test(styleEl.textContent)) {
+            styleEl.textContent = styleEl.textContent.replace(
+                /oklch\([^)]*\)/gi,
+                (match) => resolveToRgb(match, clonedDoc)
+            );
+        }
+    });
+
+    // Also handle oklab, lch, lab, color() functions
+    const allModernPatterns = [
+        /oklab\([^)]*\)/gi,
+        /\blch\([^)]*\)/gi,
+        /\blab\([^)]*\)/gi,
+        /\bcolor\([^)]*\)/gi,
+    ];
+    clonedDoc.querySelectorAll('style').forEach((styleEl) => {
+        if (!styleEl.textContent) return;
+        for (const pat of allModernPatterns) {
+            if (pat.test(styleEl.textContent)) {
+                styleEl.textContent = styleEl.textContent.replace(
+                    pat,
+                    (match) => resolveToRgb(match, clonedDoc)
+                );
+            }
+        }
+    });
+
+    // ── Phase 2: Inline computed color overrides on each element ──
+    const colorProps = [
+        'color', 'background-color', 'border-color',
+        'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color',
+        'outline-color', 'text-decoration-color', 'box-shadow', 'text-shadow',
+        'fill', 'stroke', 'caret-color', 'column-rule-color',
+        'accent-color', 'scrollbar-color',
+    ];
+
+    const modernColorRe = /\b(oklch|oklab|lch|lab|color)\s*\(/i;
+
+    const allEls = clonedDoc.querySelectorAll('*');
+    allEls.forEach((el) => {
+        if (!(el instanceof HTMLElement)) return;
+        const cs = clonedDoc.defaultView?.getComputedStyle(el);
+        if (!cs) return;
+
+        for (const prop of colorProps) {
+            try {
+                const val = cs.getPropertyValue(prop);
+                if (val && modernColorRe.test(val)) {
+                    const resolved = resolveToRgb(val, clonedDoc);
+                    el.style.setProperty(prop, resolved, 'important');
+                }
+            } catch (_) { /* skip inaccessible props */ }
+        }
+    });
+}
+
+/**
+ * Resolves a CSS color string (possibly oklch/oklab/etc.) to an rgb() string
+ * using the browser's Canvas 2D context.
+ */
+function resolveToRgb(colorStr: string, doc: Document): string {
+    try {
+        const cvs = doc.createElement('canvas');
+        cvs.width = 1;
+        cvs.height = 1;
+        const ctx = cvs.getContext('2d');
+        if (!ctx) return colorStr;
+        ctx.fillStyle = colorStr;
+        ctx.fillRect(0, 0, 1, 1);
+        const d = ctx.getImageData(0, 0, 1, 1).data;
+        return d[3] < 255
+            ? `rgba(${d[0]}, ${d[1]}, ${d[2]}, ${(d[3] / 255).toFixed(3)})`
+            : `rgb(${d[0]}, ${d[1]}, ${d[2]})`;
+    } catch (_) {
+        return colorStr;
+    }
+}
+
+/**
  * Downloads a DOM element as a high-quality PDF using native jsPDF + html2canvas.
  * Guarantees direct .pdf file download and strictly avoids opening the browser print dialog.
+ *
+ * Uses html2canvas's `onclone` callback to sanitize modern CSS color functions
+ * (oklch, oklab, lch, lab) to rgb equivalents BEFORE html2canvas parses styles.
+ * This completely bypasses the "unsupported color function" crash in html2canvas v1.x.
  */
 export async function downloadElementAsPdf(
     elementId: string,
@@ -175,7 +273,12 @@ export async function downloadElementAsPdf(
             logging: false,
             backgroundColor: '#ffffff',
             windowWidth: 1024,
-            ignoreElements: (el: Element) => el.classList.contains('print-hidden') || el.classList.contains('no-print')
+            ignoreElements: (el: Element) =>
+                el.classList.contains('print-hidden') || el.classList.contains('no-print'),
+            onclone: (_doc: Document, _el: HTMLElement) => {
+                // Sanitize ALL modern color functions to rgb before html2canvas parses them
+                sanitizeColorsForHtml2Canvas(_doc);
+            },
         };
 
         if (page1El) {
