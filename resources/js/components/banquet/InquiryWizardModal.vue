@@ -2072,131 +2072,201 @@ const triggerPrint = () => {
                             </div>
 
                             <!-- Menu Courses Grid (Extracted from official hotel docx catalog) -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 text-[10px]">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
                                 <!-- Welcome Drinks -->
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
-                                        <span>🍹 Welcome Drinks</span>
-                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.welcomeDrinksCount }} Choices</span>
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
+                                        <span class="text-[11px]">🍹 Welcome Drinks</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.welcomeDrinksCount }} Choices</span>
                                     </div>
-                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.welcomeDrinks.join(' • ') }}</p>
+                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
+                                        <li v-for="item in currentMenuCatalog.welcomeDrinks" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
+                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
+                                            <span class="leading-tight">{{ item }}</span>
+                                        </li>
+                                    </ul>
                                 </div>
 
                                 <!-- Hot Drinks -->
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
-                                        <span>☕ Hot Beverages</span>
-                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.hotDrinksCount }} Choices</span>
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
+                                        <span class="text-[11px]">☕ Hot Beverages</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.hotDrinksCount }} Choices</span>
                                     </div>
-                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.hotDrinks.join(' • ') }}</p>
+                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
+                                        <li v-for="item in currentMenuCatalog.hotDrinks" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
+                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
+                                            <span class="leading-tight">{{ item }}</span>
+                                        </li>
+                                    </ul>
                                 </div>
 
                                 <!-- Soups (if present) -->
                                 <div v-if="currentMenuCatalog.soups.length" class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
-                                        <span>🍲 Soups</span>
-                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.soupsCount }} Choices</span>
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
+                                        <span class="text-[11px]">🍲 Soups</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.soupsCount }} Choices</span>
                                     </div>
-                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.soups.join(' • ') }}</p>
+                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
+                                        <li v-for="item in currentMenuCatalog.soups" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
+                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
+                                            <span class="leading-tight">{{ item }}</span>
+                                        </li>
+                                    </ul>
                                 </div>
 
                                 <!-- Starters / Appetizers -->
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
-                                        <span>🍢 Starters & Snacks</span>
-                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.startersCount }} Choices</span>
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
+                                        <span class="text-[11px]">🍢 Starters & Snacks</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.startersCount }} Choices</span>
                                     </div>
-                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.starters.join(' • ') }}</p>
+                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
+                                        <li v-for="item in currentMenuCatalog.starters" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
+                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
+                                            <span class="leading-tight">{{ item }}</span>
+                                        </li>
+                                    </ul>
                                 </div>
 
                                 <!-- Dal Preparation -->
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
-                                        <span>🍲 Dal Preparation</span>
-                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.dalCount }} Choice</span>
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
+                                        <span class="text-[11px]">🍲 Dal Preparation</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.dalCount }} Choice</span>
                                     </div>
-                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.dal.join(' • ') }}</p>
+                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
+                                        <li v-for="item in currentMenuCatalog.dal" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
+                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
+                                            <span class="leading-tight">{{ item }}</span>
+                                        </li>
+                                    </ul>
                                 </div>
 
                                 <!-- Paneer Delicacies -->
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
-                                        <span>🧀 Paneer Specialty</span>
-                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.paneerCount }} Choice(s)</span>
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
+                                        <span class="text-[11px]">🧀 Paneer Specialty</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.paneerCount }} Choice(s)</span>
                                     </div>
-                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.paneer.join(' • ') }}</p>
+                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
+                                        <li v-for="item in currentMenuCatalog.paneer" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
+                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
+                                            <span class="leading-tight">{{ item }}</span>
+                                        </li>
+                                    </ul>
                                 </div>
 
                                 <!-- Seasonal Dry Veg -->
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
-                                        <span>🥦 Dry Seasonal Veg</span>
-                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.dryVegCount }} Choice</span>
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
+                                        <span class="text-[11px]">🥦 Dry Seasonal Veg</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.dryVegCount }} Choice</span>
                                     </div>
-                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.dryVeg.join(' • ') }}</p>
+                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
+                                        <li v-for="item in currentMenuCatalog.dryVeg" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
+                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
+                                            <span class="leading-tight">{{ item }}</span>
+                                        </li>
+                                    </ul>
                                 </div>
 
                                 <!-- Gravy Veg (if present) -->
                                 <div v-if="currentMenuCatalog.gravyVeg.length" class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
-                                        <span>🥘 Rich Gravy Veg</span>
-                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.gravyVegCount }} Choice</span>
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
+                                        <span class="text-[11px]">🥘 Rich Gravy Veg</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.gravyVegCount }} Choice</span>
                                     </div>
-                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.gravyVeg.join(' • ') }}</p>
+                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
+                                        <li v-for="item in currentMenuCatalog.gravyVeg" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
+                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
+                                            <span class="leading-tight">{{ item }}</span>
+                                        </li>
+                                    </ul>
                                 </div>
 
                                 <!-- Basmati Rice & Pulao -->
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
-                                        <span>🍚 Basmati Rice & Pulao</span>
-                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.riceCount }} Choice(s)</span>
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
+                                        <span class="text-[11px]">🍚 Basmati Rice & Pulao</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.riceCount }} Choice(s)</span>
                                     </div>
-                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.rice.join(' • ') }}</p>
+                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
+                                        <li v-for="item in currentMenuCatalog.rice" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
+                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
+                                            <span class="leading-tight">{{ item }}</span>
+                                        </li>
+                                    </ul>
                                 </div>
 
                                 <!-- Curd & Raita -->
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
-                                        <span>🥣 Curd & Raita</span>
-                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.raitaCount }} Choice</span>
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
+                                        <span class="text-[11px]">🥣 Curd & Raita</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.raitaCount }} Choice</span>
                                     </div>
-                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.raita.join(' • ') }}</p>
+                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
+                                        <li v-for="item in currentMenuCatalog.raita" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
+                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
+                                            <span class="leading-tight">{{ item }}</span>
+                                        </li>
+                                    </ul>
                                 </div>
 
                                 <!-- Assorted Tandoori Breads -->
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
-                                        <span>🫓 Assorted Tandoor Breads</span>
-                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.breadsCount }} Choices</span>
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
+                                        <span class="text-[11px]">🫓 Assorted Tandoor Breads</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.breadsCount }} Choices</span>
                                     </div>
-                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.breads.join(' • ') }}</p>
+                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
+                                        <li v-for="item in currentMenuCatalog.breads" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
+                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
+                                            <span class="leading-tight">{{ item }}</span>
+                                        </li>
+                                    </ul>
                                 </div>
 
                                 <!-- Desserts & Sweets -->
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
-                                        <span>🍨 Desserts & Halwas</span>
-                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.dessertsCount }} Choices</span>
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
+                                        <span class="text-[11px]">🍨 Desserts & Halwas</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.dessertsCount }} Choices</span>
                                     </div>
-                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.desserts.join(' • ') }}</p>
+                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
+                                        <li v-for="item in currentMenuCatalog.desserts" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
+                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
+                                            <span class="leading-tight">{{ item }}</span>
+                                        </li>
+                                    </ul>
                                 </div>
 
                                 <!-- Salads & Accompaniments -->
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
-                                        <span>🥗 Salads & Accompaniments</span>
-                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">Included</span>
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
+                                        <span class="text-[11px]">🥗 Salads & Accompaniments</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">Included</span>
                                     </div>
-                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.salads.join(' • ') }}</p>
+                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
+                                        <li v-for="item in currentMenuCatalog.salads" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
+                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
+                                            <span class="leading-tight">{{ item }}</span>
+                                        </li>
+                                    </ul>
                                 </div>
 
                                 <!-- Live Cooking Counters -->
                                 <div v-if="currentMenuCatalog.liveCounters.length" class="p-2 rounded border border-slate-200 bg-slate-50/40 sm:col-span-2">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1">
-                                        <span>🍳 Live Cooking Counters</span>
-                                        <span class="text-[9px] bg-purple-50 text-purple-700 font-bold px-1 rounded">{{ currentMenuCatalog.liveCountersCount }} Live Stations</span>
+                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
+                                        <span class="text-[11px]">🍳 Live Cooking Counters</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.liveCountersCount }} Live Stations</span>
                                     </div>
-                                    <p class="text-slate-600 leading-relaxed">{{ currentMenuCatalog.liveCounters.join(' • ') }}</p>
+                                    <ul class="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1 text-[11px] font-semibold text-slate-800">
+                                        <li v-for="item in currentMenuCatalog.liveCounters" :key="item" class="flex items-start gap-1 leading-tight">
+                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
+                                            <span class="leading-tight">{{ item }}</span>
+                                        </li>
+                                    </ul>
                                 </div>
                             </div>
 
