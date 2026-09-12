@@ -53,7 +53,7 @@ export function printElement(elementId: string, customTitle: string = 'Senani Ho
             <style>
                 @page {
                     size: A4 portrait;
-                    margin: 6mm 8mm 6mm 8mm;
+                    margin: 5mm 7mm;
                 }
                 html, body {
                     margin: 0 !important;
@@ -83,6 +83,7 @@ export function printElement(elementId: string, customTitle: string = 'Senani Ho
                     margin-bottom: 0 !important;
                     box-shadow: none !important;
                     border: none !important;
+                    zoom: 0.95;
                 }
                 .page-2 {
                     page-break-before: auto !important;
@@ -92,6 +93,7 @@ export function printElement(elementId: string, customTitle: string = 'Senani Ho
                     margin-top: 0 !important;
                     box-shadow: none !important;
                     border: none !important;
+                    zoom: 0.95;
                 }
                 table {
                     border-collapse: collapse !important;
@@ -267,54 +269,56 @@ export async function downloadElementAsPdf(
         const page2El = sourceEl.querySelector('.page-2') as HTMLElement;
 
         const h2cOptions = {
-            scale: 2,
+            scale: 3, // Ultra-HD 300+ DPI print quality
             useCORS: true,
             allowTaint: false,
             logging: false,
             backgroundColor: '#ffffff',
             windowWidth: 1024,
+            imageTimeout: 15000,
             ignoreElements: (el: Element) =>
                 el.classList.contains('print-hidden') || el.classList.contains('no-print'),
             onclone: (_doc: Document, _el: HTMLElement) => {
                 // Sanitize ALL modern color functions to rgb before html2canvas parses them
                 sanitizeColorsForHtml2Canvas(_doc);
-                // Strip outer modal borders and shadows for crisp professional PDF output
+                // Strip outer modal borders, shadows and apply print-perfect scaling for crisp professional PDF
                 _doc.querySelectorAll('.page-1, .page-2').forEach((p) => {
                     if (p instanceof HTMLElement) {
                         p.style.border = 'none';
                         p.style.boxShadow = 'none';
                         p.style.borderRadius = '0';
                         p.style.margin = '0';
+                        p.style.zoom = '0.95';
                     }
                 });
             },
         };
 
         if (page1El) {
-            // Dedicated multi-page dossier export (.page-1 and .page-2)
+            // Dedicated multi-page dossier export (.page-1 and .page-2) in Ultra-HD lossless PNG
             const canvas1 = await html2canvas(page1El, h2cOptions);
 
-            const imgData1 = canvas1.toDataURL('image/jpeg', 0.96);
+            const imgData1 = canvas1.toDataURL('image/png');
             const imgHeight1 = (canvas1.height * printWidth) / canvas1.width;
-            doc.addImage(imgData1, 'JPEG', marginX, marginY, printWidth, Math.min(imgHeight1, maxPageHeight));
+            doc.addImage(imgData1, 'PNG', marginX, marginY, printWidth, Math.min(imgHeight1, maxPageHeight), undefined, 'FAST');
 
             if (page2El) {
                 doc.addPage('a4', 'portrait');
                 const canvas2 = await html2canvas(page2El, h2cOptions);
 
-                const imgData2 = canvas2.toDataURL('image/jpeg', 0.96);
+                const imgData2 = canvas2.toDataURL('image/png');
                 const imgHeight2 = (canvas2.height * printWidth) / canvas2.width;
-                doc.addImage(imgData2, 'JPEG', marginX, marginY, printWidth, Math.min(imgHeight2, maxPageHeight));
+                doc.addImage(imgData2, 'PNG', marginX, marginY, printWidth, Math.min(imgHeight2, maxPageHeight), undefined, 'FAST');
             }
         } else {
             // Generic single/multi-page element fallback (e.g. GuestMenuSelection)
             const canvas = await html2canvas(sourceEl, h2cOptions);
 
-            const imgData = canvas.toDataURL('image/jpeg', 0.96);
+            const imgData = canvas.toDataURL('image/png');
             const imgHeight = (canvas.height * printWidth) / canvas.width;
 
             if (imgHeight <= maxPageHeight) {
-                doc.addImage(imgData, 'JPEG', marginX, marginY, printWidth, imgHeight);
+                doc.addImage(imgData, 'PNG', marginX, marginY, printWidth, imgHeight, undefined, 'FAST');
             } else {
                 // Multi-page slicing
                 let remainingHeight = imgHeight;
@@ -324,7 +328,7 @@ export async function downloadElementAsPdf(
                     if (positionY > 0) {
                         doc.addPage('a4', 'portrait');
                     }
-                    doc.addImage(imgData, 'JPEG', marginX, marginY - positionY, printWidth, imgHeight);
+                    doc.addImage(imgData, 'PNG', marginX, marginY - positionY, printWidth, imgHeight, undefined, 'FAST');
                     positionY += maxPageHeight;
                     remainingHeight -= maxPageHeight;
                 }

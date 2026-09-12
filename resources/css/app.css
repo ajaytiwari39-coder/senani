@@ -246,6 +246,7 @@
         margin-bottom: 0 !important;
         box-shadow: none !important;
         border: none !important;
+        zoom: 0.95;
     }
 
     .page-2 {
@@ -256,6 +257,7 @@
         margin-top: 0 !important;
         box-shadow: none !important;
         border: none !important;
+        zoom: 0.95;
     }
 
     .pdf-page-break {
