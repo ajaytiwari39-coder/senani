@@ -145,7 +145,8 @@ export async function downloadElementAsPdf(
     }
 
     try {
-        const { jsPDF } = await import('jspdf');
+        const jsPdfModule = await import('jspdf');
+        const jsPDF = jsPdfModule.jsPDF || (jsPdfModule as any).default || jsPdfModule;
         const html2canvasModule = await import('html2canvas');
         const html2canvas = (html2canvasModule as any).default || html2canvasModule;
 
@@ -167,15 +168,19 @@ export async function downloadElementAsPdf(
         const page1El = sourceEl.querySelector('.page-1') as HTMLElement;
         const page2El = sourceEl.querySelector('.page-2') as HTMLElement;
 
+        const h2cOptions = {
+            scale: 2,
+            useCORS: true,
+            allowTaint: false,
+            logging: false,
+            backgroundColor: '#ffffff',
+            windowWidth: 1024,
+            ignoreElements: (el: Element) => el.classList.contains('print-hidden') || el.classList.contains('no-print')
+        };
+
         if (page1El) {
             // Dedicated multi-page dossier export (.page-1 and .page-2)
-            const canvas1 = await html2canvas(page1El, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                backgroundColor: '#ffffff',
-                windowWidth: 1024,
-            });
+            const canvas1 = await html2canvas(page1El, h2cOptions);
 
             const imgData1 = canvas1.toDataURL('image/jpeg', 0.96);
             const imgHeight1 = (canvas1.height * printWidth) / canvas1.width;
@@ -183,13 +188,7 @@ export async function downloadElementAsPdf(
 
             if (page2El) {
                 doc.addPage('a4', 'portrait');
-                const canvas2 = await html2canvas(page2El, {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: '#ffffff',
-                    windowWidth: 1024,
-                });
+                const canvas2 = await html2canvas(page2El, h2cOptions);
 
                 const imgData2 = canvas2.toDataURL('image/jpeg', 0.96);
                 const imgHeight2 = (canvas2.height * printWidth) / canvas2.width;
@@ -197,13 +196,7 @@ export async function downloadElementAsPdf(
             }
         } else {
             // Generic single/multi-page element fallback (e.g. GuestMenuSelection)
-            const canvas = await html2canvas(sourceEl, {
-                scale: 2,
-                useCORS: true,
-                logging: false,
-                backgroundColor: '#ffffff',
-                windowWidth: 1024,
-            });
+            const canvas = await html2canvas(sourceEl, h2cOptions);
 
             const imgData = canvas.toDataURL('image/jpeg', 0.96);
             const imgHeight = (canvas.height * printWidth) / canvas.width;
@@ -229,9 +222,10 @@ export async function downloadElementAsPdf(
         // Direct file download trigger - NEVER opens print dialog
         doc.save(filename);
         return true;
-    } catch (e) {
+    } catch (e: any) {
         console.error('Error generating and downloading PDF:', e);
-        alert('Could not download PDF file. Please try again or use the Print button.');
+        const errMsg = e?.message || (typeof e === 'string' ? e : 'Unknown error');
+        alert(`Could not download PDF file (${errMsg}). Please try again or use the Print button.`);
         return false;
     }
 }

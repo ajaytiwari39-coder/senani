@@ -3,9 +3,10 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "vp build",
-        "build:ssr": "vp build && vp build --ssr",
-        "dev": "vp dev",
+        "postinstall": "node scripts/patch-html2canvas.cjs",
+        "build": "node scripts/patch-html2canvas.cjs && vp build",
+        "build:ssr": "node scripts/patch-html2canvas.cjs && vp build && vp build --ssr",
+        "dev": "node scripts/patch-html2canvas.cjs && vp dev",
         "check": "vp check",
         "check:fix": "vp check --fix",
         "types:check": "vue-tsc --noEmit"
