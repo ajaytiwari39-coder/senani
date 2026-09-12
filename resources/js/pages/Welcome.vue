@@ -714,11 +714,12 @@ const formatCurrency = (amount: number) => {
                 </div>
 
                 <!-- Printable Bill Representation -->
-                <div class="mt-4 rounded-xl border border-dashed border-slate-700 bg-white p-6 font-mono text-xs text-slate-900 shadow-inner">
-                    <div class="text-center border-b border-slate-300 pb-3">
-                        <div class="text-base font-bold tracking-tight">HOTEL & BANQUET SENANI</div>
-                        <div class="text-[10px] text-slate-600">VIP Road, Civil Lines • GSTIN: 09AAACS1234F1Z8</div>
-                        <div class="text-[10px] text-slate-600">Phone: +91 98765 43210 • info@senani.test</div>
+                <div id="printable-bill" class="mt-4 rounded-xl border border-dashed border-slate-700 bg-white p-6 font-mono text-xs text-slate-900 shadow-inner">
+                    <div class="flex flex-col items-center text-center border-b border-slate-300 pb-3">
+                        <img src="/images/logo-dark.png" alt="Senani Hotel Pleasant View" class="h-10 w-auto object-contain mb-1.5" />
+                        <div class="text-base font-bold tracking-tight">HOTEL PLEASANT VIEW (SENANI)</div>
+                        <div class="text-[10px] text-slate-600">Civil Lines, Raebareli • GSTIN: 09AAAAA0000A1Z5</div>
+                        <div class="text-[10px] text-slate-600">Phone: +91 9794152222 / 9794152223 • info@hotelpleasantview.com</div>
                     </div>
 
                     <div class="mt-3 flex justify-between text-[11px] text-slate-700 border-b border-slate-300 pb-2">

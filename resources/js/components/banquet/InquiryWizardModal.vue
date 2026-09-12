@@ -1782,17 +1782,19 @@ const triggerPrint = () => {
                         <div class="border border-slate-400 p-4 sm:p-5 bg-white print-avoid-break">
                             <!-- Top Header Contacts & Logo -->
                             <div class="flex items-start justify-between border-b border-slate-400 pb-2.5">
-                                <div class="flex items-center gap-2.5">
-                                    <img src="/images/logo-dark.png" alt="Senani Hotel Pleasant View" class="h-9 w-auto object-contain" />
-                                    <div>
-                                        <div class="text-[13px] font-black tracking-tight text-slate-900 leading-tight">SENANI HOTEL PLEASANT VIEW</div>
-                                        <div class="text-[9px] text-slate-500 font-medium">Luxury Rooms • Banquet Halls • Lawn • Pisces Rooftop</div>
+                                <div class="flex items-center gap-3">
+                                    <img src="/images/logo-dark.png" alt="Senani Hotel Pleasant View" class="h-14 sm:h-16 w-auto object-contain" />
+                                    <div class="hidden sm:block border-l border-slate-300 pl-3">
+                                        <div class="text-[11px] font-black tracking-wider text-purple-900 uppercase">Banquet & Convention Booking Voucher</div>
+                                        <div class="text-[9px] text-slate-600 font-medium">A Premium Hospitality Unit of Senani Group</div>
+                                        <div class="text-[8px] text-slate-400 font-mono">Civil Lines, Raebareli, UP • GSTIN: 09AAAAA0000A1Z5</div>
                                     </div>
                                 </div>
                                 <div class="text-right text-[10px] leading-tight text-slate-700 font-mono">
+                                    <div class="font-bold text-[#673DE6] pb-0.5">HELPLINE & BOOKING DESK</div>
                                     <div>RECEPTION : +91 9794152222</div>
                                     <div>MANAGER : +91 9794152223</div>
-                                    <div class="font-bold text-slate-900">MANAGING DIRECTOR : +91 9794152224</div>
+                                    <div class="font-bold text-slate-900">MD OFFICE : +91 9794152224</div>
                                     <div>BANQUET SALES : +91 9794152225</div>
                                 </div>
                             </div>
@@ -1901,14 +1903,18 @@ const triggerPrint = () => {
                                 </div>
                             </div>
 
-                            <!-- Signatures Box: Dynamic Authority Designation -->
+                            <!-- Signatures Box: Dynamic Authority Designation with Official Emblem Seal -->
                             <div class="pt-4 pb-1 grid grid-cols-2 gap-8 text-center text-[11px]">
                                 <div>
                                     <div class="border-t border-slate-400 pt-1 font-bold text-slate-700">Guest / Client Signature</div>
                                     <div class="text-[9px] text-slate-500 font-mono">{{ form.guestName }}</div>
                                 </div>
-                                <div>
-                                    <div class="border-t border-slate-400 pt-1 font-bold text-slate-700">
+                                <div class="flex flex-col items-center">
+                                    <div class="flex items-center gap-1.5 mb-1">
+                                        <img src="/images/emblem-dark.png" alt="Senani" class="h-6 w-auto object-contain" />
+                                        <span class="text-[8px] font-mono font-bold text-purple-950 uppercase tracking-wider">Senani Official Seal</span>
+                                    </div>
+                                    <div class="w-full border-t border-slate-400 pt-1 font-bold text-slate-700">
                                         {{ authorityLevel.signatureLabel }}
                                     </div>
                                     <div class="text-[9px] text-emerald-700 font-bold">
@@ -1925,7 +1931,7 @@ const triggerPrint = () => {
                         <div class="border border-slate-400 p-4 sm:p-5 bg-white print-avoid-break">
                             <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-300 bg-slate-50 p-2 rounded-xs">
                                 <div class="flex items-center gap-2">
-                                    <Building2 class="h-4 w-4 text-[#673DE6]" />
+                                    <img src="/images/emblem-dark.png" alt="Senani" class="h-4.5 w-auto object-contain" />
                                     <span class="font-black text-xs uppercase tracking-wider text-slate-900">Package Inclusions & Infrastructure Logistics</span>
                                 </div>
                                 <span class="text-[10px] font-mono text-slate-500 font-semibold">Official Venue & Hospitality Breakdown</span>
@@ -2052,7 +2058,7 @@ const triggerPrint = () => {
                         <div class="border border-slate-400 p-4 sm:p-5 bg-white print-avoid-break">
                             <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-300 bg-slate-50 p-2 rounded-xs">
                                 <div class="flex items-center gap-2">
-                                    <Utensils class="h-4 w-4 text-[#673DE6]" />
+                                    <img src="/images/emblem-dark.png" alt="Senani" class="h-4.5 w-auto object-contain" />
                                     <div>
                                         <span class="font-black text-xs uppercase tracking-wider text-slate-900">Official Catering Menu Specifications</span>
                                         <span class="ml-2 text-[10px] font-bold text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded">
@@ -2223,7 +2229,10 @@ const triggerPrint = () => {
                         <!-- ========================================================= -->
                         <div class="border border-slate-400 p-4 bg-white print-avoid-break text-[10px] text-slate-600 space-y-2">
                             <div class="font-bold text-slate-800 text-xs border-b border-slate-200 pb-1 flex items-center justify-between">
-                                <span>Official Booking Terms & Conditions</span>
+                                <div class="flex items-center gap-1.5">
+                                    <img src="/images/emblem-dark.png" alt="Senani" class="h-3.5 w-auto object-contain" />
+                                    <span>Official Booking Terms & Conditions</span>
+                                </div>
                                 <span class="font-mono text-[9px] text-slate-400">Hotel Pleasant View Policy</span>
                             </div>
                             <ol class="list-decimal list-inside space-y-0.5 leading-tight">
@@ -2234,20 +2243,25 @@ const triggerPrint = () => {
                                 <li><strong>Settlement</strong>: 100% net balance (₹{{ balanceDueAmount.toLocaleString('en-IN') }}) must be cleared before event commencement prior to hall key handover.</li>
                             </ol>
 
-                            <!-- Final Signatures -->
+                            <!-- Final Signatures with Official Senani Seal -->
                             <div class="pt-4 grid grid-cols-2 gap-8 text-center text-[11px] border-t border-slate-200 mt-2">
                                 <div>
                                     <div class="border-t border-slate-400 pt-1 font-bold text-slate-800">Accepted & Confirmed By (Guest)</div>
                                     <div class="text-[9px] text-slate-500 font-mono">{{ form.guestName }} (Ph: {{ form.phonePrimary }})</div>
                                 </div>
-                                <div>
-                                    <div class="border-t border-slate-400 pt-1 font-bold text-slate-800">For Hotel Pleasant View (Authorized Officer)</div>
+                                <div class="flex flex-col items-center">
+                                    <div class="flex items-center gap-1.5 mb-1">
+                                        <img src="/images/emblem-dark.png" alt="Senani" class="h-6 w-auto object-contain" />
+                                        <span class="text-[8px] font-mono font-bold text-purple-950 uppercase tracking-wider">Hotel Pleasant View Seal</span>
+                                    </div>
+                                    <div class="w-full border-t border-slate-400 pt-1 font-bold text-slate-800">For Hotel Pleasant View (Authorized Officer)</div>
                                     <div class="text-[9px] text-emerald-700 font-bold font-mono">{{ authorityLevel.signatureLabel }}</div>
                                 </div>
                             </div>
 
-                            <div class="text-center text-[9px] text-slate-400 pt-1 border-t border-slate-100">
-                                Hotel Pleasant View, Manika Cinema Road, Gandhi Nagar, Civil Lines, Raebareli, UP - 229001 • info@hotelpleasantview.com
+                            <div class="flex items-center justify-center gap-2 text-center text-[9px] text-slate-500 pt-1.5 border-t border-slate-100">
+                                <img src="/images/emblem-dark.png" alt="Senani" class="h-3.5 w-auto object-contain opacity-75" />
+                                <span>Hotel Pleasant View • A Unit of Senani Group • Manika Cinema Road, Gandhi Nagar, Civil Lines, Raebareli, UP - 229001 • info@hotelpleasantview.com</span>
                             </div>
                         </div>
 

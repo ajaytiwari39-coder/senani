@@ -2191,17 +2191,18 @@ const submitCheckIn = () => {
                 </div>
 
                 <!-- Printable Invoice Layout -->
-                <div class="p-6 sm:p-8 border border-slate-200 rounded-xl bg-white text-slate-900">
+                <div id="printable-gst-invoice" class="p-6 sm:p-8 border border-slate-200 rounded-xl bg-white text-slate-900">
                     <!-- Header -->
                     <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-6 border-b border-slate-200">
                         <div>
-                            <div class="flex items-center gap-2">
-                                <div class="h-8 w-8 rounded-lg bg-[#673DE6] text-white flex items-center justify-center font-black text-sm">
-                                    S
+                            <div class="flex items-center gap-3">
+                                <img src="/images/logo-dark.png" alt="Senani Hotel Pleasant View" class="h-12 sm:h-14 w-auto object-contain" />
+                                <div class="border-l border-slate-200 pl-3">
+                                    <div class="text-base font-black tracking-tight text-slate-900">SENANI HOTEL & BANQUET</div>
+                                    <p class="text-[10px] text-slate-500 font-medium">Hotel Pleasant View • Civil Lines, Raebareli, UP</p>
                                 </div>
-                                <span class="text-xl font-extrabold tracking-tight text-slate-900">SENANI HOTEL & BANQUET</span>
                             </div>
-                            <p class="text-xs text-slate-500 mt-1">Railway Station Road, Civil Lines, Uttar Pradesh - 229001</p>
+                            <p class="text-xs text-slate-500 mt-2">Railway Station Road, Civil Lines, Uttar Pradesh - 229001</p>
                             <p class="text-xs text-slate-500">GSTIN: <span class="font-bold text-slate-800">09AAAAA0000A1Z5</span> • State Code: 09</p>
                         </div>
                         <div class="text-left sm:text-right">
