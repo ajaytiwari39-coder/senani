@@ -13,6 +13,8 @@ import {
     Phone,
     Share2,
     Printer,
+    Download,
+    Loader2,
     Sparkles,
     AlertTriangle,
     Save,
@@ -25,6 +27,7 @@ import {
 import { type BanquetInquiry } from '@/components/banquet/InquiryWizardModal.vue';
 import { menuCatalogs, type MenuCatalogTier } from '@/components/banquet/menuCatalog';
 import { renderSlimBarcode } from '@/components/banquet/auditTrail';
+import { printElement, downloadElementAsPdf } from '@/components/banquet/printService';
 
 defineOptions({
     layout: null,
@@ -245,8 +248,19 @@ const saveGuestPreferences = () => {
     }
 };
 
+const isPdfDownloading = ref(false);
+
 const triggerPrint = () => {
-    window.print();
+    printElement('printable-guest-selection', 'Senani Guest Menu Choices');
+};
+
+const handleDownloadPdf = async () => {
+    isPdfDownloading.value = true;
+    await downloadElementAsPdf(
+        'printable-guest-selection',
+        `Senani-Guest-Menu-${currentInquiry.value.voucherNo || 'Choices'}.pdf`
+    );
+    isPdfDownloading.value = false;
 };
 </script>
 
@@ -281,6 +295,15 @@ const triggerPrint = () => {
                         <Printer class="h-3.5 w-3.5 text-slate-500" />
                         <span>Print Choices</span>
                     </button>
+                    <button
+                        @click="handleDownloadPdf"
+                        :disabled="isPdfDownloading"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-700 text-xs font-bold transition shadow-2xs cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+                    >
+                        <Loader2 v-if="isPdfDownloading" class="h-3.5 w-3.5 animate-spin" />
+                        <Download v-else class="h-3.5 w-3.5" />
+                        <span class="hidden sm:inline">{{ isPdfDownloading ? 'Generating…' : 'Download PDF' }}</span>
+                    </button>
                     <a
                         href="tel:+919794152223"
                         class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-xs font-bold transition border border-emerald-200"
@@ -292,7 +315,7 @@ const triggerPrint = () => {
             </div>
         </header>
 
-        <main class="max-w-5xl mx-auto px-4 py-6 space-y-5">
+        <main id="printable-guest-selection" class="max-w-5xl mx-auto px-4 py-6 space-y-5">
 
             <!-- Success Alert Toast -->
             <div
@@ -1156,6 +1179,15 @@ const triggerPrint = () => {
                         <Lock class="h-4 w-4 text-amber-700" />
                         <span>Deal Locked by Hotel Manager</span>
                     </div>
+                    <button
+                        @click="handleDownloadPdf"
+                        :disabled="isPdfDownloading"
+                        class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-800 hover:text-white text-xs font-bold transition flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+                    >
+                        <Loader2 v-if="isPdfDownloading" class="h-4 w-4 animate-spin" />
+                        <Download v-else class="h-4 w-4" />
+                        <span class="hidden sm:inline">{{ isPdfDownloading ? 'Generating…' : 'Download PDF' }}</span>
+                    </button>
                 </div>
             </div>
 

@@ -176,39 +176,71 @@
         size: A4 portrait;
         margin: 8mm 10mm;
     }
-    body * {
-        visibility: hidden !important;
+
+    /* printService.ts uses an isolated iframe — the main window @media print
+       is only a safe fallback. Do NOT use body * visibility:hidden here
+       because modal wrappers (.fixed, overflow-y-auto, backdrop) cause
+       Chromium to render 0px height and produce blank pages. */
+
+    /* Reset modal/overlay constraints so printable content is never clipped */
+    .fixed,
+    [class*="fixed"] {
+        position: static !important;
+        overflow: visible !important;
+        max-height: none !important;
+        height: auto !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: transparent !important;
+        z-index: auto !important;
     }
+    .overflow-y-auto,
+    .overflow-auto,
+    .overflow-hidden {
+        overflow: visible !important;
+        max-height: none !important;
+    }
+
+    /* Printable sections — always full width, no clipping */
     #printable-voucher,
-    #printable-voucher *,
     #printable-gst-invoice,
-    #printable-gst-invoice *,
     #printable-bill,
-    #printable-bill * {
-        visibility: visible !important;
-    }
-    #printable-voucher,
-    #printable-gst-invoice,
-    #printable-bill {
-        position: absolute !important;
-        left: 0 !important;
-        top: 0 !important;
+    #printable-guest-selection {
+        position: static !important;
+        left: auto !important;
+        top: auto !important;
         width: 100% !important;
         max-width: 100% !important;
         margin: 0 !important;
-        padding: 0 !important;
+        padding: 4px !important;
         border: none !important;
         box-shadow: none !important;
         background: #ffffff !important;
         color: #000000 !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        display: block !important;
+        visibility: visible !important;
+        overflow: visible !important;
     }
-    .print-hidden {
+
+    /* Hide all non-printable chrome */
+    .print-hidden,
+    .no-print,
+    nav,
+    aside,
+    header.print-hidden {
         display: none !important;
     }
+
     .print-avoid-break {
         page-break-inside: avoid !important;
         break-inside: avoid !important;
+    }
+
+    /* Ensure tables render correctly */
+    table {
+        border-collapse: collapse !important;
+        width: 100% !important;
     }
 }

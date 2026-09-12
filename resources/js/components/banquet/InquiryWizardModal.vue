@@ -15,6 +15,8 @@ import {
     Percent,
     ShieldCheck,
     Printer,
+    Download,
+    Loader2,
     Send,
     ArrowRight,
     ArrowLeft,
@@ -50,6 +52,7 @@ import {
     diffInquiryChanges,
     type BanquetAuditEntry
 } from './auditTrail';
+import { printElement, downloadElementAsPdf } from './printService';
 
 export interface BanquetInquiry {
     id?: string;
@@ -645,8 +648,19 @@ const extraFoodingItemsDetailed = computed(() => {
     return items;
 });
 
+const isPdfDownloading = ref(false);
+
 const triggerPrint = () => {
-    window.print();
+    printElement('printable-voucher', `Senani Banquet Voucher #${form.value.voucherNo}`);
+};
+
+const handleDownloadPdf = async () => {
+    isPdfDownloading.value = true;
+    await downloadElementAsPdf(
+        'printable-voucher',
+        `Senani-Banquet-Voucher-${form.value.voucherNo}.pdf`
+    );
+    isPdfDownloading.value = false;
 };
 
 // -------------------------------------------------------------
@@ -2099,6 +2113,17 @@ const shareOnWhatsApp = () => {
 
                     <button
                         type="button"
+                        @click="handleDownloadPdf"
+                        :disabled="isPdfDownloading"
+                        class="h-8 px-3 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-wait"
+                    >
+                        <Loader2 v-if="isPdfDownloading" class="h-3.5 w-3.5 animate-spin" />
+                        <Download v-else class="h-3.5 w-3.5" />
+                        <span>{{ isPdfDownloading ? 'Generating…' : 'Download PDF' }}</span>
+                    </button>
+
+                    <button
+                        type="button"
                         @click="saveAndClose"
                         class="h-8 px-3 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition"
                     >
@@ -2149,6 +2174,16 @@ const shareOnWhatsApp = () => {
                             >
                                 <Printer class="h-3.5 w-3.5" />
                                 <span>Print Full Voucher (Invoice + Inclusions + Menu)</span>
+                            </button>
+                            <button
+                                type="button"
+                                @click="handleDownloadPdf"
+                                :disabled="isPdfDownloading"
+                                class="h-8 px-3 rounded-lg bg-emerald-600 text-white text-xs font-bold flex items-center gap-1.5 hover:bg-emerald-700 shadow-xs transition disabled:opacity-60 disabled:cursor-wait"
+                            >
+                                <Loader2 v-if="isPdfDownloading" class="h-3.5 w-3.5 animate-spin" />
+                                <Download v-else class="h-3.5 w-3.5" />
+                                <span>{{ isPdfDownloading ? 'Generating PDF…' : 'Download PDF' }}</span>
                             </button>
                             <button
                                 type="button"

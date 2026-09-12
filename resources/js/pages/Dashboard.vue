@@ -48,6 +48,7 @@ import {
 } from '@lucide/vue';
 import { home } from '@/routes';
 import InquiryWizardModal, { type BanquetInquiry } from '@/components/banquet/InquiryWizardModal.vue';
+import { downloadElementAsPdf } from '@/components/banquet/printService';
 
 defineOptions({
     layout: null,
@@ -1887,6 +1888,15 @@ const submitCheckIn = () => {
                                                 >
                                                     <Printer class="h-3 w-3" />
                                                     <span>Print</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    @click="openAndPrintInquiry(inq)"
+                                                    class="rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-emerald-200 shadow-2xs cursor-pointer"
+                                                    title="Open Print Preview to Download PDF"
+                                                >
+                                                    <Download class="h-3 w-3" />
+                                                    <span>PDF</span>
                                                 </button>
                                                 <a
                                                     :href="'/verify/voucher?v=' + inq.voucherNo"
