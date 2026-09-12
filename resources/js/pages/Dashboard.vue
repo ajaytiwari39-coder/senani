@@ -233,7 +233,7 @@ const banquetInquiries = ref<BanquetInquiry[]>([
         guestName: 'Mr. Tushar Gupta Jee',
         phonePrimary: '8115711507',
         phoneSecondary: '7081219880',
-        address: 'Civil Lines, Raebareli',
+        address: 'Civil Lines, Raebareli, UP',
         email: 'tushar.gupta@gmail.com',
         functionDateFrom: '2026-11-15',
         functionDateTo: '2026-11-15',
@@ -248,7 +248,21 @@ const banquetInquiries = ref<BanquetInquiry[]>([
         menuRateTier: 799,
         effectiveMenuRate: 799,
         menuTitle: 'Royal Deluxe Buffet',
-        selectedMenuCatalogItems: [],
+        selectedMenuCatalogItems: [
+            'Sprite', 'Virgin Mojito', 'Fresh Lime Soda',
+            'Tea (Regular, Ginger, Green, Masala, Lemon)', 'Filter Coffee',
+            'Tomato Soup', 'Veg Sweet Corn Soup',
+            'Paneer Shashlik', 'Spring Roll', 'Fried Masala Idly', 'Veg Manchurian Dry', 'Cutlets',
+            'Dal Tadka',
+            'Paneer Butter Masala',
+            'Mix Veg',
+            'Malai Kofta',
+            'Jeera Rice',
+            'Boondi Raita',
+            'Butter Naan', 'Garlic Naan', 'Tandoori Butter Roti',
+            'Hot Gulab Jamun', 'Rasgulla',
+            'Veg Fried Rice (Manchurian/Chilli Paneer)', 'Pav Bhaji Live', 'Masala Dosa Live'
+        ],
         engagementBreakfastPax: 0,
         regularBreakfastPax: 0,
         bainaBoxes: 0,
@@ -261,12 +275,12 @@ const banquetInquiries = ref<BanquetInquiry[]>([
         soundMicSetup: true,
         projectorSetup: false,
         ledWallSetup: false,
-        packageIncludes: ['Hall Rental', 'Grand Stage Setup', 'Theme Floral Decor', 'DJ & Acoustic Sound', 'Genset & 100% Power Backup'],
+        packageIncludes: ['Swarnim (G) + Swadhistam (1)', 'Grand Stage Setup', 'Theme Floral Decor', 'DJ & Acoustic Sound', '100% Genset Power Backup'],
         selfArrangements: ['Photographer / Cinematography', 'Phool / Varmala', 'Cake / Gift Counter'],
-        additionalHallCharges: 30000,
-        additionalDecorCharges: 68000,
+        additionalHallCharges: 70000,
+        additionalDecorCharges: 30000,
         specialArrangements: 'VIP Sofa seating setup for groom party. Stage entry cold pyros arranged by guest.',
-        discountPercent: 5,
+        discountPercent: 3.9,
         discountRupees: 18883,
         discountInputMode: 'amount',
         approverRole: 'manager',
@@ -275,7 +289,59 @@ const banquetInquiries = ref<BanquetInquiry[]>([
         paymentDate: '09/09/2026',
         status: 'pending_md',
         mdApprovedAt: undefined,
-        mdRemarks: 'VIP client discount 5% (₹18,883) authorized by Banquet Manager',
+        mdRemarks: 'VIP client discount (₹18,883) authorized by Banquet Manager',
+        isLocked: true,
+        lockedAt: '12/Nov/2026, 08:30 PM',
+        lockedBy: 'Banquet Operations Manager',
+        digitalSignature: 'SN-SIG-250-9F83A12E-V2',
+        barcodeValue: 'SN-SIG-250-9F83A12E',
+        auditLog: [
+            {
+                id: 'aud-1',
+                timestamp: '10/Nov/2026, 11:30 AM',
+                action: 'created',
+                actor: 'Reception Desk (Mr. Amit Verma)',
+                details: 'Initial inquiry registered at Front Desk.',
+                changes: ['Client registered: Mr. Tushar Gupta Jee', 'Event: Wedding Reception on 15-Nov-2026', 'Initial PAX estimate: 300 Pax']
+            },
+            {
+                id: 'aud-2',
+                timestamp: '11/Nov/2026, 04:15 PM',
+                action: 'locked',
+                actor: 'Banquet Operations Manager',
+                details: 'Initial catering proposal & venue allotment sealed.',
+                digitalSignature: 'SN-SIG-250-7A1B39D1',
+                changes: ['Halls Allotted: Swarnim (G) + Swadhistam (1)', 'Menu Tier: ₹799 Royal Deluxe', 'Deal Frozen']
+            },
+            {
+                id: 'aud-3',
+                timestamp: '12/Nov/2026, 02:00 PM',
+                action: 'unlocked',
+                actor: 'Banquet Operations Manager',
+                details: 'Deal unlocked for menu revision and pax increase upon client request.',
+                previousSignature: 'SN-SIG-250-7A1B39D1'
+            },
+            {
+                id: 'aud-4',
+                timestamp: '12/Nov/2026, 02:45 PM',
+                action: 'updated',
+                actor: 'Banquet Operations Manager',
+                details: 'Revision details captured and verified with client.',
+                changes: [
+                    'Guaranteed Pax updated: 300 ➔ 350 Persons (+50 Pax)',
+                    'Catering Dishes revised: Added Live Counters (Pav Bhaji Live, Masala Dosa Live)',
+                    'Special Arrangement note added: VIP Sofa setup for groom party'
+                ]
+            },
+            {
+                id: 'aud-5',
+                timestamp: '12/Nov/2026, 08:30 PM',
+                action: 'locked',
+                actor: 'Banquet Operations Manager',
+                details: 'Deal re-locked & cryptographically re-signed after revision approval.',
+                digitalSignature: 'SN-SIG-250-9F83A12E-V2'
+            }
+        ]
     },
     {
         id: 'inq-251',
@@ -299,7 +365,19 @@ const banquetInquiries = ref<BanquetInquiry[]>([
         menuRateTier: 499,
         effectiveMenuRate: 499,
         menuTitle: 'Executive Vegetarian Buffet',
-        selectedMenuCatalogItems: [],
+        selectedMenuCatalogItems: [
+            'Sprite', 'Limca',
+            'Tea (Regular, Ginger, Green, Masala, Lemon)',
+            'Tomato Soup',
+            'Fried Masala Idly', 'Veg Manchurian Dry', 'Cutlets',
+            'Dal Fry',
+            'Paneer Butter Masala',
+            'Aloo Gobhi Masala',
+            'Jeera Rice',
+            'Boondi Raita',
+            'Tandoori Roti', 'Butter Naan',
+            'Hot Gulab Jamun'
+        ],
         engagementBreakfastPax: 80,
         regularBreakfastPax: 0,
         bainaBoxes: 50,
@@ -312,7 +390,7 @@ const banquetInquiries = ref<BanquetInquiry[]>([
         soundMicSetup: false,
         projectorSetup: false,
         ledWallSetup: false,
-        packageIncludes: ['Swarnim Hall (G)', 'Full Decoration', 'DJ Setup'],
+        packageIncludes: ['Swarnim Hall (G) with Decor & DJ (@₹45,000 Package)', 'Engagement Breakfast (80 Pax)', '50 Baina Boxes'],
         selfArrangements: ['Photographer / Cinematography', 'Cake / Gift Counter'],
         additionalHallCharges: 0,
         additionalDecorCharges: 0,
@@ -325,6 +403,17 @@ const banquetInquiries = ref<BanquetInquiry[]>([
         paymentMode: 'UPI / QR',
         paymentDate: '11/09/2026',
         status: 'draft_reception',
+        isLocked: false,
+        auditLog: [
+            {
+                id: 'aud-251-1',
+                timestamp: '11/Nov/2026, 10:00 AM',
+                action: 'created',
+                actor: 'Reception Desk',
+                details: 'Inquiry registered for Engagement Package.',
+                changes: ['Guest: Dr. Vivek Sharma', 'Package: Swarnim Engagement Package (@₹45,000)', '150 Pax']
+            }
+        ]
     },
     {
         id: 'inq-249',
@@ -339,7 +428,7 @@ const banquetInquiries = ref<BanquetInquiry[]>([
         functionDateTo: '2026-11-12',
         timeFrom: '11:00',
         timeTo: '17:00',
-        eventType: 'Corporate Leadership Meeting',
+        eventType: 'Corporate Leadership Conference',
         paxGuaranteed: 120,
         selectedVenues: ['swadhistam'],
         isEngagementPackage: false,
@@ -347,8 +436,20 @@ const banquetInquiries = ref<BanquetInquiry[]>([
         isMeetingSetup: true,
         menuRateTier: 499,
         effectiveMenuRate: 799,
-        menuTitle: 'Meeting Executive Buffet',
-        selectedMenuCatalogItems: [],
+        menuTitle: 'Corporate Executive Banquet',
+        selectedMenuCatalogItems: [
+            'Virgin Mojito', 'Special Sarbat',
+            'Filter Coffee',
+            'Clear Soup',
+            'Cocktail Samosa', 'Cutlets', 'Cheese Nuggets',
+            'Dal Tadka',
+            'Kadhai Paneer',
+            'Mix Veg',
+            'Jeera Rice',
+            'Mix Veg Raita',
+            'Butter Naan', 'Missi Roti',
+            'Rasgulla'
+        ],
         engagementBreakfastPax: 0,
         regularBreakfastPax: 120,
         bainaBoxes: 0,
@@ -361,11 +462,11 @@ const banquetInquiries = ref<BanquetInquiry[]>([
         soundMicSetup: true,
         projectorSetup: true,
         ledWallSetup: false,
-        packageIncludes: ['Swadhistam (1)', 'Sound & Mic Setup', 'Projector & Screen', 'VIP Seating'],
+        packageIncludes: ['Swadhistam (1)', 'Sound & Mic Setup', 'Projector & Screen', 'Executive Buffet'],
         selfArrangements: ['Photographer / Cinematography'],
         additionalHallCharges: 0,
         additionalDecorCharges: 0,
-        specialArrangements: 'Meeting setup converted to ₹799/pax + Breakfast @ ₹300',
+        specialArrangements: 'Meeting setup converted to ₹799/pax + Executive Breakfast @ ₹300',
         discountPercent: 7,
         discountRupees: 12383,
         discountInputMode: 'amount',
@@ -376,6 +477,29 @@ const banquetInquiries = ref<BanquetInquiry[]>([
         status: 'approved_md',
         mdApprovedAt: '09 Sep 2026, 04:30 PM',
         mdRemarks: 'Approved by GM within 7% corporate discount limit (₹12,383)',
+        isLocked: true,
+        lockedAt: '10/Nov/2026, 06:15 PM',
+        lockedBy: 'Banquet Operations Manager',
+        digitalSignature: 'SN-SIG-249-3D84B91F',
+        barcodeValue: 'SN-SIG-249-3D84B91F',
+        auditLog: [
+            {
+                id: 'aud-249-1',
+                timestamp: '08/Nov/2026, 09:30 AM',
+                action: 'created',
+                actor: 'Reception Desk',
+                details: 'Corporate conference inquiry registered.',
+                changes: ['Client: Adv. Rameshwar Singh', 'Meeting setup rules applied']
+            },
+            {
+                id: 'aud-249-2',
+                timestamp: '10/Nov/2026, 06:15 PM',
+                action: 'locked',
+                actor: 'Banquet Operations Manager',
+                details: 'Meeting setup locked with Sound & Projector inclusions.',
+                digitalSignature: 'SN-SIG-249-3D84B91F'
+            }
+        ]
     },
 ]);
 
@@ -460,6 +584,15 @@ onMounted(() => {
             }
         } catch (e) {
             console.error('Error loading banquet inquiries from localStorage', e);
+        }
+
+        if (queryInquiry) {
+            const params = new URLSearchParams(window.location.search);
+            const vNo = params.get('voucher') || '250';
+            const found = banquetInquiries.value.find(i => String(i.voucherNo) === String(vNo));
+            if (found) {
+                selectedInquiry.value = { ...found };
+            }
         }
     }
 });
@@ -1670,13 +1803,13 @@ const submitCheckIn = () => {
                                         <td class="py-3">
                                             <div class="font-bold text-slate-900">{{ inq.paxGuaranteed }} Pax</div>
                                             <div class="text-[11px] text-purple-700">
-                                                ₹{{ inq.effectiveMenuRate || inq.menuRate }}/plate
+                                                ₹{{ inq.effectiveMenuRate || inq.menuRate || 799 }}/plate
                                                 <span v-if="inq.isMeetingSetup" class="text-[9px] text-amber-700 font-bold bg-amber-50 px-1 py-0.5 rounded ml-0.5">Meeting</span>
                                             </div>
                                         </td>
                                         <td class="py-3 text-right font-mono font-bold text-slate-900">
                                             ₹{{ (
-                                                (inq.paxGuaranteed * (inq.effectiveMenuRate || inq.menuRate)) +
+                                                (inq.paxGuaranteed * (inq.effectiveMenuRate || inq.menuRate || 799)) +
                                                 (inq.additionalHallCharges || 0) +
                                                 (inq.additionalDecorCharges || 0) +
                                                 (inq.isEngagementPackage ? (inq.engagementPackageType === 'swarnim' ? 45000 : 40000) : (inq.selectedVenues?.length ? inq.selectedVenues.length * 35000 : 0)) +
@@ -1695,7 +1828,7 @@ const submitCheckIn = () => {
                                         </td>
                                         <td class="py-3 text-right font-mono font-black text-emerald-700">
                                             ₹{{ Math.max(0, (
-                                                (inq.paxGuaranteed * (inq.effectiveMenuRate || inq.menuRate)) +
+                                                (inq.paxGuaranteed * (inq.effectiveMenuRate || inq.menuRate || 799)) +
                                                 (inq.additionalHallCharges || 0) +
                                                 (inq.additionalDecorCharges || 0) +
                                                 (inq.isEngagementPackage ? (inq.engagementPackageType === 'swarnim' ? 45000 : 40000) : (inq.selectedVenues?.length ? inq.selectedVenues.length * 35000 : 0)) +
@@ -1706,7 +1839,7 @@ const submitCheckIn = () => {
                                             <span class="font-bold">₹{{ inq.amountPaid.toLocaleString('en-IN') }}</span>
                                             <div class="text-[10px] text-slate-400">
                                                 Bal: ₹{{ Math.max(0, (
-                                                    (inq.paxGuaranteed * (inq.effectiveMenuRate || inq.menuRate)) +
+                                                    (inq.paxGuaranteed * (inq.effectiveMenuRate || inq.menuRate || 799)) +
                                                     (inq.additionalHallCharges || 0) +
                                                     (inq.additionalDecorCharges || 0) +
                                                     (inq.isEngagementPackage ? (inq.engagementPackageType === 'swarnim' ? 45000 : 40000) : (inq.selectedVenues?.length ? inq.selectedVenues.length * 35000 : 0)) +
@@ -1755,6 +1888,15 @@ const submitCheckIn = () => {
                                                     <Printer class="h-3 w-3" />
                                                     <span>Print</span>
                                                 </button>
+                                                <a
+                                                    :href="'/verify/voucher?v=' + inq.voucherNo"
+                                                    target="_blank"
+                                                    class="rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-emerald-200 shadow-2xs cursor-pointer"
+                                                    title="View Public Verification Certificate & Audit Trail"
+                                                >
+                                                    <ShieldCheck class="h-3 w-3" />
+                                                    <span>Verify</span>
+                                                </a>
                                                 <button
                                                     v-if="inq.status === 'draft_reception'"
                                                     @click="openExistingInquiry(inq, 2)"

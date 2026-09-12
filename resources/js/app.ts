@@ -14,6 +14,7 @@ void createInertiaApp({
             case name === 'Welcome':
             case name === 'Dashboard':
             case name === 'GuestMenuSelection':
+            case name === 'VerifyVoucher':
                 return null;
             case name === 'auth/Login':
                 return null;

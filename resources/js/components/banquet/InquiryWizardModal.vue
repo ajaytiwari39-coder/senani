@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import {
     X,
     CheckCircle2,
@@ -38,8 +38,18 @@ import {
     Unlock,
     Share2,
     Copy,
-    ExternalLink
+    ExternalLink,
+    QrCode,
+    FileText,
+    History
 } from '@lucide/vue';
+import {
+    renderSlimBarcode,
+    generateDigitalSignature,
+    generateQrCodeDataUrl,
+    diffInquiryChanges,
+    type BanquetAuditEntry
+} from './auditTrail';
 
 export interface BanquetInquiry {
     id?: string;
@@ -64,6 +74,7 @@ export interface BanquetInquiry {
     isMeetingSetup: boolean;
     menuRateTier: 499 | 799 | 999 | 1199;
     effectiveMenuRate: number;
+    menuRate?: number;
     menuTitle: string;
     selectedMenuCatalogItems: string[];
     // Additional Fooding
@@ -97,10 +108,15 @@ export interface BanquetInquiry {
     status: 'draft_reception' | 'pending_md' | 'approved_md';
     mdApprovedAt?: string;
     mdRemarks?: string;
-    // Locking & Freezing
+    // Locking, Digital Signature & Audit Trail
     isLocked?: boolean;
     lockedAt?: string;
     lockedBy?: string;
+    unlockedAt?: string;
+    unlockedBy?: string;
+    digitalSignature?: string;
+    barcodeValue?: string;
+    auditLog?: BanquetAuditEntry[];
 }
 
 const props = withDefaults(
@@ -247,9 +263,22 @@ watch(
             form.value = JSON.parse(JSON.stringify(val));
             if (form.value.isLocked === undefined) form.value.isLocked = false;
             if (!form.value.selectedMenuCatalogItems) form.value.selectedMenuCatalogItems = [];
+            if (!form.value.auditLog) form.value.auditLog = [];
+            sanitizeCatalogSelections();
+            updateBarcodeAndQr();
         }
     },
     { immediate: true }
+);
+
+watch(
+    () => props.show,
+    (open) => {
+        if (open) {
+            sanitizeCatalogSelections();
+            updateBarcodeAndQr();
+        }
+    }
 );
 
 watch(
@@ -621,18 +650,31 @@ const triggerPrint = () => {
 };
 
 // -------------------------------------------------------------
-// Interactive Menu Item Selection & Lock Control
+// Interactive Menu Item Selection, Quota Limits & Lock Control
 // -------------------------------------------------------------
+const barcodeSvgStep2 = ref<SVGSVGElement | null>(null);
+const barcodeSvgPrint = ref<SVGSVGElement | null>(null);
+const qrCodeDataUrl = ref<string>('');
+const showAuditModal = ref(false);
+const unlockSnapshot = ref<Partial<BanquetInquiry> | null>(null);
+
 const isItemSelected = (item: string) => {
     return (form.value.selectedMenuCatalogItems || []).includes(item);
 };
 
 const getCategorySelectedCount = (items: string[]) => {
+    if (!items || !items.length) return 0;
     const selected = form.value.selectedMenuCatalogItems || [];
     return items.filter(it => selected.includes(it)).length;
 };
 
-const toggleMenuItem = (item: string) => {
+const isCategoryFull = (items: string[], maxCount: number) => {
+    if (!items || !items.length || maxCount <= 0) return false;
+    return getCategorySelectedCount(items) >= maxCount;
+};
+
+// Strict Quota Limit Enforcement (Never allow more than allowed limit)
+const toggleMenuItem = (item: string, categoryItems?: string[], maxAllowed?: number) => {
     if (form.value.isLocked) return;
     if (!form.value.selectedMenuCatalogItems) {
         form.value.selectedMenuCatalogItems = [];
@@ -641,8 +683,43 @@ const toggleMenuItem = (item: string) => {
     if (idx > -1) {
         form.value.selectedMenuCatalogItems.splice(idx, 1);
     } else {
+        if (categoryItems && maxAllowed !== undefined) {
+            if (getCategorySelectedCount(categoryItems) >= maxAllowed) {
+                // Quota reached! Prevent selecting more than allowed limit
+                return;
+            }
+        }
         form.value.selectedMenuCatalogItems.push(item);
     }
+};
+
+// Ensure selections never exceed quotas for the active tier
+const sanitizeCatalogSelections = () => {
+    if (!form.value.selectedMenuCatalogItems || !form.value.selectedMenuCatalogItems.length) return;
+    const cat = currentMenuCatalog.value;
+    const allowed: string[] = [];
+
+    const keepWithinLimit = (items: string[], max: number) => {
+        if (!items || !items.length) return;
+        const selected = form.value.selectedMenuCatalogItems.filter(it => items.includes(it));
+        allowed.push(...selected.slice(0, max));
+    };
+
+    keepWithinLimit(cat.welcomeDrinks, cat.welcomeDrinksCount);
+    keepWithinLimit(cat.hotDrinks, cat.hotDrinksCount);
+    keepWithinLimit(cat.soups, cat.soupsCount);
+    keepWithinLimit(cat.starters, cat.startersCount);
+    keepWithinLimit(cat.dal, cat.dalCount);
+    keepWithinLimit(cat.paneer, cat.paneerCount);
+    keepWithinLimit(cat.dryVeg, cat.dryVegCount);
+    keepWithinLimit(cat.gravyVeg, cat.gravyVegCount);
+    keepWithinLimit(cat.rice, cat.riceCount);
+    keepWithinLimit(cat.raita, cat.raitaCount);
+    keepWithinLimit(cat.breads, cat.breadsCount);
+    keepWithinLimit(cat.desserts, cat.dessertsCount);
+    keepWithinLimit(cat.liveCounters, cat.liveCountersCount);
+
+    form.value.selectedMenuCatalogItems = allowed;
 };
 
 const selectAllDefaults = () => {
@@ -670,22 +747,94 @@ const clearMenuSelection = () => {
     form.value.selectedMenuCatalogItems = [];
 };
 
-// Manager Deal Lock / Freeze Mechanism
+// Render Barcode & QR Code
+const updateBarcodeAndQr = async () => {
+    if (typeof window === 'undefined') return;
+    const verifyUrl = `${window.location.origin}/verify/voucher?v=${form.value.voucherNo}`;
+    qrCodeDataUrl.value = await generateQrCodeDataUrl(verifyUrl, 160);
+
+    await nextTick();
+    const sig = form.value.digitalSignature || `SN-SIG-${form.value.voucherNo}`;
+    if (barcodeSvgStep2.value) {
+        renderSlimBarcode(barcodeSvgStep2.value, sig, 22);
+    }
+    if (barcodeSvgPrint.value) {
+        renderSlimBarcode(barcodeSvgPrint.value, sig, 24);
+    }
+};
+
+// Manager Deal Lock / Freeze Mechanism with Full Audit Trail Tracking
 const toggleDealLock = () => {
     form.value.isLocked = !form.value.isLocked;
-    if (form.value.isLocked) {
-        form.value.lockedAt = new Date().toLocaleString('en-IN', {
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-        form.value.lockedBy = 'Banquet Manager';
-    } else {
-        form.value.lockedAt = undefined;
-        form.value.lockedBy = undefined;
+
+    if (!form.value.auditLog) {
+        form.value.auditLog = [];
     }
+
+    const timestamp = new Date().toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+
+    if (form.value.isLocked) {
+        // Enforce quota sanity before lock
+        sanitizeCatalogSelections();
+
+        // 1. Check if there were edits made while deal was unlocked
+        if (unlockSnapshot.value) {
+            const diffs = diffInquiryChanges(unlockSnapshot.value, form.value);
+            if (diffs.length > 0) {
+                form.value.auditLog.push({
+                    id: 'aud-' + Date.now() + '-upd',
+                    timestamp,
+                    action: 'updated',
+                    actor: 'Banquet Operations Manager',
+                    details: `Inquiry details updated (${diffs.length} fields modified)`,
+                    changes: diffs,
+                });
+            }
+            unlockSnapshot.value = null;
+        }
+
+        // 2. Generate new versioned Digital Signature
+        const lockCount = form.value.auditLog.filter(a => a.action === 'locked').length + 1;
+        const newSig = generateDigitalSignature(form.value.voucherNo, lockCount);
+        form.value.digitalSignature = newSig;
+        form.value.barcodeValue = newSig;
+        form.value.lockedAt = timestamp;
+        form.value.lockedBy = 'Banquet Operations Manager';
+
+        // 3. Log Lock Event
+        form.value.auditLog.push({
+            id: 'aud-' + Date.now() + '-lck',
+            timestamp,
+            action: 'locked',
+            actor: 'Banquet Operations Manager',
+            details: 'Deal sealed & frozen. Cryptographic digital signature generated.',
+            digitalSignature: newSig,
+        });
+
+        updateBarcodeAndQr();
+    } else {
+        // UNLOCKING DEAL
+        unlockSnapshot.value = JSON.parse(JSON.stringify(form.value));
+        const prevSig = form.value.digitalSignature;
+        form.value.unlockedAt = timestamp;
+        form.value.unlockedBy = 'Banquet Operations Manager';
+
+        form.value.auditLog.push({
+            id: 'aud-' + Date.now() + '-unl',
+            timestamp,
+            action: 'unlocked',
+            actor: 'Banquet Operations Manager',
+            details: 'Deal unlocked for menu revision and client adjustments.',
+            previousSignature: prevSig,
+        });
+    }
+
     emit('save', { ...form.value });
 };
 
@@ -1021,15 +1170,30 @@ const shareOnWhatsApp = () => {
 
                     <!-- Manager Catering Control & Deal Lock Bar -->
                     <div class="p-3 rounded-xl bg-gradient-to-r from-purple-50 via-white to-purple-50 border border-purple-200 flex flex-wrap items-center justify-between gap-3 text-xs shadow-2xs">
-                        <div class="flex items-center gap-3">
-                            <!-- Deal Lock / Unlock Status Button -->
-                            <div v-if="form.isLocked" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-100 border border-amber-300 text-amber-900 font-bold">
-                                <Lock class="h-3.5 w-3.5 text-amber-700 shrink-0" />
-                                <span>🔒 DEAL LOCKED ({{ form.lockedAt || 'Confirmed' }})</span>
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <!-- Deal Lock / Unlock Status Button with Slim Barcode -->
+                            <div v-if="form.isLocked" class="flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-950 font-bold shadow-2xs">
+                                <div class="flex items-center gap-1.5 text-xs">
+                                    <Lock class="h-3.5 w-3.5 text-amber-700 shrink-0" />
+                                    <span>🔒 DEAL LOCKED</span>
+                                </div>
+                                <!-- Slim Barcode ("Ptla sa Barcode") -->
+                                <div class="hidden sm:flex flex-col items-center bg-white px-2 py-0.5 rounded border border-slate-200">
+                                    <svg ref="barcodeSvgStep2" class="h-5 w-36"></svg>
+                                    <span class="text-[8.5px] font-mono font-bold text-slate-700">{{ form.digitalSignature || `SN-SIG-${form.voucherNo}` }}</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    @click="showAuditModal = true"
+                                    class="px-2 py-0.5 rounded bg-purple-100 hover:bg-purple-200 text-purple-900 text-[10.5px] font-bold border border-purple-200 cursor-pointer transition flex items-center gap-1"
+                                >
+                                    <History class="h-3 w-3 text-purple-700" />
+                                    <span>Audit Log ({{ form.auditLog?.length || 0 }})</span>
+                                </button>
                                 <button
                                     type="button"
                                     @click="toggleDealLock"
-                                    class="ml-2 px-2 py-0.5 rounded bg-amber-200 hover:bg-amber-300 text-amber-900 text-[11px] font-black cursor-pointer transition"
+                                    class="px-2 py-0.5 rounded bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-black cursor-pointer transition shadow-2xs"
                                 >
                                     Unlock
                                 </button>
@@ -1047,6 +1211,15 @@ const shareOnWhatsApp = () => {
                                 <span class="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
                                     🟢 Menu Editing Open
                                 </span>
+                                <button
+                                    v-if="form.auditLog && form.auditLog.length"
+                                    type="button"
+                                    @click="showAuditModal = true"
+                                    class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10.5px] font-bold border border-slate-300 cursor-pointer transition flex items-center gap-1"
+                                >
+                                    <History class="h-3 w-3 text-slate-600" />
+                                    <span>Audit ({{ form.auditLog.length }})</span>
+                                </button>
                             </div>
 
                             <div class="hidden sm:block text-slate-300">|</div>
@@ -1247,8 +1420,8 @@ const shareOnWhatsApp = () => {
                         </div>
 
                         <!-- COLUMN 2 (5 Cols): Fooding Engine & Docx Menu Catalog -->
-                        <div class="lg:col-span-5 space-y-4">
-                            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-3">
+                        <div class="lg:col-span-5 flex flex-col space-y-4">
+                            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-3 flex-1 flex flex-col">
                                 <div class="flex items-center justify-between border-b border-slate-100 pb-2">
                                     <div class="flex items-center gap-1.5">
                                         <Utensils class="h-3.5 w-3.5 text-[#673DE6]" />
@@ -1264,7 +1437,7 @@ const shareOnWhatsApp = () => {
                                 <!-- 4 Base Menu Tiers (@499 / @799 / @999 / @1199) -->
                                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                     <button
-                                        v-for="tier in [499, 799, 999, 1199]"
+                                        v-for="tier in ([499, 799, 999, 1199] as const)"
                                         :key="tier"
                                         type="button"
                                         @click="form.menuRateTier = tier; activeMenuPreviewTier = tier"
@@ -1278,10 +1451,10 @@ const shareOnWhatsApp = () => {
                                         <div class="text-[10px] font-medium" :class="form.menuRateTier === tier ? 'text-purple-200' : 'text-slate-400'">
                                             Tier Rate
                                         </div>
-                                        <div class="text-base font-black font-mono">
+                                        <div class="font-mono text-base font-black">
                                             ₹{{ tier }}
                                         </div>
-                                        <div class="text-[10px] truncate" :class="form.menuRateTier === tier ? 'text-purple-100 font-semibold' : 'text-slate-500'">
+                                        <div class="text-[9px] truncate" :class="form.menuRateTier === tier ? 'text-purple-100' : 'text-slate-500'">
                                             {{ tier === 499 ? 'Veg Buffet' : tier === 799 ? 'Royal Deluxe' : tier === 999 ? 'Imperial' : 'Royal Grand' }}
                                         </div>
                                     </button>
@@ -1293,15 +1466,15 @@ const shareOnWhatsApp = () => {
                                     <span>Base ₹{{ form.menuRateTier }} ➔ Effective <strong class="text-sm font-black font-mono">₹{{ effectiveMenuRate }}</strong> / Pax</span>
                                 </div>
 
-                                <!-- Extra Fooding Addons Grid -->
+                                <!-- Special Servings & Breakfast Addons -->
                                 <div class="pt-2 border-t border-slate-100 space-y-2">
-                                    <div class="flex items-center justify-between text-[11px] font-bold text-slate-700">
-                                        <span>Special Servings & Breakfast Addons</span>
-                                        <span class="font-mono text-purple-700">₹{{ extraFoodingTotal.toLocaleString('en-IN') }}</span>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-[11px] font-bold text-slate-700">Special Servings & Breakfast Addons</span>
+                                        <span class="font-mono text-xs font-bold text-purple-700">
+                                            ₹{{ ((form.engagementBreakfastPax * 200) + (form.regularBreakfastPax * 300) + (form.bainaBoxes * 260) + (form.mandapServingsPax * 60)).toLocaleString('en-IN') }}
+                                        </span>
                                     </div>
-
-                                    <div class="grid grid-cols-2 gap-2 text-xs">
-                                        <!-- Engagement Breakfast @200 -->
+                                    <div class="grid grid-cols-2 gap-2">
                                         <div class="p-2 rounded-lg bg-slate-50 border border-slate-200">
                                             <div class="flex justify-between items-center mb-1">
                                                 <span class="text-[10px] font-bold text-slate-700">Engagement Bf (@₹200)</span>
@@ -1316,7 +1489,6 @@ const shareOnWhatsApp = () => {
                                             />
                                         </div>
 
-                                        <!-- Regular Breakfast @300 -->
                                         <div class="p-2 rounded-lg bg-slate-50 border border-slate-200">
                                             <div class="flex justify-between items-center mb-1">
                                                 <span class="text-[10px] font-bold text-slate-700">Regular Bf (@₹300)</span>
@@ -1331,7 +1503,6 @@ const shareOnWhatsApp = () => {
                                             />
                                         </div>
 
-                                        <!-- Baina @260 per pentagon box -->
                                         <div class="p-2 rounded-lg bg-slate-50 border border-slate-200">
                                             <div class="flex justify-between items-center mb-1">
                                                 <span class="text-[10px] font-bold text-slate-700">Baina Box (@₹260)</span>
@@ -1346,7 +1517,6 @@ const shareOnWhatsApp = () => {
                                             />
                                         </div>
 
-                                        <!-- Mandap Servings @60 -->
                                         <div class="p-2 rounded-lg bg-slate-50 border border-slate-200">
                                             <div class="flex justify-between items-center mb-1">
                                                 <span class="text-[10px] font-bold text-slate-700">Mandap Servings (@₹60)</span>
@@ -1364,7 +1534,7 @@ const shareOnWhatsApp = () => {
                                 </div>
 
                                 <!-- Official Docx Menu Selection Panel (Interactive Checkboxes for Manager) -->
-                                <div class="pt-2 border-t border-slate-100">
+                                <div class="pt-2 border-t border-slate-100 flex-1 flex flex-col min-h-0">
                                     <div class="flex items-center justify-between mb-2">
                                         <div class="flex items-center gap-1.5">
                                             <span class="text-[11px] font-bold text-slate-900">
@@ -1379,18 +1549,19 @@ const shareOnWhatsApp = () => {
                                         </div>
                                     </div>
 
-                                    <div class="max-h-64 overflow-y-auto p-2.5 rounded-lg bg-slate-50/80 border border-slate-200 text-[11px] space-y-3 custom-scrollbar">
+                                    <!-- Full-Height Expandable Scrollable Course Container (No Empty Gap) -->
+                                    <div class="flex-1 min-h-[460px] max-h-[660px] overflow-y-auto p-2.5 rounded-lg bg-slate-50/80 border border-slate-200 text-[11px] space-y-3 custom-scrollbar">
                                         <!-- Welcome Drinks -->
                                         <div class="p-2 rounded bg-white border border-slate-200/80">
                                             <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
                                                 <span>🍹 Welcome Drinks</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.welcomeDrinks) >= currentMenuCatalog.welcomeDrinksCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.welcomeDrinks) }}/{{ currentMenuCatalog.welcomeDrinksCount }} Picked
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.welcomeDrinks, currentMenuCatalog.welcomeDrinksCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.welcomeDrinks) }}/{{ currentMenuCatalog.welcomeDrinksCount }} {{ isCategoryFull(currentMenuCatalog.welcomeDrinks, currentMenuCatalog.welcomeDrinksCount) ? 'Max' : 'Picked' }}
                                                 </span>
                                             </div>
                                             <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.welcomeDrinks" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                <label v-for="item in currentMenuCatalog.welcomeDrinks" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.welcomeDrinks, currentMenuCatalog.welcomeDrinksCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.welcomeDrinks, currentMenuCatalog.welcomeDrinksCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.welcomeDrinks, currentMenuCatalog.welcomeDrinksCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
                                                     <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
                                                 </label>
                                             </div>
@@ -1400,13 +1571,13 @@ const shareOnWhatsApp = () => {
                                         <div class="p-2 rounded bg-white border border-slate-200/80">
                                             <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
                                                 <span>☕ Hot Beverages</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.hotDrinks) >= currentMenuCatalog.hotDrinksCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.hotDrinks) }}/{{ currentMenuCatalog.hotDrinksCount }} Picked
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.hotDrinks, currentMenuCatalog.hotDrinksCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.hotDrinks) }}/{{ currentMenuCatalog.hotDrinksCount }} {{ isCategoryFull(currentMenuCatalog.hotDrinks, currentMenuCatalog.hotDrinksCount) ? 'Max' : 'Picked' }}
                                                 </span>
                                             </div>
                                             <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.hotDrinks" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                <label v-for="item in currentMenuCatalog.hotDrinks" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.hotDrinks, currentMenuCatalog.hotDrinksCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.hotDrinks, currentMenuCatalog.hotDrinksCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.hotDrinks, currentMenuCatalog.hotDrinksCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
                                                     <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
                                                 </label>
                                             </div>
@@ -1416,13 +1587,13 @@ const shareOnWhatsApp = () => {
                                         <div v-if="currentMenuCatalog.soups.length" class="p-2 rounded bg-white border border-slate-200/80">
                                             <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
                                                 <span>🍲 Soups</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.soups) >= currentMenuCatalog.soupsCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.soups) }}/{{ currentMenuCatalog.soupsCount }} Picked
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.soups, currentMenuCatalog.soupsCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.soups) }}/{{ currentMenuCatalog.soupsCount }} {{ isCategoryFull(currentMenuCatalog.soups, currentMenuCatalog.soupsCount) ? 'Max' : 'Picked' }}
                                                 </span>
                                             </div>
                                             <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.soups" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                <label v-for="item in currentMenuCatalog.soups" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.soups, currentMenuCatalog.soupsCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.soups, currentMenuCatalog.soupsCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.soups, currentMenuCatalog.soupsCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
                                                     <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
                                                 </label>
                                             </div>
@@ -1432,13 +1603,13 @@ const shareOnWhatsApp = () => {
                                         <div class="p-2 rounded bg-white border border-slate-200/80">
                                             <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
                                                 <span>🍢 Starters & Snacks</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.starters) >= currentMenuCatalog.startersCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.starters) }}/{{ currentMenuCatalog.startersCount }} Picked
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.starters, currentMenuCatalog.startersCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.starters) }}/{{ currentMenuCatalog.startersCount }} {{ isCategoryFull(currentMenuCatalog.starters, currentMenuCatalog.startersCount) ? 'Max' : 'Picked' }}
                                                 </span>
                                             </div>
                                             <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.starters" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                <label v-for="item in currentMenuCatalog.starters" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.starters, currentMenuCatalog.startersCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.starters, currentMenuCatalog.startersCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.starters, currentMenuCatalog.startersCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
                                                     <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
                                                 </label>
                                             </div>
@@ -1448,13 +1619,13 @@ const shareOnWhatsApp = () => {
                                         <div class="p-2 rounded bg-white border border-slate-200/80">
                                             <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
                                                 <span>🍲 Dal Preparation</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.dal) >= currentMenuCatalog.dalCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.dal) }}/{{ currentMenuCatalog.dalCount }} Picked
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.dal, currentMenuCatalog.dalCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.dal) }}/{{ currentMenuCatalog.dalCount }} {{ isCategoryFull(currentMenuCatalog.dal, currentMenuCatalog.dalCount) ? 'Max' : 'Picked' }}
                                                 </span>
                                             </div>
                                             <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.dal" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                <label v-for="item in currentMenuCatalog.dal" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.dal, currentMenuCatalog.dalCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.dal, currentMenuCatalog.dalCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.dal, currentMenuCatalog.dalCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
                                                     <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
                                                 </label>
                                             </div>
@@ -1464,13 +1635,13 @@ const shareOnWhatsApp = () => {
                                         <div class="p-2 rounded bg-white border border-slate-200/80">
                                             <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
                                                 <span>🧀 Paneer Specialty</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.paneer) >= currentMenuCatalog.paneerCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.paneer) }}/{{ currentMenuCatalog.paneerCount }} Picked
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.paneer, currentMenuCatalog.paneerCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.paneer) }}/{{ currentMenuCatalog.paneerCount }} {{ isCategoryFull(currentMenuCatalog.paneer, currentMenuCatalog.paneerCount) ? 'Max' : 'Picked' }}
                                                 </span>
                                             </div>
                                             <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.paneer" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                <label v-for="item in currentMenuCatalog.paneer" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.paneer, currentMenuCatalog.paneerCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.paneer, currentMenuCatalog.paneerCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.paneer, currentMenuCatalog.paneerCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
                                                     <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
                                                 </label>
                                             </div>
@@ -1480,13 +1651,13 @@ const shareOnWhatsApp = () => {
                                         <div class="p-2 rounded bg-white border border-slate-200/80">
                                             <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
                                                 <span>🥦 Dry Seasonal Veg</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.dryVeg) >= currentMenuCatalog.dryVegCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.dryVeg) }}/{{ currentMenuCatalog.dryVegCount }} Picked
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.dryVeg, currentMenuCatalog.dryVegCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.dryVeg) }}/{{ currentMenuCatalog.dryVegCount }} {{ isCategoryFull(currentMenuCatalog.dryVeg, currentMenuCatalog.dryVegCount) ? 'Max' : 'Picked' }}
                                                 </span>
                                             </div>
                                             <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.dryVeg" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                <label v-for="item in currentMenuCatalog.dryVeg" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.dryVeg, currentMenuCatalog.dryVegCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.dryVeg, currentMenuCatalog.dryVegCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.dryVeg, currentMenuCatalog.dryVegCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
                                                     <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
                                                 </label>
                                             </div>
@@ -1496,13 +1667,13 @@ const shareOnWhatsApp = () => {
                                         <div v-if="currentMenuCatalog.gravyVeg.length" class="p-2 rounded bg-white border border-slate-200/80">
                                             <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
                                                 <span>🥘 Rich Gravy Veg</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.gravyVeg) >= currentMenuCatalog.gravyVegCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.gravyVeg) }}/{{ currentMenuCatalog.gravyVegCount }} Picked
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.gravyVeg, currentMenuCatalog.gravyVegCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.gravyVeg) }}/{{ currentMenuCatalog.gravyVegCount }} {{ isCategoryFull(currentMenuCatalog.gravyVeg, currentMenuCatalog.gravyVegCount) ? 'Max' : 'Picked' }}
                                                 </span>
                                             </div>
                                             <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.gravyVeg" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                <label v-for="item in currentMenuCatalog.gravyVeg" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.gravyVeg, currentMenuCatalog.gravyVegCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.gravyVeg, currentMenuCatalog.gravyVegCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.gravyVeg, currentMenuCatalog.gravyVegCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
                                                     <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
                                                 </label>
                                             </div>
@@ -1512,13 +1683,13 @@ const shareOnWhatsApp = () => {
                                         <div class="p-2 rounded bg-white border border-slate-200/80">
                                             <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
                                                 <span>🍚 Basmati Rice & Pulao</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.rice) >= currentMenuCatalog.riceCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.rice) }}/{{ currentMenuCatalog.riceCount }} Picked
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.rice, currentMenuCatalog.riceCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.rice) }}/{{ currentMenuCatalog.riceCount }} {{ isCategoryFull(currentMenuCatalog.rice, currentMenuCatalog.riceCount) ? 'Max' : 'Picked' }}
                                                 </span>
                                             </div>
                                             <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.rice" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                <label v-for="item in currentMenuCatalog.rice" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.rice, currentMenuCatalog.riceCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.rice, currentMenuCatalog.riceCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.rice, currentMenuCatalog.riceCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
                                                     <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
                                                 </label>
                                             </div>
@@ -1528,13 +1699,13 @@ const shareOnWhatsApp = () => {
                                         <div class="p-2 rounded bg-white border border-slate-200/80">
                                             <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
                                                 <span>🥣 Curd & Raita</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.raita) >= currentMenuCatalog.raitaCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.raita) }}/{{ currentMenuCatalog.raitaCount }} Picked
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.raita, currentMenuCatalog.raitaCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.raita) }}/{{ currentMenuCatalog.raitaCount }} {{ isCategoryFull(currentMenuCatalog.raita, currentMenuCatalog.raitaCount) ? 'Max' : 'Picked' }}
                                                 </span>
                                             </div>
                                             <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.raita" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                <label v-for="item in currentMenuCatalog.raita" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.raita, currentMenuCatalog.raitaCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.raita, currentMenuCatalog.raitaCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.raita, currentMenuCatalog.raitaCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
                                                     <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
                                                 </label>
                                             </div>
@@ -1544,13 +1715,13 @@ const shareOnWhatsApp = () => {
                                         <div class="p-2 rounded bg-white border border-slate-200/80">
                                             <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
                                                 <span>🫓 Assorted Tandoor Breads</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.breads) >= currentMenuCatalog.breadsCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.breads) }}/{{ currentMenuCatalog.breadsCount }} Picked
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.breads, currentMenuCatalog.breadsCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.breads) }}/{{ currentMenuCatalog.breadsCount }} {{ isCategoryFull(currentMenuCatalog.breads, currentMenuCatalog.breadsCount) ? 'Max' : 'Picked' }}
                                                 </span>
                                             </div>
                                             <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.breads" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                <label v-for="item in currentMenuCatalog.breads" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.breads, currentMenuCatalog.breadsCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.breads, currentMenuCatalog.breadsCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.breads, currentMenuCatalog.breadsCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
                                                     <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
                                                 </label>
                                             </div>
@@ -1560,13 +1731,13 @@ const shareOnWhatsApp = () => {
                                         <div class="p-2 rounded bg-white border border-slate-200/80">
                                             <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
                                                 <span>🍨 Desserts & Halwas</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.desserts) >= currentMenuCatalog.dessertsCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.desserts) }}/{{ currentMenuCatalog.dessertsCount }} Picked
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.desserts, currentMenuCatalog.dessertsCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.desserts) }}/{{ currentMenuCatalog.dessertsCount }} {{ isCategoryFull(currentMenuCatalog.desserts, currentMenuCatalog.dessertsCount) ? 'Max' : 'Picked' }}
                                                 </span>
                                             </div>
                                             <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.desserts" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                <label v-for="item in currentMenuCatalog.desserts" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.desserts, currentMenuCatalog.dessertsCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.desserts, currentMenuCatalog.dessertsCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.desserts, currentMenuCatalog.dessertsCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
                                                     <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
                                                 </label>
                                             </div>
@@ -1576,13 +1747,13 @@ const shareOnWhatsApp = () => {
                                         <div v-if="currentMenuCatalog.liveCounters.length" class="p-2 rounded bg-white border border-slate-200/80">
                                             <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
                                                 <span>🍳 Live Cooking Stations</span>
-                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.liveCounters) >= currentMenuCatalog.liveCountersCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
-                                                    {{ getCategorySelectedCount(currentMenuCatalog.liveCounters) }}/{{ currentMenuCatalog.liveCountersCount }} Picked
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded transition" :class="isCategoryFull(currentMenuCatalog.liveCounters, currentMenuCatalog.liveCountersCount) ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 font-black' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.liveCounters) }}/{{ currentMenuCatalog.liveCountersCount }} {{ isCategoryFull(currentMenuCatalog.liveCounters, currentMenuCatalog.liveCountersCount) ? 'Max' : 'Picked' }}
                                                 </span>
                                             </div>
                                             <div class="grid grid-cols-2 gap-1 text-[10.5px]">
-                                                <label v-for="item in currentMenuCatalog.liveCounters" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
-                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                <label v-for="item in currentMenuCatalog.liveCounters" :key="item" :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.liveCounters, currentMenuCatalog.liveCountersCount)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item, currentMenuCatalog.liveCounters, currentMenuCatalog.liveCountersCount)" :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(currentMenuCatalog.liveCounters, currentMenuCatalog.liveCountersCount))" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer" />
                                                     <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
                                                 </label>
                                             </div>
@@ -2674,6 +2845,46 @@ const shareOnWhatsApp = () => {
                                 <li><strong>Settlement</strong>: 100% net balance (₹{{ balanceDueAmount.toLocaleString('en-IN') }}) must be cleared before event commencement prior to hall key handover.</li>
                             </ol>
 
+                            <!-- Digital Integrity Seal & Slim Barcode Block ("Ptla sa Barcode") -->
+                            <div class="p-2.5 rounded border border-slate-300 bg-slate-50 flex flex-wrap items-center justify-between gap-3 text-xs">
+                                <div class="flex items-center gap-3">
+                                    <!-- Scannable QR Code -->
+                                    <div class="flex flex-col items-center bg-white p-1 rounded border border-slate-300 shadow-2xs">
+                                        <img v-if="qrCodeDataUrl" :src="qrCodeDataUrl" alt="Verification QR" class="h-16 w-16" />
+                                        <span class="text-[8px] font-mono text-slate-500 font-bold mt-0.5">Scan to Verify</span>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-1.5">
+                                            <ShieldCheck class="h-3.5 w-3.5 text-emerald-600" />
+                                            <span class="text-[11px] font-black uppercase tracking-wider text-slate-900">Official Digital Integrity Seal</span>
+                                            <span v-if="form.isLocked" class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                                🔒 SEALED & FROZEN
+                                            </span>
+                                            <span v-else class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                                                🔓 UNLOCKED
+                                            </span>
+                                        </div>
+                                        <div class="text-[10px] font-mono text-slate-700 mt-0.5">
+                                            Auth Token: <strong class="text-purple-900">{{ form.digitalSignature || `SN-SIG-${form.voucherNo}-CONFIRMED` }}</strong>
+                                        </div>
+                                        <div class="text-[9px] text-slate-500 mt-0.5">
+                                            Sealed by: <strong>{{ form.lockedBy || 'Banquet Operations Manager' }}</strong> • {{ form.lockedAt || 'Official Record' }}
+                                        </div>
+                                        <div class="text-[9px] text-purple-700 font-medium mt-0.5">
+                                            Scan QR with any smartphone to inspect full revision history audit log.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Slim Barcode ("Ptla sa Barcode") -->
+                                <div class="flex flex-col items-center bg-white px-3 py-1 rounded border border-slate-300 shadow-2xs">
+                                    <svg ref="barcodeSvgPrint" class="h-6 w-48"></svg>
+                                    <span class="text-[9px] font-mono font-bold text-slate-700 mt-0.5">
+                                        {{ form.digitalSignature || `SN-SIG-${form.voucherNo}` }}
+                                    </span>
+                                </div>
+                            </div>
+
                             <!-- Final Signatures with Official Senani Seal -->
                             <div class="pt-4 grid grid-cols-2 gap-8 text-center text-[11px] border-t border-slate-200 mt-2">
                                 <div>
@@ -2772,6 +2983,123 @@ const shareOnWhatsApp = () => {
                             <ExternalLink class="h-3.5 w-3.5" />
                             <span>Preview Guest Portal in New Tab</span>
                         </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================================================== -->
+            <!-- DIGITAL AUDIT TRAIL & REVISION HISTORY MODAL          -->
+            <!-- ===================================================== -->
+            <div
+                v-if="showAuditModal"
+                class="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
+            >
+                <div class="w-full max-w-xl bg-white rounded-2xl border border-slate-200 shadow-2xl p-5 space-y-4 max-h-[85vh] flex flex-col">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                        <div class="flex items-center gap-2">
+                            <div class="p-2 rounded-xl bg-purple-100 text-[#673DE6]">
+                                <History class="h-4 w-4" />
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900">Banquet Voucher Audit Trail & Revisions</h3>
+                                <p class="text-[11px] text-slate-500 font-mono">Voucher #{{ form.voucherNo }} • {{ form.guestName }}</p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            @click="showAuditModal = false"
+                            class="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
+                        >
+                            <X class="h-4 w-4" />
+                        </button>
+                    </div>
+
+                    <!-- Timeline Content -->
+                    <div class="flex-1 overflow-y-auto pr-1 space-y-4 text-xs custom-scrollbar">
+                        <div v-if="!form.auditLog || !form.auditLog.length" class="text-center py-8 text-slate-400">
+                            No revision logs recorded yet for this voucher.
+                        </div>
+                        <div v-else class="relative pl-5 border-l-2 border-slate-200 space-y-4">
+                            <div
+                                v-for="entry in form.auditLog"
+                                :key="entry.id"
+                                class="relative group"
+                            >
+                                <div
+                                    class="absolute -left-[27px] top-0 h-4 w-4 rounded-full flex items-center justify-center border text-[9px]"
+                                    :class="{
+                                        'bg-emerald-500 text-white border-emerald-200': entry.action === 'locked',
+                                        'bg-amber-500 text-white border-amber-200': entry.action === 'unlocked',
+                                        'bg-blue-500 text-white border-blue-200': entry.action === 'updated',
+                                        'bg-purple-500 text-white border-purple-200': entry.action === 'created',
+                                    }"
+                                >
+                                    <Lock v-if="entry.action === 'locked'" class="h-2 w-2" />
+                                    <Unlock v-else-if="entry.action === 'unlocked'" class="h-2 w-2" />
+                                    <Check v-else-if="entry.action === 'created'" class="h-2 w-2" />
+                                    <span v-else>✏️</span>
+                                </div>
+
+                                <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-1.5">
+                                            <span
+                                                class="font-black uppercase tracking-wider text-[9px] px-1.5 py-0.5 rounded"
+                                                :class="{
+                                                    'bg-emerald-100 text-emerald-800': entry.action === 'locked',
+                                                    'bg-amber-100 text-amber-800': entry.action === 'unlocked',
+                                                    'bg-blue-100 text-blue-800': entry.action === 'updated',
+                                                    'bg-purple-100 text-purple-800': entry.action === 'created',
+                                                }"
+                                            >
+                                                {{ entry.action.toUpperCase() }}
+                                            </span>
+                                            <span class="font-bold text-slate-800">{{ entry.actor }}</span>
+                                        </div>
+                                        <span class="text-[10px] font-mono text-slate-400">{{ entry.timestamp }}</span>
+                                    </div>
+
+                                    <p class="text-[11px] text-slate-600">{{ entry.details }}</p>
+
+                                    <div v-if="entry.digitalSignature" class="p-1 rounded bg-white border border-slate-200 font-mono text-[10px] text-amber-800">
+                                        Digital Signature Token: <strong>{{ entry.digitalSignature }}</strong>
+                                    </div>
+
+                                    <div v-if="entry.previousSignature" class="text-[9.5px] font-mono text-slate-400">
+                                        Previous Seal Voided: <span class="line-through text-slate-500">{{ entry.previousSignature }}</span>
+                                    </div>
+
+                                    <div v-if="entry.changes && entry.changes.length" class="mt-1 pt-1 border-t border-slate-200/80 space-y-0.5">
+                                        <div class="text-[9.5px] font-bold text-slate-500 uppercase">Recorded Updates:</div>
+                                        <div
+                                            v-for="(chg, cIdx) in entry.changes"
+                                            :key="cIdx"
+                                            class="text-[10.5px] text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200 font-medium"
+                                        >
+                                            • {{ chg }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+                        <a
+                            :href="`/verify/voucher?v=${form.voucherNo}`"
+                            target="_blank"
+                            class="text-xs font-bold text-purple-700 hover:text-purple-800 flex items-center gap-1"
+                        >
+                            <span>Open Public Verification Page</span>
+                            <ExternalLink class="h-3 w-3" />
+                        </a>
+                        <button
+                            type="button"
+                            @click="showAuditModal = false"
+                            class="px-3 py-1.5 rounded-lg bg-slate-800 text-white font-bold text-xs hover:bg-slate-900 cursor-pointer transition"
+                        >
+                            Close
+                        </button>
                     </div>
                 </div>
             </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, nextTick } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import {
     Utensils,
@@ -20,9 +20,11 @@ import {
     Coffee,
     Wine,
     ChevronRight,
+    ShieldCheck,
 } from 'lucide-vue-next';
 import { type BanquetInquiry } from '@/components/banquet/InquiryWizardModal.vue';
 import { menuCatalogs, type MenuCatalogTier } from '@/components/banquet/menuCatalog';
+import { renderSlimBarcode } from '@/components/banquet/auditTrail';
 
 defineOptions({
     layout: null,
@@ -92,7 +94,11 @@ const defaultInquiry: BanquetInquiry = {
     paymentMode: 'Cash',
     paymentDate: '09/09/2026',
     status: 'pending_md',
-    isLocked: false,
+    isLocked: true,
+    lockedBy: 'Banquet Operations Manager',
+    lockedAt: '12/Nov/2026, 08:30 PM',
+    digitalSignature: 'SN-SIG-250-9F83A12E-V2',
+    barcodeValue: 'SN-SIG-250-9F83A12E-V2',
 };
 
 // -------------------------------------------------------------
@@ -101,9 +107,92 @@ const defaultInquiry: BanquetInquiry = {
 const currentInquiry = ref<BanquetInquiry>({ ...defaultInquiry });
 const saveSuccessMessage = ref('');
 const isSaving = ref(false);
+const barcodeSvgGuest = ref<SVGSVGElement | null>(null);
+
+// Menu Catalog for current tier
+const catalog = computed<MenuCatalogTier>(() => {
+    const tier = currentInquiry.value.menuRateTier || 799;
+    if (tier === 499 || tier === 799 || tier === 999 || tier === 1199) {
+        return menuCatalogs[tier];
+    }
+    return menuCatalogs[799];
+});
+
+// Render Slim Barcode
+const renderGuestBarcode = () => {
+    if (barcodeSvgGuest.value && currentInquiry.value.isLocked) {
+        const sig = currentInquiry.value.digitalSignature || `SN-SIG-${currentInquiry.value.voucherNo}`;
+        renderSlimBarcode(barcodeSvgGuest.value, sig, 22);
+    }
+};
+
+// -------------------------------------------------------------
+// Selection Helpers & Strict Quota Enforcement
+// -------------------------------------------------------------
+const isSelected = (item: string) => {
+    return (currentInquiry.value.selectedMenuCatalogItems || []).includes(item);
+};
+
+const getCategoryCount = (items: string[]) => {
+    const selected = currentInquiry.value.selectedMenuCatalogItems || [];
+    return items.filter(it => selected.includes(it)).length;
+};
+
+const isCategoryFull = (items: string[], maxCount: number) => {
+    return getCategoryCount(items) >= maxCount;
+};
+
+// Prevent exceeding quotas by auto-trimming excess selections
+const sanitizeCatalogSelections = () => {
+    if (!currentInquiry.value.selectedMenuCatalogItems || !currentInquiry.value.selectedMenuCatalogItems.length) return;
+    const cat = catalog.value;
+    const allowed: string[] = [];
+
+    const keepWithinLimit = (items: string[], max: number) => {
+        if (!items || !items.length) return;
+        const selected = (currentInquiry.value.selectedMenuCatalogItems || []).filter(it => items.includes(it));
+        allowed.push(...selected.slice(0, max));
+    };
+
+    keepWithinLimit(cat.welcomeDrinks, cat.welcomeDrinksCount);
+    keepWithinLimit(cat.hotDrinks, cat.hotDrinksCount);
+    keepWithinLimit(cat.soups, cat.soupsCount);
+    keepWithinLimit(cat.starters, cat.startersCount);
+    keepWithinLimit(cat.dal, cat.dalCount);
+    keepWithinLimit(cat.paneer, cat.paneerCount);
+    keepWithinLimit(cat.dryVeg, cat.dryVegCount);
+    keepWithinLimit(cat.gravyVeg, cat.gravyVegCount);
+    keepWithinLimit(cat.rice, cat.riceCount);
+    keepWithinLimit(cat.raita, cat.raitaCount);
+    keepWithinLimit(cat.breads, cat.breadsCount);
+    keepWithinLimit(cat.desserts, cat.dessertsCount);
+    keepWithinLimit(cat.liveCounters, cat.liveCountersCount);
+
+    currentInquiry.value.selectedMenuCatalogItems = allowed;
+};
+
+const toggleItem = (item: string, catItems?: string[], maxCount?: number) => {
+    if (currentInquiry.value.isLocked) return;
+    
+    if (!currentInquiry.value.selectedMenuCatalogItems) {
+        currentInquiry.value.selectedMenuCatalogItems = [];
+    }
+    const idx = currentInquiry.value.selectedMenuCatalogItems.indexOf(item);
+    if (idx > -1) {
+        currentInquiry.value.selectedMenuCatalogItems.splice(idx, 1);
+    } else {
+        if (catItems && typeof maxCount === 'number') {
+            if (isCategoryFull(catItems, maxCount)) {
+                // Quota reached - prohibit selecting more than allowed limit
+                return;
+            }
+        }
+        currentInquiry.value.selectedMenuCatalogItems.push(item);
+    }
+};
 
 // Load inquiry from localStorage based on query param ?v=250
-onMounted(() => {
+onMounted(async () => {
     if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
         const voucher = params.get('v') || params.get('voucher') || '250';
@@ -121,42 +210,11 @@ onMounted(() => {
             console.error('Error loading inquiry from localStorage', e);
         }
     }
+
+    sanitizeCatalogSelections();
+    await nextTick();
+    renderGuestBarcode();
 });
-
-// Menu Catalog for current tier
-const catalog = computed<MenuCatalogTier>(() => {
-    const tier = currentInquiry.value.menuRateTier || 799;
-    if (tier === 499 || tier === 799 || tier === 999 || tier === 1199) {
-        return menuCatalogs[tier];
-    }
-    return menuCatalogs[799];
-});
-
-// -------------------------------------------------------------
-// Selection Helpers
-// -------------------------------------------------------------
-const isSelected = (item: string) => {
-    return (currentInquiry.value.selectedMenuCatalogItems || []).includes(item);
-};
-
-const getCategoryCount = (items: string[]) => {
-    const selected = currentInquiry.value.selectedMenuCatalogItems || [];
-    return items.filter(it => selected.includes(it)).length;
-};
-
-const toggleItem = (item: string) => {
-    if (currentInquiry.value.isLocked) return;
-    
-    if (!currentInquiry.value.selectedMenuCatalogItems) {
-        currentInquiry.value.selectedMenuCatalogItems = [];
-    }
-    const idx = currentInquiry.value.selectedMenuCatalogItems.indexOf(item);
-    if (idx > -1) {
-        currentInquiry.value.selectedMenuCatalogItems.splice(idx, 1);
-    } else {
-        currentInquiry.value.selectedMenuCatalogItems.push(item);
-    }
-};
 
 // Save Selections
 const saveGuestPreferences = () => {
@@ -251,25 +309,54 @@ const triggerPrint = () => {
             <!-- LOCK STATUS BANNER -->
             <div
                 v-if="currentInquiry.isLocked"
-                class="p-4 sm:p-5 rounded-2xl bg-amber-50 border-2 border-amber-300 text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs"
+                class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-50 via-amber-50/60 to-white border-2 border-amber-300 text-amber-950 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm"
             >
-                <div class="flex items-start gap-3">
-                    <div class="p-2 rounded-xl bg-amber-200 text-amber-900 shrink-0 mt-0.5">
+                <div class="flex items-start gap-3.5">
+                    <div class="p-2.5 rounded-xl bg-amber-200 text-amber-900 shrink-0 mt-0.5 shadow-2xs">
                         <Lock class="h-5 w-5" />
                     </div>
-                    <div>
-                        <div class="text-sm font-black tracking-tight">DEAL & MENU ARE LOCKED BY HOTEL MANAGEMENT</div>
-                        <p class="text-xs text-amber-800 mt-0.5 leading-relaxed">
-                            This catering selection was officially locked on <strong>{{ currentInquiry.lockedAt || 'Event Confirmation' }}</strong> by {{ currentInquiry.lockedBy || 'Banquet Manager' }}. Choices are frozen for kitchen preparation. If you require amendments, please contact the manager.
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <div class="text-sm font-black tracking-tight">DEAL & MENU LOCKED BY HOTEL MANAGEMENT</div>
+                            <span class="text-[10px] font-mono px-2 py-0.5 bg-amber-200/80 text-amber-900 rounded font-bold">LOCKED</span>
+                        </div>
+                        <p class="text-xs text-amber-800 leading-relaxed max-w-2xl">
+                            This catering selection was officially sealed on <strong>{{ currentInquiry.lockedAt || 'Event Confirmation' }}</strong> by {{ currentInquiry.lockedBy || 'Banquet Manager' }}. Choices are frozen for kitchen prep and billing integrity.
                         </p>
+                        <div v-if="currentInquiry.digitalSignature" class="flex flex-wrap items-center gap-2 pt-1">
+                            <span class="text-[10px] font-mono text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 font-semibold">
+                                🔒 {{ currentInquiry.digitalSignature }}
+                            </span>
+                            <span v-if="currentInquiry.auditLog?.length" class="text-[10px] text-amber-700 font-medium">
+                                (Revisions Tracked: {{ currentInquiry.auditLog.length }})
+                            </span>
+                        </div>
                     </div>
                 </div>
-                <a
-                    href="tel:+919794152223"
-                    class="px-3.5 py-2 rounded-xl bg-amber-900 text-white hover:bg-amber-800 text-xs font-bold shrink-0 transition"
-                >
-                    Request Unlock
-                </a>
+
+                <!-- Slim Barcode & Verify Link -->
+                <div class="flex flex-col sm:flex-row items-center gap-3 shrink-0 self-stretch sm:self-auto justify-end">
+                    <div class="bg-white/90 p-2 rounded-xl border border-amber-200 flex flex-col items-center">
+                        <svg ref="barcodeSvgGuest" class="h-6 max-w-[150px]"></svg>
+                        <span class="text-[9px] font-mono font-bold text-slate-500 mt-0.5">SN-BARCODE #{{ currentInquiry.voucherNo }}</span>
+                    </div>
+                    <div class="flex flex-col gap-1.5 w-full sm:w-auto">
+                        <a
+                            :href="'/verify/voucher?v=' + currentInquiry.voucherNo"
+                            target="_blank"
+                            class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#673DE6] text-white hover:bg-[#5832D0] text-xs font-bold shadow-xs transition"
+                        >
+                            <ShieldCheck class="h-3.5 w-3.5" />
+                            <span>Verify Seal</span>
+                        </a>
+                        <a
+                            href="tel:+919794152223"
+                            class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-100 text-amber-900 hover:bg-amber-200 text-xs font-bold transition border border-amber-300"
+                        >
+                            Request Unlock
+                        </a>
+                    </div>
+                </div>
             </div>
 
             <div
@@ -376,12 +463,13 @@ const triggerPrint = () => {
                             <span
                                 :class="[
                                     'text-[10px] font-bold px-2 py-0.5 rounded-full border',
-                                    getCategoryCount(catalog.welcomeDrinks) === catalog.welcomeDrinksCount
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    getCategoryCount(catalog.welcomeDrinks) >= catalog.welcomeDrinksCount
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
                                 ]"
                             >
-                                {{ getCategoryCount(catalog.welcomeDrinks) }}/{{ catalog.welcomeDrinksCount }} Picked
+                                {{ getCategoryCount(catalog.welcomeDrinks) }}/{{ catalog.welcomeDrinksCount }}
+                                {{ getCategoryCount(catalog.welcomeDrinks) >= catalog.welcomeDrinksCount ? 'Max Picked' : 'Picked' }}
                             </span>
                         </div>
                         <div class="grid grid-cols-2 gap-1.5 text-xs">
@@ -390,15 +478,19 @@ const triggerPrint = () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:bg-purple-50/40',
+                                    currentInquiry.isLocked
+                                        ? 'cursor-not-allowed opacity-75'
+                                        : (!isSelected(item) && isCategoryFull(catalog.welcomeDrinks, catalog.welcomeDrinksCount))
+                                            ? 'opacity-40 cursor-not-allowed bg-slate-50'
+                                            : 'cursor-pointer hover:bg-purple-50/40',
                                     isSelected(item) ? 'bg-purple-50/60 border-purple-300 font-bold text-slate-900' : 'border-slate-100 text-slate-600'
                                 ]"
                             >
                                 <input
                                     type="checkbox"
                                     :checked="isSelected(item)"
-                                    @change="toggleItem(item)"
-                                    :disabled="currentInquiry.isLocked"
+                                    @change="toggleItem(item, catalog.welcomeDrinks, catalog.welcomeDrinksCount)"
+                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.welcomeDrinks, catalog.welcomeDrinksCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -415,12 +507,13 @@ const triggerPrint = () => {
                             <span
                                 :class="[
                                     'text-[10px] font-bold px-2 py-0.5 rounded-full border',
-                                    getCategoryCount(catalog.hotDrinks) === catalog.hotDrinksCount
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    getCategoryCount(catalog.hotDrinks) >= catalog.hotDrinksCount
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
                                 ]"
                             >
-                                {{ getCategoryCount(catalog.hotDrinks) }}/{{ catalog.hotDrinksCount }} Picked
+                                {{ getCategoryCount(catalog.hotDrinks) }}/{{ catalog.hotDrinksCount }}
+                                {{ getCategoryCount(catalog.hotDrinks) >= catalog.hotDrinksCount ? 'Max Picked' : 'Picked' }}
                             </span>
                         </div>
                         <div class="grid grid-cols-2 gap-1.5 text-xs">
@@ -430,15 +523,19 @@ const triggerPrint = () => {
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
                                     item.length > 25 ? 'col-span-2' : '',
-                                    currentInquiry.isLocked ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:bg-purple-50/40',
+                                    currentInquiry.isLocked
+                                        ? 'cursor-not-allowed opacity-75'
+                                        : (!isSelected(item) && isCategoryFull(catalog.hotDrinks, catalog.hotDrinksCount))
+                                            ? 'opacity-40 cursor-not-allowed bg-slate-50'
+                                            : 'cursor-pointer hover:bg-purple-50/40',
                                     isSelected(item) ? 'bg-purple-50/60 border-purple-300 font-bold text-slate-900' : 'border-slate-100 text-slate-600'
                                 ]"
                             >
                                 <input
                                     type="checkbox"
                                     :checked="isSelected(item)"
-                                    @change="toggleItem(item)"
-                                    :disabled="currentInquiry.isLocked"
+                                    @change="toggleItem(item, catalog.hotDrinks, catalog.hotDrinksCount)"
+                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.hotDrinks, catalog.hotDrinksCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -455,12 +552,13 @@ const triggerPrint = () => {
                             <span
                                 :class="[
                                     'text-[10px] font-bold px-2 py-0.5 rounded-full border',
-                                    getCategoryCount(catalog.soups) === catalog.soupsCount
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    getCategoryCount(catalog.soups) >= catalog.soupsCount
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
                                 ]"
                             >
-                                {{ getCategoryCount(catalog.soups) }}/{{ catalog.soupsCount }} Picked
+                                {{ getCategoryCount(catalog.soups) }}/{{ catalog.soupsCount }}
+                                {{ getCategoryCount(catalog.soups) >= catalog.soupsCount ? 'Max Picked' : 'Picked' }}
                             </span>
                         </div>
                         <div class="grid grid-cols-2 gap-1.5 text-xs">
@@ -469,15 +567,19 @@ const triggerPrint = () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:bg-purple-50/40',
+                                    currentInquiry.isLocked
+                                        ? 'cursor-not-allowed opacity-75'
+                                        : (!isSelected(item) && isCategoryFull(catalog.soups, catalog.soupsCount))
+                                            ? 'opacity-40 cursor-not-allowed bg-slate-50'
+                                            : 'cursor-pointer hover:bg-purple-50/40',
                                     isSelected(item) ? 'bg-purple-50/60 border-purple-300 font-bold text-slate-900' : 'border-slate-100 text-slate-600'
                                 ]"
                             >
                                 <input
                                     type="checkbox"
                                     :checked="isSelected(item)"
-                                    @change="toggleItem(item)"
-                                    :disabled="currentInquiry.isLocked"
+                                    @change="toggleItem(item, catalog.soups, catalog.soupsCount)"
+                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.soups, catalog.soupsCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -494,12 +596,13 @@ const triggerPrint = () => {
                             <span
                                 :class="[
                                     'text-[10px] font-bold px-2 py-0.5 rounded-full border',
-                                    getCategoryCount(catalog.starters) === catalog.startersCount
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    getCategoryCount(catalog.starters) >= catalog.startersCount
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
                                 ]"
                             >
-                                {{ getCategoryCount(catalog.starters) }}/{{ catalog.startersCount }} Picked
+                                {{ getCategoryCount(catalog.starters) }}/{{ catalog.startersCount }}
+                                {{ getCategoryCount(catalog.starters) >= catalog.startersCount ? 'Max Picked' : 'Picked' }}
                             </span>
                         </div>
                         <div class="grid grid-cols-2 gap-1.5 text-xs">
@@ -508,15 +611,19 @@ const triggerPrint = () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:bg-purple-50/40',
+                                    currentInquiry.isLocked
+                                        ? 'cursor-not-allowed opacity-75'
+                                        : (!isSelected(item) && isCategoryFull(catalog.starters, catalog.startersCount))
+                                            ? 'opacity-40 cursor-not-allowed bg-slate-50'
+                                            : 'cursor-pointer hover:bg-purple-50/40',
                                     isSelected(item) ? 'bg-purple-50/60 border-purple-300 font-bold text-slate-900' : 'border-slate-100 text-slate-600'
                                 ]"
                             >
                                 <input
                                     type="checkbox"
                                     :checked="isSelected(item)"
-                                    @change="toggleItem(item)"
-                                    :disabled="currentInquiry.isLocked"
+                                    @change="toggleItem(item, catalog.starters, catalog.startersCount)"
+                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.starters, catalog.startersCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -533,12 +640,13 @@ const triggerPrint = () => {
                             <span
                                 :class="[
                                     'text-[10px] font-bold px-2 py-0.5 rounded-full border',
-                                    getCategoryCount(catalog.dal) === catalog.dalCount
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    getCategoryCount(catalog.dal) >= catalog.dalCount
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
                                 ]"
                             >
-                                {{ getCategoryCount(catalog.dal) }}/{{ catalog.dalCount }} Picked
+                                {{ getCategoryCount(catalog.dal) }}/{{ catalog.dalCount }}
+                                {{ getCategoryCount(catalog.dal) >= catalog.dalCount ? 'Max Picked' : 'Picked' }}
                             </span>
                         </div>
                         <div class="grid grid-cols-2 gap-1.5 text-xs">
@@ -547,15 +655,19 @@ const triggerPrint = () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:bg-purple-50/40',
+                                    currentInquiry.isLocked
+                                        ? 'cursor-not-allowed opacity-75'
+                                        : (!isSelected(item) && isCategoryFull(catalog.dal, catalog.dalCount))
+                                            ? 'opacity-40 cursor-not-allowed bg-slate-50'
+                                            : 'cursor-pointer hover:bg-purple-50/40',
                                     isSelected(item) ? 'bg-purple-50/60 border-purple-300 font-bold text-slate-900' : 'border-slate-100 text-slate-600'
                                 ]"
                             >
                                 <input
                                     type="checkbox"
                                     :checked="isSelected(item)"
-                                    @change="toggleItem(item)"
-                                    :disabled="currentInquiry.isLocked"
+                                    @change="toggleItem(item, catalog.dal, catalog.dalCount)"
+                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.dal, catalog.dalCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -572,12 +684,13 @@ const triggerPrint = () => {
                             <span
                                 :class="[
                                     'text-[10px] font-bold px-2 py-0.5 rounded-full border',
-                                    getCategoryCount(catalog.paneer) === catalog.paneerCount
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    getCategoryCount(catalog.paneer) >= catalog.paneerCount
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
                                 ]"
                             >
-                                {{ getCategoryCount(catalog.paneer) }}/{{ catalog.paneerCount }} Picked
+                                {{ getCategoryCount(catalog.paneer) }}/{{ catalog.paneerCount }}
+                                {{ getCategoryCount(catalog.paneer) >= catalog.paneerCount ? 'Max Picked' : 'Picked' }}
                             </span>
                         </div>
                         <div class="grid grid-cols-2 gap-1.5 text-xs">
@@ -586,15 +699,19 @@ const triggerPrint = () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:bg-purple-50/40',
+                                    currentInquiry.isLocked
+                                        ? 'cursor-not-allowed opacity-75'
+                                        : (!isSelected(item) && isCategoryFull(catalog.paneer, catalog.paneerCount))
+                                            ? 'opacity-40 cursor-not-allowed bg-slate-50'
+                                            : 'cursor-pointer hover:bg-purple-50/40',
                                     isSelected(item) ? 'bg-purple-50/60 border-purple-300 font-bold text-slate-900' : 'border-slate-100 text-slate-600'
                                 ]"
                             >
                                 <input
                                     type="checkbox"
                                     :checked="isSelected(item)"
-                                    @change="toggleItem(item)"
-                                    :disabled="currentInquiry.isLocked"
+                                    @change="toggleItem(item, catalog.paneer, catalog.paneerCount)"
+                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.paneer, catalog.paneerCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -611,12 +728,13 @@ const triggerPrint = () => {
                             <span
                                 :class="[
                                     'text-[10px] font-bold px-2 py-0.5 rounded-full border',
-                                    getCategoryCount(catalog.dryVeg) === catalog.dryVegCount
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    getCategoryCount(catalog.dryVeg) >= catalog.dryVegCount
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
                                 ]"
                             >
-                                {{ getCategoryCount(catalog.dryVeg) }}/{{ catalog.dryVegCount }} Picked
+                                {{ getCategoryCount(catalog.dryVeg) }}/{{ catalog.dryVegCount }}
+                                {{ getCategoryCount(catalog.dryVeg) >= catalog.dryVegCount ? 'Max Picked' : 'Picked' }}
                             </span>
                         </div>
                         <div class="grid grid-cols-2 gap-1.5 text-xs">
@@ -625,15 +743,19 @@ const triggerPrint = () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:bg-purple-50/40',
+                                    currentInquiry.isLocked
+                                        ? 'cursor-not-allowed opacity-75'
+                                        : (!isSelected(item) && isCategoryFull(catalog.dryVeg, catalog.dryVegCount))
+                                            ? 'opacity-40 cursor-not-allowed bg-slate-50'
+                                            : 'cursor-pointer hover:bg-purple-50/40',
                                     isSelected(item) ? 'bg-purple-50/60 border-purple-300 font-bold text-slate-900' : 'border-slate-100 text-slate-600'
                                 ]"
                             >
                                 <input
                                     type="checkbox"
                                     :checked="isSelected(item)"
-                                    @change="toggleItem(item)"
-                                    :disabled="currentInquiry.isLocked"
+                                    @change="toggleItem(item, catalog.dryVeg, catalog.dryVegCount)"
+                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.dryVeg, catalog.dryVegCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -650,12 +772,13 @@ const triggerPrint = () => {
                             <span
                                 :class="[
                                     'text-[10px] font-bold px-2 py-0.5 rounded-full border',
-                                    getCategoryCount(catalog.gravyVeg) === catalog.gravyVegCount
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    getCategoryCount(catalog.gravyVeg) >= catalog.gravyVegCount
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
                                 ]"
                             >
-                                {{ getCategoryCount(catalog.gravyVeg) }}/{{ catalog.gravyVegCount }} Picked
+                                {{ getCategoryCount(catalog.gravyVeg) }}/{{ catalog.gravyVegCount }}
+                                {{ getCategoryCount(catalog.gravyVeg) >= catalog.gravyVegCount ? 'Max Picked' : 'Picked' }}
                             </span>
                         </div>
                         <div class="grid grid-cols-2 gap-1.5 text-xs">
@@ -664,15 +787,19 @@ const triggerPrint = () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:bg-purple-50/40',
+                                    currentInquiry.isLocked
+                                        ? 'cursor-not-allowed opacity-75'
+                                        : (!isSelected(item) && isCategoryFull(catalog.gravyVeg, catalog.gravyVegCount))
+                                            ? 'opacity-40 cursor-not-allowed bg-slate-50'
+                                            : 'cursor-pointer hover:bg-purple-50/40',
                                     isSelected(item) ? 'bg-purple-50/60 border-purple-300 font-bold text-slate-900' : 'border-slate-100 text-slate-600'
                                 ]"
                             >
                                 <input
                                     type="checkbox"
                                     :checked="isSelected(item)"
-                                    @change="toggleItem(item)"
-                                    :disabled="currentInquiry.isLocked"
+                                    @change="toggleItem(item, catalog.gravyVeg, catalog.gravyVegCount)"
+                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.gravyVeg, catalog.gravyVegCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -689,12 +816,13 @@ const triggerPrint = () => {
                             <span
                                 :class="[
                                     'text-[10px] font-bold px-2 py-0.5 rounded-full border',
-                                    getCategoryCount(catalog.rice) === catalog.riceCount
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    getCategoryCount(catalog.rice) >= catalog.riceCount
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
                                 ]"
                             >
-                                {{ getCategoryCount(catalog.rice) }}/{{ catalog.riceCount }} Picked
+                                {{ getCategoryCount(catalog.rice) }}/{{ catalog.riceCount }}
+                                {{ getCategoryCount(catalog.rice) >= catalog.riceCount ? 'Max Picked' : 'Picked' }}
                             </span>
                         </div>
                         <div class="grid grid-cols-2 gap-1.5 text-xs">
@@ -703,15 +831,19 @@ const triggerPrint = () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:bg-purple-50/40',
+                                    currentInquiry.isLocked
+                                        ? 'cursor-not-allowed opacity-75'
+                                        : (!isSelected(item) && isCategoryFull(catalog.rice, catalog.riceCount))
+                                            ? 'opacity-40 cursor-not-allowed bg-slate-50'
+                                            : 'cursor-pointer hover:bg-purple-50/40',
                                     isSelected(item) ? 'bg-purple-50/60 border-purple-300 font-bold text-slate-900' : 'border-slate-100 text-slate-600'
                                 ]"
                             >
                                 <input
                                     type="checkbox"
                                     :checked="isSelected(item)"
-                                    @change="toggleItem(item)"
-                                    :disabled="currentInquiry.isLocked"
+                                    @change="toggleItem(item, catalog.rice, catalog.riceCount)"
+                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.rice, catalog.riceCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -728,12 +860,13 @@ const triggerPrint = () => {
                             <span
                                 :class="[
                                     'text-[10px] font-bold px-2 py-0.5 rounded-full border',
-                                    getCategoryCount(catalog.raita) === catalog.raitaCount
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    getCategoryCount(catalog.raita) >= catalog.raitaCount
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
                                 ]"
                             >
-                                {{ getCategoryCount(catalog.raita) }}/{{ catalog.raitaCount }} Picked
+                                {{ getCategoryCount(catalog.raita) }}/{{ catalog.raitaCount }}
+                                {{ getCategoryCount(catalog.raita) >= catalog.raitaCount ? 'Max Picked' : 'Picked' }}
                             </span>
                         </div>
                         <div class="grid grid-cols-2 gap-1.5 text-xs">
@@ -742,15 +875,19 @@ const triggerPrint = () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:bg-purple-50/40',
+                                    currentInquiry.isLocked
+                                        ? 'cursor-not-allowed opacity-75'
+                                        : (!isSelected(item) && isCategoryFull(catalog.raita, catalog.raitaCount))
+                                            ? 'opacity-40 cursor-not-allowed bg-slate-50'
+                                            : 'cursor-pointer hover:bg-purple-50/40',
                                     isSelected(item) ? 'bg-purple-50/60 border-purple-300 font-bold text-slate-900' : 'border-slate-100 text-slate-600'
                                 ]"
                             >
                                 <input
                                     type="checkbox"
                                     :checked="isSelected(item)"
-                                    @change="toggleItem(item)"
-                                    :disabled="currentInquiry.isLocked"
+                                    @change="toggleItem(item, catalog.raita, catalog.raitaCount)"
+                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.raita, catalog.raitaCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -767,12 +904,13 @@ const triggerPrint = () => {
                             <span
                                 :class="[
                                     'text-[10px] font-bold px-2 py-0.5 rounded-full border',
-                                    getCategoryCount(catalog.breads) === catalog.breadsCount
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    getCategoryCount(catalog.breads) >= catalog.breadsCount
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
                                 ]"
                             >
-                                {{ getCategoryCount(catalog.breads) }}/{{ catalog.breadsCount }} Picked
+                                {{ getCategoryCount(catalog.breads) }}/{{ catalog.breadsCount }}
+                                {{ getCategoryCount(catalog.breads) >= catalog.breadsCount ? 'Max Picked' : 'Picked' }}
                             </span>
                         </div>
                         <div class="grid grid-cols-2 gap-1.5 text-xs">
@@ -781,15 +919,19 @@ const triggerPrint = () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:bg-purple-50/40',
+                                    currentInquiry.isLocked
+                                        ? 'cursor-not-allowed opacity-75'
+                                        : (!isSelected(item) && isCategoryFull(catalog.breads, catalog.breadsCount))
+                                            ? 'opacity-40 cursor-not-allowed bg-slate-50'
+                                            : 'cursor-pointer hover:bg-purple-50/40',
                                     isSelected(item) ? 'bg-purple-50/60 border-purple-300 font-bold text-slate-900' : 'border-slate-100 text-slate-600'
                                 ]"
                             >
                                 <input
                                     type="checkbox"
                                     :checked="isSelected(item)"
-                                    @change="toggleItem(item)"
-                                    :disabled="currentInquiry.isLocked"
+                                    @change="toggleItem(item, catalog.breads, catalog.breadsCount)"
+                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.breads, catalog.breadsCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -806,12 +948,13 @@ const triggerPrint = () => {
                             <span
                                 :class="[
                                     'text-[10px] font-bold px-2 py-0.5 rounded-full border',
-                                    getCategoryCount(catalog.desserts) === catalog.dessertsCount
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    getCategoryCount(catalog.desserts) >= catalog.dessertsCount
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
                                 ]"
                             >
-                                {{ getCategoryCount(catalog.desserts) }}/{{ catalog.dessertsCount }} Picked
+                                {{ getCategoryCount(catalog.desserts) }}/{{ catalog.dessertsCount }}
+                                {{ getCategoryCount(catalog.desserts) >= catalog.dessertsCount ? 'Max Picked' : 'Picked' }}
                             </span>
                         </div>
                         <div class="grid grid-cols-2 gap-1.5 text-xs">
@@ -820,15 +963,19 @@ const triggerPrint = () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:bg-purple-50/40',
+                                    currentInquiry.isLocked
+                                        ? 'cursor-not-allowed opacity-75'
+                                        : (!isSelected(item) && isCategoryFull(catalog.desserts, catalog.dessertsCount))
+                                            ? 'opacity-40 cursor-not-allowed bg-slate-50'
+                                            : 'cursor-pointer hover:bg-purple-50/40',
                                     isSelected(item) ? 'bg-purple-50/60 border-purple-300 font-bold text-slate-900' : 'border-slate-100 text-slate-600'
                                 ]"
                             >
                                 <input
                                     type="checkbox"
                                     :checked="isSelected(item)"
-                                    @change="toggleItem(item)"
-                                    :disabled="currentInquiry.isLocked"
+                                    @change="toggleItem(item, catalog.desserts, catalog.dessertsCount)"
+                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.desserts, catalog.dessertsCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -867,12 +1014,13 @@ const triggerPrint = () => {
                             <span
                                 :class="[
                                     'text-[10px] font-bold px-2 py-0.5 rounded-full border',
-                                    getCategoryCount(catalog.liveCounters) === catalog.liveCountersCount
-                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    getCategoryCount(catalog.liveCounters) >= catalog.liveCountersCount
+                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-300 ring-1 ring-emerald-200'
                                         : 'bg-purple-50 text-purple-700 border-purple-200'
                                 ]"
                             >
-                                {{ getCategoryCount(catalog.liveCounters) }}/{{ catalog.liveCountersCount }} Picked
+                                {{ getCategoryCount(catalog.liveCounters) }}/{{ catalog.liveCountersCount }}
+                                {{ getCategoryCount(catalog.liveCounters) >= catalog.liveCountersCount ? 'Max Picked' : 'Picked' }}
                             </span>
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1.5 text-xs">
@@ -881,15 +1029,19 @@ const triggerPrint = () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked ? 'cursor-not-allowed opacity-75' : 'cursor-pointer hover:bg-purple-50/40',
+                                    currentInquiry.isLocked
+                                        ? 'cursor-not-allowed opacity-75'
+                                        : (!isSelected(item) && isCategoryFull(catalog.liveCounters, catalog.liveCountersCount))
+                                            ? 'opacity-40 cursor-not-allowed bg-slate-50'
+                                            : 'cursor-pointer hover:bg-purple-50/40',
                                     isSelected(item) ? 'bg-purple-50/60 border-purple-300 font-bold text-slate-900' : 'border-slate-100 text-slate-600'
                                 ]"
                             >
                                 <input
                                     type="checkbox"
                                     :checked="isSelected(item)"
-                                    @change="toggleItem(item)"
-                                    :disabled="currentInquiry.isLocked"
+                                    @change="toggleItem(item, catalog.liveCounters, catalog.liveCountersCount)"
+                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.liveCounters, catalog.liveCountersCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
