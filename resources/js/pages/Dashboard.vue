@@ -20,6 +20,8 @@ import {
     Bell,
     Menu,
     X,
+    PanelLeftClose,
+    PanelLeftOpen,
     ChevronRight,
     ChevronDown,
     Plus,
@@ -60,6 +62,13 @@ const logout = () => {
 type AdminTab = 'dashboard' | 'rooms' | 'banquet' | 'billing' | 'invoices' | 'guests' | 'security';
 const currentTab = ref<AdminTab>('dashboard');
 const isMobileMenuOpen = ref(false);
+const isSidebarCollapsed = ref(typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('collapsed') === 'true' || localStorage.getItem('senani_sidebar_collapsed') === 'true'));
+const toggleSidebarCollapse = () => {
+    isSidebarCollapsed.value = !isSidebarCollapsed.value;
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('senani_sidebar_collapsed', String(isSidebarCollapsed.value));
+    }
+};
 const searchQuery = ref('');
 
 // -------------------------------------------------------------
@@ -395,53 +404,68 @@ const submitCheckIn = () => {
         <!-- ========================================================= -->
         <!-- TOP EXECUTIVE NAVBAR (Sleek Minimal Glass Bar)              -->
         <!-- ========================================================= -->
-        <header class="sticky top-0 z-30 h-16 border-b border-slate-200/80 bg-white/90 backdrop-blur-md px-4 sm:px-6 lg:px-8 flex items-center justify-between shadow-xs">
-            <!-- Left: Brand Logo & Mobile Trigger -->
-            <div class="flex items-center gap-3">
+        <header class="sticky top-0 z-30 h-11 sm:h-12 border-b border-slate-200/80 bg-white/95 backdrop-blur-md px-3 sm:px-5 flex items-center justify-between shadow-2xs">
+            <!-- Left: Brand Logo, Desktop Collapse Toggle & Mobile Trigger -->
+            <div class="flex items-center gap-2 sm:gap-3">
+                <!-- Mobile Drawer Toggle -->
                 <button
                     type="button"
                     @click="isMobileMenuOpen = !isMobileMenuOpen"
-                    class="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition"
+                    class="lg:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 transition"
+                    aria-label="Toggle mobile navigation"
                 >
-                    <Menu v-if="!isMobileMenuOpen" class="h-5 w-5" />
-                    <X v-else class="h-5 w-5" />
+                    <Menu v-if="!isMobileMenuOpen" class="h-4.5 w-4.5" />
+                    <X v-else class="h-4.5 w-4.5" />
                 </button>
 
-                <Link :href="home()" class="flex items-center gap-2.5 group">
+                <!-- Desktop Sidebar Collapse/Expand Toggle Button -->
+                <button
+                    type="button"
+                    @click="toggleSidebarCollapse"
+                    class="hidden lg:flex items-center justify-center h-8 w-8 rounded-lg text-slate-500 hover:text-[#673DE6] hover:bg-[#F0EBFF] transition"
+                    :title="isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'"
+                >
+                    <PanelLeftOpen v-if="isSidebarCollapsed" class="h-4 w-4" />
+                    <PanelLeftClose v-else class="h-4 w-4" />
+                </button>
+
+                <div class="hidden lg:block h-4 w-px bg-slate-200"></div>
+
+                <Link :href="home()" class="flex items-center gap-2 group">
                     <img
                         src="/images/logo-dark.png"
                         alt="Senani Hotel Pleasant View"
-                        class="h-9 w-auto object-contain group-hover:scale-105 transition-transform duration-200"
+                        class="h-6.5 sm:h-7 w-auto object-contain group-hover:opacity-90 transition"
                     />
-                    <span class="rounded-full bg-[#F0EBFF] px-2 py-0.5 text-[10px] font-bold text-[#673DE6] border border-[#E0D7FE] hidden sm:inline-flex">
-                        ERP v2.4
+                    <span class="rounded-full bg-[#F0EBFF] px-1.5 py-0.2 text-[9px] font-bold text-[#673DE6] border border-[#E0D7FE] hidden sm:inline-flex">
+                        v2.4
                     </span>
                 </Link>
             </div>
 
-            <!-- Center: Quick Universal Search Bar -->
-            <div class="hidden md:flex items-center max-w-md w-full mx-6">
+            <!-- Center: Quick Universal Search Bar (Thin & Sleek) -->
+            <div class="hidden md:flex items-center max-w-sm w-full mx-4">
                 <div class="relative w-full">
-                    <Search class="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                     <input
                         v-model="searchQuery"
                         type="text"
-                        placeholder="Search rooms, guests, invoice #, bookings..."
-                        class="w-full rounded-xl border border-slate-200 bg-[#F8F9FD] pl-9.5 pr-12 py-2 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#673DE6] focus:outline-none focus:ring-2 focus:ring-[#673DE6]/20 transition"
+                        placeholder="Search rooms, guests, invoice #..."
+                        class="w-full h-8 rounded-lg border border-slate-200 bg-[#F8F9FD] pl-8 pr-10 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#673DE6] focus:outline-none focus:ring-1 focus:ring-[#673DE6]/20 transition"
                     />
-                    <kbd class="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center gap-0.5 rounded border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-semibold text-slate-400">
+                    <kbd class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center rounded border border-slate-200 bg-white px-1 py-0.2 text-[9px] font-semibold text-slate-400">
                         ⌘K
                     </kbd>
                 </div>
             </div>
 
             <!-- Right: Live Cloud Pill, Fast Actions & Admin Profile -->
-            <div class="flex items-center gap-2.5 sm:gap-3">
+            <div class="flex items-center gap-2 sm:gap-2.5">
                 <!-- Hostinger Live Cloud Badge -->
-                <div class="hidden xl:inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                    <span class="relative flex h-2 w-2">
+                <div class="hidden xl:inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+                    <span class="relative flex h-1.5 w-1.5">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
                     </span>
                     Hostinger MySQL Live
                 </div>
@@ -449,7 +473,7 @@ const submitCheckIn = () => {
                 <!-- Quick Check-in Button -->
                 <button
                     @click="showCheckInModal = true"
-                    class="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-[#673DE6] hover:text-[#673DE6] transition shadow-xs"
+                    class="hidden sm:inline-flex items-center gap-1.5 h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:border-[#673DE6] hover:text-[#673DE6] transition shadow-2xs"
                 >
                     <Plus class="h-3.5 w-3.5 text-[#673DE6]" />
                     <span>Check-In</span>
@@ -458,7 +482,7 @@ const submitCheckIn = () => {
                 <!-- Fast GST Bill Button -->
                 <button
                     @click="currentTab = 'billing'"
-                    class="inline-flex items-center gap-1.5 rounded-xl bg-[#673DE6] px-3.5 py-2 text-xs font-bold text-white hover:bg-[#5832D0] transition shadow-md shadow-[#673DE6]/20"
+                    class="inline-flex items-center gap-1.5 h-8 rounded-lg bg-[#673DE6] px-3 text-xs font-bold text-white hover:bg-[#5832D0] transition shadow-xs shadow-[#673DE6]/20"
                 >
                     <Receipt class="h-3.5 w-3.5" />
                     <span class="hidden sm:inline">Fast GST Bill</span>
@@ -469,9 +493,9 @@ const submitCheckIn = () => {
                 <button
                     @click="logout"
                     title="Sign Out"
-                    class="p-2 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition border border-transparent hover:border-rose-200"
+                    class="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition border border-transparent hover:border-rose-200"
                 >
-                    <LogOut class="h-4 w-4" />
+                    <LogOut class="h-3.5 w-3.5" />
                 </button>
             </div>
         </header>
@@ -482,150 +506,199 @@ const submitCheckIn = () => {
         <div class="flex-1 flex w-full max-w-[1720px] mx-auto overflow-hidden">
 
             <!-- ----------------------------------------------------- -->
-            <!-- SLEEK MINIMAL SIDEBAR (Hostinger Light Aesthetic)      -->
+            <!-- SLEEK COLLAPSIBLE SIDEBAR                             -->
             <!-- ----------------------------------------------------- -->
             <aside
                 :class="[
-                    'fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200/80 p-4 transition-transform duration-200 lg:static lg:translate-x-0 flex flex-col justify-between shadow-sm lg:shadow-none',
-                    isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+                    'fixed inset-y-0 left-0 z-40 bg-white border-r border-slate-200/80 transition-all duration-200 lg:sticky lg:top-12 lg:h-[calc(100vh-3rem)] flex flex-col justify-between shadow-sm lg:shadow-none',
+                    isSidebarCollapsed ? 'lg:w-[68px] p-2' : 'lg:w-64 p-3.5',
+                    isMobileMenuOpen ? 'w-64 translate-x-0 p-4' : '-translate-x-full lg:translate-x-0'
                 ]"
             >
-                <div class="space-y-6">
+                <div class="space-y-4">
                     <!-- Navigation Category: Overview -->
                     <div>
-                        <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        <div v-if="!isSidebarCollapsed" class="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                             Overview
                         </div>
+                        <div v-else class="my-1 border-t border-slate-100"></div>
+
                         <nav class="space-y-1">
                             <button
                                 @click="currentTab = 'dashboard'; isMobileMenuOpen = false"
+                                :title="isSidebarCollapsed ? 'Dashboard' : ''"
                                 :class="[
-                                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left',
+                                    'w-full flex items-center rounded-xl text-xs font-semibold transition',
+                                    isSidebarCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2 text-left',
                                     currentTab === 'dashboard'
-                                        ? 'bg-[#F0EBFF] text-[#673DE6] font-bold shadow-xs'
+                                        ? 'bg-[#F0EBFF] text-[#673DE6] font-bold shadow-2xs'
                                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                 ]"
                             >
-                                <Activity class="h-4 w-4" />
-                                <span>Dashboard</span>
+                                <Activity class="h-4 w-4 shrink-0" />
+                                <span v-if="!isSidebarCollapsed" class="truncate">Dashboard</span>
                             </button>
 
                             <button
                                 @click="currentTab = 'rooms'; isMobileMenuOpen = false"
+                                :title="isSidebarCollapsed ? `Room Matrix (${roomStats.available} Free)` : ''"
                                 :class="[
-                                    'w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left',
+                                    'w-full flex items-center rounded-xl text-xs font-semibold transition',
+                                    isSidebarCollapsed ? 'justify-center p-2.5 relative' : 'justify-between px-3 py-2 text-left',
                                     currentTab === 'rooms'
-                                        ? 'bg-[#F0EBFF] text-[#673DE6] font-bold shadow-xs'
+                                        ? 'bg-[#F0EBFF] text-[#673DE6] font-bold shadow-2xs'
                                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                 ]"
                             >
                                 <span class="flex items-center gap-3">
-                                    <BedDouble class="h-4 w-4" />
-                                    <span>Room Matrix</span>
+                                    <BedDouble class="h-4 w-4 shrink-0" />
+                                    <span v-if="!isSidebarCollapsed" class="truncate">Room Matrix</span>
                                 </span>
-                                <span class="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
+                                <span v-if="!isSidebarCollapsed" class="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
                                     {{ roomStats.available }} Free
                                 </span>
+                                <span v-else class="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                             </button>
 
                             <button
                                 @click="currentTab = 'banquet'; isMobileMenuOpen = false"
+                                :title="isSidebarCollapsed ? 'Banquet Halls (2 Today)' : ''"
                                 :class="[
-                                    'w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left',
+                                    'w-full flex items-center rounded-xl text-xs font-semibold transition',
+                                    isSidebarCollapsed ? 'justify-center p-2.5 relative' : 'justify-between px-3 py-2 text-left',
                                     currentTab === 'banquet'
-                                        ? 'bg-[#F0EBFF] text-[#673DE6] font-bold shadow-xs'
+                                        ? 'bg-[#F0EBFF] text-[#673DE6] font-bold shadow-2xs'
                                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                 ]"
                             >
                                 <span class="flex items-center gap-3">
-                                    <Calendar class="h-4 w-4" />
-                                    <span>Banquet Halls</span>
+                                    <Calendar class="h-4 w-4 shrink-0" />
+                                    <span v-if="!isSidebarCollapsed" class="truncate">Banquet Halls</span>
                                 </span>
-                                <span class="rounded-md bg-purple-100 px-1.5 py-0.5 text-[10px] font-bold text-[#673DE6]">
+                                <span v-if="!isSidebarCollapsed" class="rounded-md bg-purple-100 px-1.5 py-0.5 text-[10px] font-bold text-[#673DE6]">
                                     2 Today
                                 </span>
+                                <span v-else class="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-[#673DE6]"></span>
                             </button>
                         </nav>
                     </div>
 
                     <!-- Navigation Category: Revenue & POS -->
                     <div>
-                        <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        <div v-if="!isSidebarCollapsed" class="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                             Billing & Finance
                         </div>
+                        <div v-else class="my-1 border-t border-slate-100"></div>
+
                         <nav class="space-y-1">
                             <button
                                 @click="currentTab = 'billing'; isMobileMenuOpen = false"
+                                :title="isSidebarCollapsed ? 'Fast GST POS' : ''"
                                 :class="[
-                                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left',
+                                    'w-full flex items-center rounded-xl text-xs font-semibold transition',
+                                    isSidebarCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2 text-left',
                                     currentTab === 'billing'
-                                        ? 'bg-[#F0EBFF] text-[#673DE6] font-bold shadow-xs'
+                                        ? 'bg-[#F0EBFF] text-[#673DE6] font-bold shadow-2xs'
                                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                 ]"
                             >
-                                <Receipt class="h-4 w-4" />
-                                <span>Fast GST POS</span>
+                                <Receipt class="h-4 w-4 shrink-0" />
+                                <span v-if="!isSidebarCollapsed" class="truncate">Fast GST POS</span>
                             </button>
 
                             <button
                                 @click="currentTab = 'invoices'; isMobileMenuOpen = false"
+                                :title="isSidebarCollapsed ? 'Tax Invoices' : ''"
                                 :class="[
-                                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left',
+                                    'w-full flex items-center rounded-xl text-xs font-semibold transition',
+                                    isSidebarCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2 text-left',
                                     currentTab === 'invoices'
-                                        ? 'bg-[#F0EBFF] text-[#673DE6] font-bold shadow-xs'
+                                        ? 'bg-[#F0EBFF] text-[#673DE6] font-bold shadow-2xs'
                                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                 ]"
                             >
-                                <FileText class="h-4 w-4" />
-                                <span>Tax Invoices</span>
+                                <FileText class="h-4 w-4 shrink-0" />
+                                <span v-if="!isSidebarCollapsed" class="truncate">Tax Invoices</span>
                             </button>
                         </nav>
                     </div>
 
                     <!-- Navigation Category: Administration -->
                     <div>
-                        <div class="px-3 mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                        <div v-if="!isSidebarCollapsed" class="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
                             Management
                         </div>
+                        <div v-else class="my-1 border-t border-slate-100"></div>
+
                         <nav class="space-y-1">
                             <button
                                 @click="currentTab = 'guests'; isMobileMenuOpen = false"
+                                :title="isSidebarCollapsed ? 'Guest Directory' : ''"
                                 :class="[
-                                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left',
+                                    'w-full flex items-center rounded-xl text-xs font-semibold transition',
+                                    isSidebarCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2 text-left',
                                     currentTab === 'guests'
-                                        ? 'bg-[#F0EBFF] text-[#673DE6] font-bold shadow-xs'
+                                        ? 'bg-[#F0EBFF] text-[#673DE6] font-bold shadow-2xs'
                                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                 ]"
                             >
-                                <Users class="h-4 w-4" />
-                                <span>Guest Directory</span>
+                                <Users class="h-4 w-4 shrink-0" />
+                                <span v-if="!isSidebarCollapsed" class="truncate">Guest Directory</span>
                             </button>
 
                             <button
                                 @click="currentTab = 'security'; isMobileMenuOpen = false"
+                                :title="isSidebarCollapsed ? 'Server & Security' : ''"
                                 :class="[
-                                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition text-left',
+                                    'w-full flex items-center rounded-xl text-xs font-semibold transition',
+                                    isSidebarCollapsed ? 'justify-center p-2.5' : 'gap-3 px-3 py-2 text-left',
                                     currentTab === 'security'
-                                        ? 'bg-[#F0EBFF] text-[#673DE6] font-bold shadow-xs'
+                                        ? 'bg-[#F0EBFF] text-[#673DE6] font-bold shadow-2xs'
                                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                                 ]"
                             >
-                                <ShieldCheck class="h-4 w-4" />
-                                <span>Server & Security</span>
+                                <ShieldCheck class="h-4 w-4 shrink-0" />
+                                <span v-if="!isSidebarCollapsed" class="truncate">Server & Security</span>
                             </button>
                         </nav>
                     </div>
                 </div>
 
-                <!-- Sidebar Footer User Profile -->
-                <div class="pt-4 border-t border-slate-200/80">
-                    <div class="flex items-center gap-3 p-2 rounded-xl bg-[#F8F9FD] border border-slate-200/60">
-                        <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-[#673DE6] to-[#5025d1] text-white flex items-center justify-center font-bold text-xs shadow-xs">
+                <!-- Sidebar Bottom: Collapse Toggle & User Profile -->
+                <div class="pt-3 border-t border-slate-200/80 space-y-2">
+                    <!-- Collapse Toggle Inside Sidebar -->
+                    <button
+                        type="button"
+                        @click="toggleSidebarCollapse"
+                        class="w-full hidden lg:flex items-center rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 text-xs font-medium transition"
+                        :class="isSidebarCollapsed ? 'justify-center p-2' : 'gap-2.5 px-3 py-2'"
+                        :title="isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'"
+                    >
+                        <PanelLeftOpen v-if="isSidebarCollapsed" class="h-4 w-4 shrink-0 text-slate-500" />
+                        <PanelLeftClose v-else class="h-4 w-4 shrink-0 text-slate-500" />
+                        <span v-if="!isSidebarCollapsed" class="truncate text-slate-600 font-semibold">Collapse</span>
+                    </button>
+
+                    <!-- User Profile Card -->
+                    <div
+                        v-if="!isSidebarCollapsed"
+                        class="flex items-center gap-2.5 p-2 rounded-xl bg-[#F8F9FD] border border-slate-200/60"
+                    >
+                        <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-[#673DE6] to-[#5025d1] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                             {{ user.name.charAt(0).toUpperCase() }}
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-xs font-bold text-slate-900 truncate">{{ user.name }}</p>
                             <p class="text-[10px] text-slate-400 truncate">{{ user.email }}</p>
+                        </div>
+                    </div>
+                    <div
+                        v-else
+                        class="flex justify-center"
+                        :title="`${user.name} (${user.email})`"
+                    >
+                        <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-[#673DE6] to-[#5025d1] text-white flex items-center justify-center font-bold text-xs shadow-2xs cursor-pointer hover:ring-2 hover:ring-[#673DE6]/30 transition">
+                            {{ user.name.charAt(0).toUpperCase() }}
                         </div>
                     </div>
                 </div>
