@@ -54,6 +54,7 @@ import {
     type BanquetAuditEntry
 } from './auditTrail';
 import { printElement, downloadElementAsPdf } from './printService';
+import { buildGuestPortalUrl } from './guestShare';
 
 export interface BanquetInquiry {
     id?: string;
@@ -911,7 +912,7 @@ const copySuccess = ref(false);
 
 const getGuestPortalUrl = computed(() => {
     if (typeof window === 'undefined') return '';
-    return `${window.location.origin}/guest/menu-selection?v=${form.value.voucherNo}`;
+    return buildGuestPortalUrl(window.location.origin, form.value);
 });
 
 const copyGuestLink = async () => {

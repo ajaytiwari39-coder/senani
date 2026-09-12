@@ -28,6 +28,7 @@ import { type BanquetInquiry } from '@/components/banquet/InquiryWizardModal.vue
 import { menuCatalogs, type MenuCatalogTier } from '@/components/banquet/menuCatalog';
 import { renderSlimBarcode } from '@/components/banquet/auditTrail';
 import { printElement, downloadElementAsPdf } from '@/components/banquet/printService';
+import { decodeGuestPayload } from '@/components/banquet/guestShare';
 
 defineOptions({
     layout: null,
@@ -97,7 +98,7 @@ const defaultInquiry: BanquetInquiry = {
     paymentMode: 'Cash',
     paymentDate: '09/09/2026',
     status: 'pending_md',
-    isLocked: true,
+    isLocked: false,
     lockedBy: 'Banquet Operations Manager',
     lockedAt: '12/Nov/2026, 08:30 PM',
     digitalSignature: 'SN-SIG-250-9F83A12E-V2',
@@ -105,12 +106,15 @@ const defaultInquiry: BanquetInquiry = {
 };
 
 // -------------------------------------------------------------
-// Reactive State
+// Reactive State & Guest Portal Mode
 // -------------------------------------------------------------
 const currentInquiry = ref<BanquetInquiry>({ ...defaultInquiry });
 const saveSuccessMessage = ref('');
 const isSaving = ref(false);
 const barcodeSvgGuest = ref<SVGSVGElement | null>(null);
+
+// Guest editing mode is active by default so client can freely customize dishes
+const isGuestEditing = ref(true);
 
 // Menu Catalog for current tier
 const catalog = computed<MenuCatalogTier>(() => {
@@ -123,7 +127,7 @@ const catalog = computed<MenuCatalogTier>(() => {
 
 // Render Slim Barcode
 const renderGuestBarcode = () => {
-    if (barcodeSvgGuest.value && currentInquiry.value.isLocked) {
+    if (barcodeSvgGuest.value) {
         const sig = currentInquiry.value.digitalSignature || `SN-SIG-${currentInquiry.value.voucherNo}`;
         renderSlimBarcode(barcodeSvgGuest.value, sig, 22);
     }
@@ -175,7 +179,7 @@ const sanitizeCatalogSelections = () => {
 };
 
 const toggleItem = (item: string, catItems?: string[], maxCount?: number) => {
-    if (currentInquiry.value.isLocked) return;
+    if (!isGuestEditing.value) return;
     
     if (!currentInquiry.value.selectedMenuCatalogItems) {
         currentInquiry.value.selectedMenuCatalogItems = [];
@@ -194,25 +198,74 @@ const toggleItem = (item: string, catItems?: string[], maxCount?: number) => {
     }
 };
 
-// Load inquiry from localStorage based on query param ?v=250
+// Load inquiry from URL payload or localStorage
 onMounted(async () => {
     if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
         const voucher = params.get('v') || params.get('voucher') || '250';
-        
-        try {
-            const raw = localStorage.getItem('senani_banquet_inquiries');
-            if (raw) {
-                const list: BanquetInquiry[] = JSON.parse(raw);
-                const found = list.find(i => String(i.voucherNo) === String(voucher));
-                if (found) {
-                    currentInquiry.value = { ...found };
+        const dataPayload = params.get('d');
+
+        // 1. Try decoding embedded inquiry data from shareable URL parameter 'd' (cross-device/WhatsApp support)
+        if (dataPayload) {
+            const decoded = decodeGuestPayload(dataPayload);
+            if (decoded && decoded.v) {
+                currentInquiry.value = {
+                    ...defaultInquiry,
+                    voucherNo: decoded.v || voucher,
+                    guestName: decoded.g || defaultInquiry.guestName,
+                    phonePrimary: decoded.p || defaultInquiry.phonePrimary,
+                    functionDateFrom: decoded.d || defaultInquiry.functionDateFrom,
+                    timeFrom: decoded.t1 || defaultInquiry.timeFrom,
+                    timeTo: decoded.t2 || defaultInquiry.timeTo,
+                    eventType: decoded.e || defaultInquiry.eventType,
+                    paxGuaranteed: decoded.pax || defaultInquiry.paxGuaranteed,
+                    menuRateTier: (decoded.tier as any) || defaultInquiry.menuRateTier,
+                    effectiveMenuRate: decoded.rate || defaultInquiry.effectiveMenuRate,
+                    menuTitle: decoded.title || defaultInquiry.menuTitle,
+                    selectedMenuCatalogItems: Array.isArray(decoded.items) ? [...decoded.items] : defaultInquiry.selectedMenuCatalogItems,
+                    engagementBreakfastPax: decoded.eb ?? defaultInquiry.engagementBreakfastPax,
+                    regularBreakfastPax: decoded.rb ?? defaultInquiry.regularBreakfastPax,
+                    bainaBoxes: decoded.bb ?? defaultInquiry.bainaBoxes,
+                    mandapServingsPax: decoded.mb ?? defaultInquiry.mandapServingsPax,
+                    specialArrangements: decoded.notes ?? defaultInquiry.specialArrangements,
+                    digitalSignature: decoded.sig ?? defaultInquiry.digitalSignature,
+                    isLocked: false,
+                };
+
+                // Cache in local device storage
+                try {
+                    const raw = localStorage.getItem('senani_banquet_inquiries');
+                    let list: BanquetInquiry[] = raw ? JSON.parse(raw) : [];
+                    const idx = list.findIndex(i => String(i.voucherNo) === String(currentInquiry.value.voucherNo));
+                    if (idx > -1) {
+                        list[idx] = { ...list[idx], ...currentInquiry.value };
+                    } else {
+                        list.unshift({ ...currentInquiry.value });
+                    }
+                    localStorage.setItem('senani_banquet_inquiries', JSON.stringify(list));
+                } catch (e) {
+                    console.warn('Could not cache inquiry to localStorage', e);
                 }
             }
-        } catch (e) {
-            console.error('Error loading inquiry from localStorage', e);
+        } else {
+            // 2. Fallback to localStorage by voucher number
+            try {
+                const raw = localStorage.getItem('senani_banquet_inquiries');
+                if (raw) {
+                    const list: BanquetInquiry[] = JSON.parse(raw);
+                    const found = list.find(i => String(i.voucherNo) === String(voucher));
+                    if (found) {
+                        currentInquiry.value = { ...found };
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading inquiry from localStorage', e);
+            }
         }
     }
+
+    // Guest portal is explicitly editable by default
+    isGuestEditing.value = true;
 
     sanitizeCatalogSelections();
     await nextTick();
@@ -221,7 +274,7 @@ onMounted(async () => {
 
 // Save Selections
 const saveGuestPreferences = () => {
-    if (currentInquiry.value.isLocked) return;
+    if (!isGuestEditing.value) return;
 
     isSaving.value = true;
     try {
@@ -230,7 +283,15 @@ const saveGuestPreferences = () => {
             let list: BanquetInquiry[] = raw ? JSON.parse(raw) : [defaultInquiry];
             const idx = list.findIndex(i => String(i.voucherNo) === String(currentInquiry.value.voucherNo));
             if (idx > -1) {
-                list[idx] = { ...currentInquiry.value };
+                list[idx] = {
+                    ...list[idx],
+                    selectedMenuCatalogItems: [...(currentInquiry.value.selectedMenuCatalogItems || [])],
+                    engagementBreakfastPax: currentInquiry.value.engagementBreakfastPax,
+                    regularBreakfastPax: currentInquiry.value.regularBreakfastPax,
+                    bainaBoxes: currentInquiry.value.bainaBoxes,
+                    mandapServingsPax: currentInquiry.value.mandapServingsPax,
+                    specialArrangements: currentInquiry.value.specialArrangements,
+                };
             } else {
                 list.unshift({ ...currentInquiry.value });
             }
@@ -240,12 +301,21 @@ const saveGuestPreferences = () => {
         saveSuccessMessage.value = 'Your menu selections and service preferences have been saved successfully!';
         setTimeout(() => {
             saveSuccessMessage.value = '';
-        }, 4000);
+        }, 6000);
     } catch (e) {
         console.error('Error saving guest preferences', e);
     } finally {
         isSaving.value = false;
     }
+};
+
+const shareSelectionsToWhatsApp = () => {
+    const count = currentInquiry.value.selectedMenuCatalogItems?.length || 0;
+    const items = (currentInquiry.value.selectedMenuCatalogItems || []).map(it => `• ${it}`).join('\n');
+    const msg = encodeURIComponent(
+        `Namaste Senani Banquet Team,\n\nI have finalized my catering menu choices for Voucher #${currentInquiry.value.voucherNo} (${currentInquiry.value.guestName}):\n\n📅 Date: ${currentInquiry.value.functionDateFrom}\n👥 Pax: ${currentInquiry.value.paxGuaranteed} Guests\n🍽️ Selected Dishes (${count}):\n${items}\n\n☕ Extra Services:\n- Engagement Breakfast: ${currentInquiry.value.engagementBreakfastPax || 0} pax\n- Regular Breakfast: ${currentInquiry.value.regularBreakfastPax || 0} pax\n- Baina Boxes: ${currentInquiry.value.bainaBoxes || 0} pcs\n- Mandap Servings: ${currentInquiry.value.mandapServingsPax || 0} pax\n\n📝 Special Dietary / Setup Notes:\n${currentInquiry.value.specialArrangements || 'None'}\n\nPlease proceed with kitchen preparations. Thank you!`
+    );
+    window.open(`https://wa.me/919794152223?text=${msg}`, '_blank');
 };
 
 const isPdfDownloading = ref(false);
@@ -320,93 +390,95 @@ const handleDownloadPdf = async () => {
             <!-- Success Alert Toast -->
             <div
                 v-if="saveSuccessMessage"
-                class="p-4 rounded-xl bg-emerald-600 text-white shadow-lg flex items-center justify-between animate-fade-in"
+                class="p-4 rounded-xl bg-emerald-600 text-white shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in print-hidden"
             >
                 <div class="flex items-center gap-2.5">
                     <CheckCircle2 class="h-5 w-5 shrink-0" />
-                    <span class="text-xs sm:text-sm font-bold">{{ saveSuccessMessage }}</span>
+                    <div>
+                        <span class="text-xs sm:text-sm font-bold block">{{ saveSuccessMessage }}</span>
+                        <span class="text-[11px] text-emerald-100 block">Your preferences are saved locally on this device.</span>
+                    </div>
                 </div>
-                <button @click="saveSuccessMessage = ''" class="text-white/80 hover:text-white text-xs cursor-pointer">✕</button>
+                <div class="flex items-center gap-2">
+                    <button
+                        @click="shareSelectionsToWhatsApp"
+                        class="px-3 py-1.5 rounded-lg bg-white text-emerald-800 hover:bg-emerald-50 text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                    >
+                        <Share2 class="h-3.5 w-3.5 text-emerald-600" />
+                        <span>Send to Hotel on WhatsApp</span>
+                    </button>
+                    <button @click="saveSuccessMessage = ''" class="text-white/80 hover:text-white text-xs cursor-pointer p-1">✕</button>
+                </div>
             </div>
 
-            <!-- LOCK STATUS BANNER -->
+            <!-- GUEST STATUS & MODE BANNER -->
             <div
-                v-if="currentInquiry.isLocked"
-                class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-50 via-amber-50/60 to-white border-2 border-amber-300 text-amber-950 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm"
+                class="p-4 sm:p-5 rounded-2xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm"
+                :class="isGuestEditing ? 'bg-gradient-to-r from-purple-50 via-white to-purple-50 border-purple-200 text-slate-800' : 'bg-gradient-to-r from-amber-50 via-amber-50/60 to-white border-2 border-amber-300 text-amber-950'"
             >
                 <div class="flex items-start gap-3.5">
-                    <div class="p-2.5 rounded-xl bg-amber-200 text-amber-900 shrink-0 mt-0.5 shadow-2xs">
-                        <Lock class="h-5 w-5" />
+                    <div
+                        class="p-2.5 rounded-xl shrink-0 mt-0.5 shadow-2xs"
+                        :class="isGuestEditing ? 'bg-[#673DE6] text-white' : 'bg-amber-200 text-amber-900'"
+                    >
+                        <Utensils v-if="isGuestEditing" class="h-5 w-5" />
+                        <Lock v-else class="h-5 w-5" />
                     </div>
                     <div class="space-y-1">
                         <div class="flex items-center gap-2">
-                            <div class="text-sm font-black tracking-tight">DEAL & MENU LOCKED BY HOTEL MANAGEMENT</div>
-                            <span class="text-[10px] font-mono px-2 py-0.5 bg-amber-200/80 text-amber-900 rounded font-bold">LOCKED</span>
+                            <div class="text-sm font-black tracking-tight" :class="isGuestEditing ? 'text-[#673DE6]' : 'text-amber-950'">
+                                {{ isGuestEditing ? 'GUEST MENU CUSTOMIZATION ACTIVE' : 'SEALED VIEW MODE' }}
+                            </div>
+                            <span
+                                class="text-[10px] font-mono px-2 py-0.5 rounded font-bold"
+                                :class="isGuestEditing ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-200/80 text-amber-900'"
+                            >
+                                {{ isGuestEditing ? '🟢 EDITABLE' : '🔒 VIEW ONLY' }}
+                            </span>
                         </div>
-                        <p class="text-xs text-amber-800 leading-relaxed max-w-2xl">
-                            This catering selection was officially sealed on <strong>{{ currentInquiry.lockedAt || 'Event Confirmation' }}</strong> by {{ currentInquiry.lockedBy || 'Banquet Manager' }}. Choices are frozen for kitchen prep and billing integrity.
+                        <p class="text-xs leading-relaxed max-w-2xl" :class="isGuestEditing ? 'text-slate-600' : 'text-amber-800'">
+                            {{ isGuestEditing
+                                ? 'Namaste ' + currentInquiry.guestName + ' Ji! You can select and customize your catering dishes below within your package quota. Click "Save My Choices" when finished.'
+                                : 'This selection is currently in view mode. Click "Enable Editing" to adjust dish selections.' }}
                         </p>
                         <div v-if="currentInquiry.digitalSignature" class="flex flex-wrap items-center gap-2 pt-1">
-                            <span class="text-[10px] font-mono text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 font-semibold">
-                                🔒 {{ currentInquiry.digitalSignature }}
+                            <span class="text-[10px] font-mono text-purple-900 bg-purple-100/70 px-2 py-0.5 rounded border border-purple-200 font-semibold">
+                                🔒 Deal Seal: {{ currentInquiry.digitalSignature }}
                             </span>
-                            <span v-if="currentInquiry.auditLog?.length" class="text-[10px] text-amber-700 font-medium">
-                                (Revisions Tracked: {{ currentInquiry.auditLog.length }})
+                            <span v-if="currentInquiry.lockedAt" class="text-[10px] text-slate-500 font-medium">
+                                (Contract Sealed: {{ currentInquiry.lockedAt }})
                             </span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Slim Barcode & Verify Link -->
+                <!-- Slim Barcode & Action Buttons -->
                 <div class="flex flex-col sm:flex-row items-center gap-3 shrink-0 self-stretch sm:self-auto justify-end">
-                    <div class="bg-white/90 p-2 rounded-xl border border-amber-200 flex flex-col items-center">
+                    <div class="bg-white/90 p-2 rounded-xl border border-purple-100 flex flex-col items-center">
                         <svg ref="barcodeSvgGuest" class="h-6 max-w-[150px]"></svg>
                         <span class="text-[9px] font-mono font-bold text-slate-500 mt-0.5">SN-BARCODE #{{ currentInquiry.voucherNo }}</span>
                     </div>
-                    <div class="flex flex-col gap-1.5 w-full sm:w-auto">
-                        <a
-                            :href="'/verify/voucher?v=' + currentInquiry.voucherNo"
-                            target="_blank"
-                            class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#673DE6] text-white hover:bg-[#5832D0] text-xs font-bold shadow-xs transition"
+                    <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <button
+                            @click="isGuestEditing = !isGuestEditing"
+                            class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold shadow-xs transition cursor-pointer"
+                            :class="isGuestEditing ? 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100'"
                         >
-                            <ShieldCheck class="h-3.5 w-3.5" />
-                            <span>Verify Seal</span>
-                        </a>
-                        <a
-                            href="tel:+919794152223"
-                            class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-100 text-amber-900 hover:bg-amber-200 text-xs font-bold transition border border-amber-300"
+                            <Lock v-if="isGuestEditing" class="h-3.5 w-3.5" />
+                            <Unlock v-else class="h-3.5 w-3.5" />
+                            <span>{{ isGuestEditing ? 'View Mode' : 'Enable Editing' }}</span>
+                        </button>
+                        <button
+                            v-if="isGuestEditing"
+                            @click="saveGuestPreferences"
+                            :disabled="isSaving"
+                            class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#673DE6] text-white hover:bg-[#5832D0] text-xs font-bold transition shadow-sm cursor-pointer"
                         >
-                            Request Unlock
-                        </a>
+                            <Save class="h-3.5 w-3.5" />
+                            <span>{{ isSaving ? 'Saving…' : 'Save Choices' }}</span>
+                        </button>
                     </div>
                 </div>
-            </div>
-
-            <div
-                v-else
-                class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-50 via-white to-purple-50 border border-purple-200 text-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs"
-            >
-                <div class="flex items-start gap-3">
-                    <div class="p-2 rounded-xl bg-[#673DE6] text-white shrink-0 mt-0.5">
-                        <Unlock class="h-5 w-5" />
-                    </div>
-                    <div>
-                        <div class="text-sm font-black tracking-tight text-[#673DE6]">
-                            MENU CUSTOMIZATION IS OPEN
-                        </div>
-                        <p class="text-xs text-slate-600 mt-0.5 leading-relaxed">
-                            You can check or uncheck dishes to suit your guest preferences. Once finalized, the hotel manager will lock the deal for kitchen preparation.
-                        </p>
-                    </div>
-                </div>
-                <button
-                    @click="saveGuestPreferences"
-                    :disabled="isSaving"
-                    class="px-4 py-2 rounded-xl bg-[#673DE6] text-white hover:bg-[#5832D0] text-xs font-bold shrink-0 transition shadow-sm flex items-center gap-1.5 cursor-pointer"
-                >
-                    <Save class="h-3.5 w-3.5" />
-                    <span>Save My Choices</span>
-                </button>
             </div>
 
             <!-- Guest Event Particulars Card -->
@@ -425,10 +497,10 @@ const handleDownloadPdf = async () => {
                         <span
                             :class="[
                                 'px-2.5 py-1 rounded-full text-xs font-bold uppercase',
-                                currentInquiry.isLocked ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                                isGuestEditing ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
                             ]"
                         >
-                            {{ currentInquiry.isLocked ? '🔒 Locked' : '🟢 Active' }}
+                            {{ isGuestEditing ? '🟢 Customization Open' : '🔒 View Mode' }}
                         </span>
                     </div>
                 </div>
@@ -501,7 +573,7 @@ const handleDownloadPdf = async () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked
+                                    !isGuestEditing
                                         ? 'cursor-not-allowed opacity-75'
                                         : (!isSelected(item) && isCategoryFull(catalog.welcomeDrinks, catalog.welcomeDrinksCount))
                                             ? 'opacity-40 cursor-not-allowed bg-slate-50'
@@ -513,7 +585,7 @@ const handleDownloadPdf = async () => {
                                     type="checkbox"
                                     :checked="isSelected(item)"
                                     @change="toggleItem(item, catalog.welcomeDrinks, catalog.welcomeDrinksCount)"
-                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.welcomeDrinks, catalog.welcomeDrinksCount))"
+                                    :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.welcomeDrinks, catalog.welcomeDrinksCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -546,7 +618,7 @@ const handleDownloadPdf = async () => {
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
                                     item.length > 25 ? 'col-span-2' : '',
-                                    currentInquiry.isLocked
+                                    !isGuestEditing
                                         ? 'cursor-not-allowed opacity-75'
                                         : (!isSelected(item) && isCategoryFull(catalog.hotDrinks, catalog.hotDrinksCount))
                                             ? 'opacity-40 cursor-not-allowed bg-slate-50'
@@ -558,7 +630,7 @@ const handleDownloadPdf = async () => {
                                     type="checkbox"
                                     :checked="isSelected(item)"
                                     @change="toggleItem(item, catalog.hotDrinks, catalog.hotDrinksCount)"
-                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.hotDrinks, catalog.hotDrinksCount))"
+                                    :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.hotDrinks, catalog.hotDrinksCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -590,7 +662,7 @@ const handleDownloadPdf = async () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked
+                                    !isGuestEditing
                                         ? 'cursor-not-allowed opacity-75'
                                         : (!isSelected(item) && isCategoryFull(catalog.soups, catalog.soupsCount))
                                             ? 'opacity-40 cursor-not-allowed bg-slate-50'
@@ -602,7 +674,7 @@ const handleDownloadPdf = async () => {
                                     type="checkbox"
                                     :checked="isSelected(item)"
                                     @change="toggleItem(item, catalog.soups, catalog.soupsCount)"
-                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.soups, catalog.soupsCount))"
+                                    :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.soups, catalog.soupsCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -634,7 +706,7 @@ const handleDownloadPdf = async () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked
+                                    !isGuestEditing
                                         ? 'cursor-not-allowed opacity-75'
                                         : (!isSelected(item) && isCategoryFull(catalog.starters, catalog.startersCount))
                                             ? 'opacity-40 cursor-not-allowed bg-slate-50'
@@ -646,7 +718,7 @@ const handleDownloadPdf = async () => {
                                     type="checkbox"
                                     :checked="isSelected(item)"
                                     @change="toggleItem(item, catalog.starters, catalog.startersCount)"
-                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.starters, catalog.startersCount))"
+                                    :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.starters, catalog.startersCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -678,7 +750,7 @@ const handleDownloadPdf = async () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked
+                                    !isGuestEditing
                                         ? 'cursor-not-allowed opacity-75'
                                         : (!isSelected(item) && isCategoryFull(catalog.dal, catalog.dalCount))
                                             ? 'opacity-40 cursor-not-allowed bg-slate-50'
@@ -690,7 +762,7 @@ const handleDownloadPdf = async () => {
                                     type="checkbox"
                                     :checked="isSelected(item)"
                                     @change="toggleItem(item, catalog.dal, catalog.dalCount)"
-                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.dal, catalog.dalCount))"
+                                    :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.dal, catalog.dalCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -722,7 +794,7 @@ const handleDownloadPdf = async () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked
+                                    !isGuestEditing
                                         ? 'cursor-not-allowed opacity-75'
                                         : (!isSelected(item) && isCategoryFull(catalog.paneer, catalog.paneerCount))
                                             ? 'opacity-40 cursor-not-allowed bg-slate-50'
@@ -734,7 +806,7 @@ const handleDownloadPdf = async () => {
                                     type="checkbox"
                                     :checked="isSelected(item)"
                                     @change="toggleItem(item, catalog.paneer, catalog.paneerCount)"
-                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.paneer, catalog.paneerCount))"
+                                    :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.paneer, catalog.paneerCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -766,7 +838,7 @@ const handleDownloadPdf = async () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked
+                                    !isGuestEditing
                                         ? 'cursor-not-allowed opacity-75'
                                         : (!isSelected(item) && isCategoryFull(catalog.dryVeg, catalog.dryVegCount))
                                             ? 'opacity-40 cursor-not-allowed bg-slate-50'
@@ -778,7 +850,7 @@ const handleDownloadPdf = async () => {
                                     type="checkbox"
                                     :checked="isSelected(item)"
                                     @change="toggleItem(item, catalog.dryVeg, catalog.dryVegCount)"
-                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.dryVeg, catalog.dryVegCount))"
+                                    :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.dryVeg, catalog.dryVegCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -810,7 +882,7 @@ const handleDownloadPdf = async () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked
+                                    !isGuestEditing
                                         ? 'cursor-not-allowed opacity-75'
                                         : (!isSelected(item) && isCategoryFull(catalog.gravyVeg, catalog.gravyVegCount))
                                             ? 'opacity-40 cursor-not-allowed bg-slate-50'
@@ -822,7 +894,7 @@ const handleDownloadPdf = async () => {
                                     type="checkbox"
                                     :checked="isSelected(item)"
                                     @change="toggleItem(item, catalog.gravyVeg, catalog.gravyVegCount)"
-                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.gravyVeg, catalog.gravyVegCount))"
+                                    :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.gravyVeg, catalog.gravyVegCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -854,7 +926,7 @@ const handleDownloadPdf = async () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked
+                                    !isGuestEditing
                                         ? 'cursor-not-allowed opacity-75'
                                         : (!isSelected(item) && isCategoryFull(catalog.rice, catalog.riceCount))
                                             ? 'opacity-40 cursor-not-allowed bg-slate-50'
@@ -866,7 +938,7 @@ const handleDownloadPdf = async () => {
                                     type="checkbox"
                                     :checked="isSelected(item)"
                                     @change="toggleItem(item, catalog.rice, catalog.riceCount)"
-                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.rice, catalog.riceCount))"
+                                    :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.rice, catalog.riceCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -898,7 +970,7 @@ const handleDownloadPdf = async () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked
+                                    !isGuestEditing
                                         ? 'cursor-not-allowed opacity-75'
                                         : (!isSelected(item) && isCategoryFull(catalog.raita, catalog.raitaCount))
                                             ? 'opacity-40 cursor-not-allowed bg-slate-50'
@@ -910,7 +982,7 @@ const handleDownloadPdf = async () => {
                                     type="checkbox"
                                     :checked="isSelected(item)"
                                     @change="toggleItem(item, catalog.raita, catalog.raitaCount)"
-                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.raita, catalog.raitaCount))"
+                                    :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.raita, catalog.raitaCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -942,7 +1014,7 @@ const handleDownloadPdf = async () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked
+                                    !isGuestEditing
                                         ? 'cursor-not-allowed opacity-75'
                                         : (!isSelected(item) && isCategoryFull(catalog.breads, catalog.breadsCount))
                                             ? 'opacity-40 cursor-not-allowed bg-slate-50'
@@ -954,7 +1026,7 @@ const handleDownloadPdf = async () => {
                                     type="checkbox"
                                     :checked="isSelected(item)"
                                     @change="toggleItem(item, catalog.breads, catalog.breadsCount)"
-                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.breads, catalog.breadsCount))"
+                                    :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.breads, catalog.breadsCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -986,7 +1058,7 @@ const handleDownloadPdf = async () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked
+                                    !isGuestEditing
                                         ? 'cursor-not-allowed opacity-75'
                                         : (!isSelected(item) && isCategoryFull(catalog.desserts, catalog.dessertsCount))
                                             ? 'opacity-40 cursor-not-allowed bg-slate-50'
@@ -998,7 +1070,7 @@ const handleDownloadPdf = async () => {
                                     type="checkbox"
                                     :checked="isSelected(item)"
                                     @change="toggleItem(item, catalog.desserts, catalog.dessertsCount)"
-                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.desserts, catalog.dessertsCount))"
+                                    :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.desserts, catalog.dessertsCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -1052,7 +1124,7 @@ const handleDownloadPdf = async () => {
                                 :key="item"
                                 :class="[
                                     'flex items-start gap-2 p-1.5 rounded-lg border transition select-none',
-                                    currentInquiry.isLocked
+                                    !isGuestEditing
                                         ? 'cursor-not-allowed opacity-75'
                                         : (!isSelected(item) && isCategoryFull(catalog.liveCounters, catalog.liveCountersCount))
                                             ? 'opacity-40 cursor-not-allowed bg-slate-50'
@@ -1064,7 +1136,7 @@ const handleDownloadPdf = async () => {
                                     type="checkbox"
                                     :checked="isSelected(item)"
                                     @change="toggleItem(item, catalog.liveCounters, catalog.liveCountersCount)"
-                                    :disabled="currentInquiry.isLocked || (!isSelected(item) && isCategoryFull(catalog.liveCounters, catalog.liveCountersCount))"
+                                    :disabled="!isGuestEditing || (!isSelected(item) && isCategoryFull(catalog.liveCounters, catalog.liveCountersCount))"
                                     class="rounded text-[#673DE6] focus:ring-[#673DE6] mt-0.5"
                                 />
                                 <span class="leading-tight text-[11px]">{{ item }}</span>
@@ -1092,7 +1164,7 @@ const handleDownloadPdf = async () => {
                             v-model.number="currentInquiry.engagementBreakfastPax"
                             type="number"
                             min="0"
-                            :disabled="currentInquiry.isLocked"
+                            :disabled="!isGuestEditing"
                             placeholder="Pax Count"
                             class="w-full h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold disabled:bg-slate-100"
                         />
@@ -1103,7 +1175,7 @@ const handleDownloadPdf = async () => {
                             v-model.number="currentInquiry.regularBreakfastPax"
                             type="number"
                             min="0"
-                            :disabled="currentInquiry.isLocked"
+                            :disabled="!isGuestEditing"
                             placeholder="Pax Count"
                             class="w-full h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold disabled:bg-slate-100"
                         />
@@ -1114,7 +1186,7 @@ const handleDownloadPdf = async () => {
                             v-model.number="currentInquiry.bainaBoxes"
                             type="number"
                             min="0"
-                            :disabled="currentInquiry.isLocked"
+                            :disabled="!isGuestEditing"
                             placeholder="Box Count"
                             class="w-full h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold disabled:bg-slate-100"
                         />
@@ -1125,7 +1197,7 @@ const handleDownloadPdf = async () => {
                             v-model.number="currentInquiry.mandapServingsPax"
                             type="number"
                             min="0"
-                            :disabled="currentInquiry.isLocked"
+                            :disabled="!isGuestEditing"
                             placeholder="Servings Count"
                             class="w-full h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-bold disabled:bg-slate-100"
                         />
@@ -1138,7 +1210,7 @@ const handleDownloadPdf = async () => {
                     </label>
                     <textarea
                         v-model="currentInquiry.specialArrangements"
-                        :disabled="currentInquiry.isLocked"
+                        :disabled="!isGuestEditing"
                         rows="2"
                         placeholder="Type any specific guest preferences or requirements for hotel management..."
                         class="w-full rounded-lg border border-slate-200 bg-slate-50/60 p-2.5 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition disabled:bg-slate-100"
@@ -1157,14 +1229,14 @@ const handleDownloadPdf = async () => {
                             {{ currentInquiry.selectedMenuCatalogItems?.length || 0 }} Items Selected for {{ currentInquiry.guestName }}
                         </div>
                         <div class="text-[10px] text-slate-500">
-                            {{ currentInquiry.isLocked ? '🔒 Changes are currently locked by manager' : '🟢 Ready to save and transmit to hotel banquet team' }}
+                            {{ isGuestEditing ? '🟢 Ready to save and transmit to hotel banquet team' : '🔒 Menu currently in view-only mode' }}
                         </div>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-2 w-full sm:w-auto">
                     <button
-                        v-if="!currentInquiry.isLocked"
+                        v-if="isGuestEditing"
                         @click="saveGuestPreferences"
                         :disabled="isSaving"
                         class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#673DE6] text-white hover:bg-[#5832D0] text-xs font-bold transition shadow-md flex items-center justify-center gap-2 cursor-pointer"
@@ -1172,13 +1244,21 @@ const handleDownloadPdf = async () => {
                         <Save class="h-4 w-4" />
                         <span>{{ isSaving ? 'Saving Changes...' : 'Save & Confirm Menu Choices' }}</span>
                     </button>
-                    <div
+                    <button
                         v-else
-                        class="px-4 py-2 rounded-xl bg-amber-100 text-amber-900 font-bold text-xs flex items-center gap-1.5"
+                        @click="isGuestEditing = true"
+                        class="px-4 py-2 rounded-xl bg-amber-100 text-amber-900 hover:bg-amber-200 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
                     >
-                        <Lock class="h-4 w-4 text-amber-700" />
-                        <span>Deal Locked by Hotel Manager</span>
-                    </div>
+                        <Unlock class="h-4 w-4 text-amber-700" />
+                        <span>Enable Editing</span>
+                    </button>
+                    <button
+                        @click="shareSelectionsToWhatsApp"
+                        class="px-4 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-600 hover:text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    >
+                        <Share2 class="h-4 w-4 text-emerald-600 group-hover:text-white" />
+                        <span>Send to WhatsApp</span>
+                    </button>
                     <button
                         @click="handleDownloadPdf"
                         :disabled="isPdfDownloading"

@@ -49,6 +49,7 @@ import {
 import { home } from '@/routes';
 import InquiryWizardModal, { type BanquetInquiry } from '@/components/banquet/InquiryWizardModal.vue';
 import { downloadElementAsPdf } from '@/components/banquet/printService';
+import { buildGuestPortalUrl } from '@/components/banquet/guestShare';
 
 defineOptions({
     layout: null,
@@ -528,7 +529,8 @@ const guestLinkCopiedVoucher = ref<string | null>(null);
 
 const copyGuestLinkForVoucher = async (voucherNo: string) => {
     if (typeof window !== 'undefined' && navigator.clipboard) {
-        const url = `${window.location.origin}/guest/menu-selection?v=${voucherNo}`;
+        const inq = banquetInquiries.value.find(i => String(i.voucherNo) === String(voucherNo));
+        const url = inq ? buildGuestPortalUrl(window.location.origin, inq) : `${window.location.origin}/guest/menu-selection?v=${voucherNo}`;
         await navigator.clipboard.writeText(url);
         guestLinkCopiedVoucher.value = voucherNo;
         setTimeout(() => {
