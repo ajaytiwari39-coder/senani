@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import {
     Building2,
     ShieldCheck,
@@ -9,6 +9,7 @@ import {
     Calendar,
     Clock,
     Lock,
+    Unlock,
     LogOut,
     CheckCircle2,
     Sparkles,
@@ -41,6 +42,8 @@ import {
     SlidersHorizontal,
     Check,
     Copy,
+    Share2,
+    ExternalLink,
     Eye
 } from '@lucide/vue';
 import { home } from '@/routes';
@@ -396,6 +399,37 @@ const openAndPrintInquiry = (inq: BanquetInquiry) => {
     openExistingInquiry(inq, 3, true);
 };
 
+const guestLinkCopiedVoucher = ref<string | null>(null);
+
+const copyGuestLinkForVoucher = async (voucherNo: string) => {
+    if (typeof window !== 'undefined' && navigator.clipboard) {
+        const url = `${window.location.origin}/guest/menu-selection?v=${voucherNo}`;
+        await navigator.clipboard.writeText(url);
+        guestLinkCopiedVoucher.value = voucherNo;
+        setTimeout(() => {
+            guestLinkCopiedVoucher.value = null;
+        }, 2000);
+    }
+};
+
+const toggleInquiryLock = (inq: BanquetInquiry) => {
+    inq.isLocked = !inq.isLocked;
+    if (inq.isLocked) {
+        inq.lockedAt = new Date().toLocaleString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+        inq.lockedBy = 'Banquet Manager';
+    } else {
+        inq.lockedAt = undefined;
+        inq.lockedBy = undefined;
+    }
+    handleSaveInquiry(inq);
+};
+
 const handleSaveInquiry = (inq: BanquetInquiry) => {
     const existingIdx = banquetInquiries.value.findIndex(i => i.voucherNo === inq.voucherNo);
     if (existingIdx > -1) {
@@ -403,7 +437,32 @@ const handleSaveInquiry = (inq: BanquetInquiry) => {
     } else {
         banquetInquiries.value.unshift(inq);
     }
+    if (typeof window !== 'undefined') {
+        try {
+            localStorage.setItem('senani_banquet_inquiries', JSON.stringify(banquetInquiries.value));
+        } catch (e) {
+            console.error('Error saving banquet inquiries to localStorage', e);
+        }
+    }
 };
+
+onMounted(() => {
+    if (typeof window !== 'undefined') {
+        try {
+            const raw = localStorage.getItem('senani_banquet_inquiries');
+            if (raw) {
+                const list = JSON.parse(raw);
+                if (Array.isArray(list) && list.length > 0) {
+                    banquetInquiries.value = list;
+                }
+            } else {
+                localStorage.setItem('senani_banquet_inquiries', JSON.stringify(banquetInquiries.value));
+            }
+        } catch (e) {
+            console.error('Error loading banquet inquiries from localStorage', e);
+        }
+    }
+});
 
 // -------------------------------------------------------------
 // Interactive Data: Recent GST Tax Invoices
@@ -1584,8 +1643,21 @@ const submitCheckIn = () => {
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 text-slate-600 font-medium">
                                     <tr v-for="inq in banquetInquiries" :key="inq.voucherNo" class="hover:bg-slate-50/80 transition">
-                                        <td class="py-3 font-mono font-bold text-[#673DE6]">
-                                            #{{ inq.voucherNo }}
+                                        <td class="py-3 font-mono">
+                                            <div class="font-bold text-[#673DE6]">#{{ inq.voucherNo }}</div>
+                                            <div class="mt-0.5">
+                                                <button
+                                                    type="button"
+                                                    @click="toggleInquiryLock(inq)"
+                                                    class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold cursor-pointer transition"
+                                                    :class="inq.isLocked ? 'bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200' : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'"
+                                                    :title="inq.isLocked ? 'Deal is Locked. Click to unlock.' : 'Deal is Open. Click to lock.'"
+                                                >
+                                                    <Lock v-if="inq.isLocked" class="h-2.5 w-2.5 text-amber-700" />
+                                                    <Unlock v-else class="h-2.5 w-2.5 text-slate-500" />
+                                                    <span>{{ inq.isLocked ? 'Locked' : 'Open' }}</span>
+                                                </button>
+                                            </div>
                                         </td>
                                         <td class="py-3">
                                             <div class="font-bold text-slate-900">{{ inq.guestName }}</div>
@@ -1665,8 +1737,19 @@ const submitCheckIn = () => {
                                         <td class="py-3 text-right">
                                             <div class="flex items-center justify-end gap-1.5">
                                                 <button
+                                                    type="button"
+                                                    @click="copyGuestLinkForVoucher(inq.voucherNo)"
+                                                    class="rounded-lg bg-purple-50 text-[#673DE6] hover:bg-[#673DE6] hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-purple-200 shadow-2xs cursor-pointer"
+                                                    :title="'Copy guest self-selection link for Voucher #' + inq.voucherNo"
+                                                >
+                                                    <Check v-if="guestLinkCopiedVoucher === inq.voucherNo" class="h-3 w-3 text-emerald-600" />
+                                                    <Share2 v-else class="h-3 w-3" />
+                                                    <span>{{ guestLinkCopiedVoucher === inq.voucherNo ? 'Copied!' : 'Link' }}</span>
+                                                </button>
+                                                <button
+                                                    type="button"
                                                     @click="openAndPrintInquiry(inq)"
-                                                    class="rounded-lg bg-purple-50 text-[#673DE6] hover:bg-[#673DE6] hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-purple-200 shadow-2xs"
+                                                    class="rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-800 hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-slate-200 shadow-2xs cursor-pointer"
                                                     title="Print Full Voucher, Package & Menu"
                                                 >
                                                     <Printer class="h-3 w-3" />

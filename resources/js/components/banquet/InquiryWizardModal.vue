@@ -33,7 +33,12 @@ import {
     Info,
     Layers,
     Gift,
-    Coffee
+    Coffee,
+    Lock,
+    Unlock,
+    Share2,
+    Copy,
+    ExternalLink
 } from '@lucide/vue';
 
 export interface BanquetInquiry {
@@ -92,6 +97,10 @@ export interface BanquetInquiry {
     status: 'draft_reception' | 'pending_md' | 'approved_md';
     mdApprovedAt?: string;
     mdRemarks?: string;
+    // Locking & Freezing
+    isLocked?: boolean;
+    lockedAt?: string;
+    lockedBy?: string;
 }
 
 const props = withDefaults(
@@ -170,167 +179,8 @@ const FOODING_RATES = {
     roomPerNight: 2500, // Room price @ 2,500
 };
 
-// -------------------------------------------------------------
-// Official Docx Menu Catalogs (Extracted from 499, 799, 999 docx)
-// -------------------------------------------------------------
-interface MenuCatalogTier {
-    tier: 499 | 799 | 999 | 1199;
-    title: string;
-    welcomeDrinksCount: number;
-    hotDrinksCount: number;
-    soupsCount: number;
-    startersCount: number;
-    dalCount: number;
-    paneerCount: number;
-    dryVegCount: number;
-    gravyVegCount: number;
-    riceCount: number;
-    raitaCount: number;
-    breadsCount: number;
-    dessertsCount: number;
-    liveCountersCount: number;
-    welcomeDrinks: string[];
-    hotDrinks: string[];
-    soups: string[];
-    starters: string[];
-    dal: string[];
-    paneer: string[];
-    dryVeg: string[];
-    gravyVeg: string[];
-    rice: string[];
-    raita: string[];
-    breads: string[];
-    desserts: string[];
-    salads: string[];
-    liveCounters: string[];
-}
-
-const menuCatalogs: Record<499 | 799 | 999 | 1199, MenuCatalogTier> = {
-    499: {
-        tier: 499,
-        title: 'Executive Vegetarian Buffet (₹499)',
-        welcomeDrinksCount: 2,
-        hotDrinksCount: 1,
-        soupsCount: 0,
-        startersCount: 3,
-        dalCount: 1,
-        paneerCount: 1,
-        dryVegCount: 1,
-        gravyVegCount: 0,
-        riceCount: 1,
-        raitaCount: 1,
-        breadsCount: 4,
-        dessertsCount: 1,
-        liveCountersCount: 0,
-        welcomeDrinks: ['Sprite', 'Coke', 'Fanta', 'Limca', 'Special Sarbat'],
-        hotDrinks: ['Tea (Regular, Masala, Ginger, Green, Lemon)', 'Coffee'],
-        soups: [],
-        starters: ['Veg Manchurian Dry', 'Chilli Potato', 'Cocktail Samosa', 'Cheese Nuggets', 'Fried Masala Idly', 'Peri Peri French Fries'],
-        dal: ['Dal Tadka', 'Dal Fry', 'Rajma Masala', 'Chana Masala'],
-        paneer: ['Paneer Butter Masala', 'Paneer Do Pyaaza', 'Palak Paneer', 'Matar Paneer'],
-        dryVeg: ['Jeera Aloo', 'Mix Veg', 'Aloo Gobhi'],
-        gravyVeg: [],
-        rice: ['Jeera Rice', 'Plain Rice'],
-        raita: ['Boondi Raita', 'Mix Veg Raita'],
-        breads: ['Tandoori Plain Roti', 'Tandoori Butter Roti', 'Butter Naan', 'Lachha Parantha', 'Poori', 'Kachauri'],
-        desserts: ['Hot Gulab Jamun', 'Rasgulla', 'Ice Cream', 'Lauki Halwa'],
-        salads: ['Sirka Pyaaz', 'Green Salad', 'Achaar', 'Chutney', 'Water', 'Sprouts'],
-        liveCounters: [],
-    },
-    799: {
-        tier: 799,
-        title: 'Royal Deluxe Buffet (₹799)',
-        welcomeDrinksCount: 3,
-        hotDrinksCount: 2,
-        soupsCount: 2,
-        startersCount: 5,
-        dalCount: 1,
-        paneerCount: 1,
-        dryVegCount: 1,
-        gravyVegCount: 1,
-        riceCount: 1,
-        raitaCount: 1,
-        breadsCount: 3,
-        dessertsCount: 2,
-        liveCountersCount: 3,
-        welcomeDrinks: ['Sprite', 'Fanta', 'Limca', 'Coke', 'Special Sarbat', 'Watermelon Mojito', 'Virgin Mojito', 'Fresh Lime Soda'],
-        hotDrinks: ['Tea (Regular, Ginger, Green, Masala, Lemon)', 'Filter Coffee', 'Hot Chocolate Milk', 'Badam Milk'],
-        soups: ['Tomato Soup', 'Veg Sweet Corn Soup', 'Clear Soup', 'Veg Manchow Soup'],
-        starters: ['Veg Manchurian Dry', 'Chilli Potato', 'Cocktail Samosa', 'Cheese Nuggets', 'Fried Masala Idly', 'Peri Peri French Fries', 'Paneer Shashlik', 'Spring Roll', 'Cutlets'],
-        dal: ['Dal Tadka', 'Dal Fry', 'Rajma Masala', 'Chana Masala', 'Mix Dal', 'Panch Ratan Dal', 'Pal Dal (Saghpaita)'],
-        paneer: ['Paneer Butter Masala', 'Paneer Do Pyaaza', 'Palak Paneer', 'Matar Paneer', 'Kadhai Paneer', 'Khoya Paneer'],
-        dryVeg: ['Jeera Aloo', 'Mix Veg', 'Aloo Gobhi Masala'],
-        gravyVeg: ['Kashmiri Dum Aloo', 'Aloo Matar', 'Malai Kofta', 'Veg Kofta'],
-        rice: ['Jeera Rice', 'Plain Rice', 'Masala Rice', 'Mix Veg Pulao', 'Matar Pulao', 'Kaju Pulao'],
-        raita: ['Boondi Raita', 'Mix Veg Raita', 'Bottle Gourd (Lauki) Raita'],
-        breads: ['Tandoori Plain Roti', 'Tandoori Butter Roti', 'Butter Naan', 'Garlic Naan', 'Missi Roti', 'Poori', 'Kachauri', 'Khasta Kachauri', 'Fried Papad'],
-        desserts: ['Hot Gulab Jamun', 'Rasgulla', 'Ice Cream', 'Lauki Halwa', 'Rasmalai', 'Moong Dal Halwa'],
-        salads: ['Sirka Pyaaz', 'Green Salad', 'Russian Salad', 'Sprouts', 'Mix Fruit Salad', 'German Potato Salad', 'Achaar', 'Chutney'],
-        liveCounters: ['Veg Hakka Noodles', 'Veg Fried Rice (Manchurian/Chilli Paneer)', 'Masala Dosa Live', 'Imarti & Rabri Live', 'Pav Bhaji Live', 'Muradabadi Dal Live'],
-    },
-    999: {
-        tier: 999,
-        title: 'Imperial Grand Feast (₹999)',
-        welcomeDrinksCount: 4,
-        hotDrinksCount: 2,
-        soupsCount: 2,
-        startersCount: 7,
-        dalCount: 1,
-        paneerCount: 2,
-        dryVegCount: 1,
-        gravyVegCount: 1,
-        riceCount: 2,
-        raitaCount: 2,
-        breadsCount: 5,
-        dessertsCount: 3,
-        liveCountersCount: 6,
-        welcomeDrinks: ['Pepsi / Coke / Limca / Fanta', 'Red Smooth Sarbat', 'Mojito Blue', 'Fresh Lime Soda', 'Milk Shake', 'Watermelon Mocktail', 'Cold Coffee', 'Mango Mojito', 'Vanilla Shake', 'Virgin Mojito'],
-        hotDrinks: ['Tea (Regular, Masala, Ginger, Green, Lemon)', 'Milk (Badam, Chocolate, Turmeric)'],
-        soups: ['Veg Sweet Corn Soup', 'Veg Manchow', 'Talumein Soup', 'Vegetable Soup', 'Mix Veg Clear Soup', 'Tomato Soup', 'Cream of Mushroom Soup', 'Veg Lemon & Coriander Soup'],
-        starters: ['Tandoori Paneer Tikka', 'Hara Bhara Kabab', 'Chilli Paneer Dry', 'Paneer 65', 'Tandoori Roasted Aloo', 'Mushroom Tikka', 'Paneer Pakoda', 'Achari Paneer Tikka', 'Veg Seekh Kabab', 'Cheese Nuggets', 'Fried Idly', 'Peri Peri French Fries', 'Gobhi Chilli', 'Baby Corn Chilli', 'Mushroom Chilli', 'Paneer Manchurian', 'Gobhi Manchurian', 'Aloo Bonda'],
-        dal: ['Dhuli Urad Masala Dal', 'Masur Dal Black', 'Green Urad Masala Dal', 'Black Chana Dal', 'Green Chana Dal', 'Matar Fry Dal'],
-        paneer: ['Paneer Pasanda', 'Paneer Kaleji', 'Paneer Kali Mirch', 'Paneer Korma', 'Kaju Paneer', 'Paneer Hongkong', 'Paneer 65', 'Paneer Do Pyaza', 'Paneer Bhurji', 'Paneer Lahsuni'],
-        dryVeg: ['Mix Veg', 'Aloo Gobhi Masala', 'Jeera Aloo', 'Lauki Masala', 'Patta Gobhi Matar', 'Stuffed Tawa Veg'],
-        gravyVeg: ['Kashmiri Dum Aloo', 'Matar Mushroom', 'Malai Kofta', 'Veg Kofta', 'Aloo Tomato Masala', 'Sarso Ka Saag'],
-        rice: ['Masala Rice', 'Garlic Pulao', 'Paneer Pulao', 'Lemon Rice', 'Curd Rice', 'Jeera Rice', 'Mix Veg Pulao', 'Kaju Pulao'],
-        raita: ['Lauki Raita', 'Cucumber Raita', 'Mango Raita', 'Fruit Raita', 'Boondi Raita', 'Mix Veg Raita'],
-        breads: ['Stuff Naan', 'Coriander Naan', 'White Til Naan', 'Pudina Parantha', 'Missi Roti', 'Chilli Lachha', 'Garlic Naan', 'Tandoori Butter Roti', 'Butter Naan', 'Tawa Roti', 'Poori', 'Kachauri', 'Khasta Kachauri', 'Fried Papad'],
-        desserts: ['White Rasgulla', 'Ras Bhari', 'Pastry Cake', 'Gulab Jamun', 'Chhena Bol', 'Rasmalai', 'Gajar Ka Halwa (Winter)', 'Moong Dal Halwa', 'Kesariya Mewa Milk (Live)'],
-        salads: ['Kimchi Salad', 'Russian Salad', 'Pasta Salad', 'Sprout Salad', 'Green Salad', 'Kachumbar Salad', 'Red Onion Lachha Salad'],
-        liveCounters: ['Chaat Counter (Aloo, Matar, Papdi, Stuffed Chilli/Tomato)', 'Pani Poori Counter', 'Veg Hakka Noodles', 'Crispy Corn', 'Chilli Mushroom', 'Chilli Paneer Gravy', 'Chilli Garlic Noodles', 'Burnt Garlic Noodles', 'Schezwan Fried Rice', 'Pav Bhaji Live', 'Moradabadi Daal Live'],
-    },
-    1199: {
-        tier: 1199,
-        title: 'Presidential Royal Grand Banquet (₹1199)',
-        welcomeDrinksCount: 5,
-        hotDrinksCount: 2,
-        soupsCount: 3,
-        startersCount: 9,
-        dalCount: 2,
-        paneerCount: 2,
-        dryVegCount: 2,
-        gravyVegCount: 2,
-        riceCount: 2,
-        raitaCount: 2,
-        breadsCount: 6,
-        dessertsCount: 4,
-        liveCountersCount: 8,
-        welcomeDrinks: ['All Mocktails & Shakes', 'Exotic Fruit Punch', 'Blue Lagoon', 'Mojito Barista', 'Cold Coffee with Ice Cream'],
-        hotDrinks: ['Signature Masala Chai', 'Espresso Bar', 'Kadhai Badam Kesar Milk'],
-        soups: ['Minestrone Soup', 'Cream of Broccoli Soup', 'Tom Yum Soup', 'Veg Manchow', 'Sweet Corn'],
-        starters: ['Afghani Paneer Tikka', 'Dahi Ke Kabab', 'Corn Cheese Balls', 'Tandoori Broccoli', 'Paneer Kurkure', 'Kurkuri Bhindi', 'Soya Chaap Tandoori', 'Crispy Lotus Stem', 'Spring Rolls', 'Veg Seekh Kabab'],
-        dal: ['Dal Makhani Special', 'Panchmel Dal', 'Yellow Dal Tadka Double Tadka'],
-        paneer: ['Shahi Paneer Lazeez', 'Paneer Lababdar', 'Paneer Tikka Masala Gravy', 'Paneer Pasanda'],
-        dryVeg: ['Subz Panchwati', 'Methi Malai Matar Dry', 'Aloo Dum Banarasi', 'Tawa Exotic Veg'],
-        gravyVeg: ['Navratan Korma', 'Malai Kofta Kesariya', 'Mushroom Rogan Josh', 'Kaju Masala Gravy'],
-        rice: ['Awadhi Dum Biryani', 'Kashmiri Pulao', 'Jeera Pulao', 'Brown Garlic Rice'],
-        raita: ['Pineapple Raita', 'Anar Raita', 'Burani Raita', 'Mix Veg Raita'],
-        breads: ['Amritsari Kulcha', 'Chilli Garlic Naan', 'Laccha Parantha', 'Missi Roti', 'Butter Naan', 'Roomali Roti'],
-        desserts: ['Angoori Rasmalai', 'Hot Jalebi with Rabri', 'Brownie with Vanilla', 'Kulfi Falooda', 'Gulab Jamun', 'Moong Dal Halwa'],
-        salads: ['Exotic Greek Salad', 'Caesar Salad', 'Sprouts & Apple Salad', 'Russian Salad', 'Lachha Pyaaz'],
-        liveCounters: ['Woodfired Pizza Counter', 'Pasta in Red & White Sauce', 'Dimsum & Momos Counter', 'Live Dosa & Uttapam', 'Live Tawa Chaat', 'Pani Poori (5 Flavors)', 'Waffle & Crepes', 'Mocktail Bar'],
-    },
-};
+import { menuCatalogs, type MenuCatalogTier } from './menuCatalog';
+export type { MenuCatalogTier };
 
 // -------------------------------------------------------------
 // Reactive Form State
@@ -384,6 +234,9 @@ const form = ref<BanquetInquiry>({
     status: 'pending_md',
     mdApprovedAt: undefined,
     mdRemarks: 'Approved with 5% privilege VIP discount.',
+    isLocked: false,
+    lockedAt: undefined,
+    lockedBy: undefined,
 });
 
 // Watch for incoming edits
@@ -392,6 +245,8 @@ watch(
     (val) => {
         if (val) {
             form.value = JSON.parse(JSON.stringify(val));
+            if (form.value.isLocked === undefined) form.value.isLocked = false;
+            if (!form.value.selectedMenuCatalogItems) form.value.selectedMenuCatalogItems = [];
         }
     },
     { immediate: true }
@@ -764,6 +619,104 @@ const extraFoodingItemsDetailed = computed(() => {
 const triggerPrint = () => {
     window.print();
 };
+
+// -------------------------------------------------------------
+// Interactive Menu Item Selection & Lock Control
+// -------------------------------------------------------------
+const isItemSelected = (item: string) => {
+    return (form.value.selectedMenuCatalogItems || []).includes(item);
+};
+
+const getCategorySelectedCount = (items: string[]) => {
+    const selected = form.value.selectedMenuCatalogItems || [];
+    return items.filter(it => selected.includes(it)).length;
+};
+
+const toggleMenuItem = (item: string) => {
+    if (form.value.isLocked) return;
+    if (!form.value.selectedMenuCatalogItems) {
+        form.value.selectedMenuCatalogItems = [];
+    }
+    const idx = form.value.selectedMenuCatalogItems.indexOf(item);
+    if (idx > -1) {
+        form.value.selectedMenuCatalogItems.splice(idx, 1);
+    } else {
+        form.value.selectedMenuCatalogItems.push(item);
+    }
+};
+
+const selectAllDefaults = () => {
+    if (form.value.isLocked) return;
+    const cat = currentMenuCatalog.value;
+    const picked: string[] = [];
+    if (cat.welcomeDrinks) picked.push(...cat.welcomeDrinks.slice(0, cat.welcomeDrinksCount));
+    if (cat.hotDrinks) picked.push(...cat.hotDrinks.slice(0, cat.hotDrinksCount));
+    if (cat.soups) picked.push(...cat.soups.slice(0, cat.soupsCount));
+    if (cat.starters) picked.push(...cat.starters.slice(0, cat.startersCount));
+    if (cat.dal) picked.push(...cat.dal.slice(0, cat.dalCount));
+    if (cat.paneer) picked.push(...cat.paneer.slice(0, cat.paneerCount));
+    if (cat.dryVeg) picked.push(...cat.dryVeg.slice(0, cat.dryVegCount));
+    if (cat.gravyVeg) picked.push(...cat.gravyVeg.slice(0, cat.gravyVegCount));
+    if (cat.rice) picked.push(...cat.rice.slice(0, cat.riceCount));
+    if (cat.raita) picked.push(...cat.raita.slice(0, cat.raitaCount));
+    if (cat.breads) picked.push(...cat.breads.slice(0, cat.breadsCount));
+    if (cat.desserts) picked.push(...cat.desserts.slice(0, cat.dessertsCount));
+    if (cat.liveCounters) picked.push(...cat.liveCounters.slice(0, cat.liveCountersCount));
+    form.value.selectedMenuCatalogItems = picked;
+};
+
+const clearMenuSelection = () => {
+    if (form.value.isLocked) return;
+    form.value.selectedMenuCatalogItems = [];
+};
+
+// Manager Deal Lock / Freeze Mechanism
+const toggleDealLock = () => {
+    form.value.isLocked = !form.value.isLocked;
+    if (form.value.isLocked) {
+        form.value.lockedAt = new Date().toLocaleString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+        form.value.lockedBy = 'Banquet Manager';
+    } else {
+        form.value.lockedAt = undefined;
+        form.value.lockedBy = undefined;
+    }
+    emit('save', { ...form.value });
+};
+
+// Share Link Helpers
+const showShareModal = ref(false);
+const copySuccess = ref(false);
+
+const getGuestPortalUrl = computed(() => {
+    if (typeof window === 'undefined') return '';
+    return `${window.location.origin}/guest/menu-selection?v=${form.value.voucherNo}`;
+});
+
+const copyGuestLink = async () => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        await navigator.clipboard.writeText(getGuestPortalUrl.value);
+        copySuccess.value = true;
+        setTimeout(() => {
+            copySuccess.value = false;
+        }, 2500);
+    }
+};
+
+const shareOnWhatsApp = () => {
+    const phone = form.value.phonePrimary ? form.value.phonePrimary.replace(/[^0-9]/g, '') : '';
+    const msg = encodeURIComponent(
+        `Namaste ${form.value.guestName} Ji,\n\nPlease select your preferred catering menu and service options for your upcoming ${form.value.eventType} (Voucher #${form.value.voucherNo}) at Hotel Pleasant View (Senani):\n\n${getGuestPortalUrl.value}\n\nThank you,\nSenani Banquet Management`
+    );
+    const targetPhone = phone ? `91${phone.slice(-10)}` : '';
+    const url = targetPhone ? `https://wa.me/${targetPhone}?text=${msg}` : `https://wa.me/?text=${msg}`;
+    window.open(url, '_blank');
+};
 </script>
 
 <template>
@@ -1066,6 +1019,77 @@ const triggerPrint = () => {
                         </div>
                     </div>
 
+                    <!-- Manager Catering Control & Deal Lock Bar -->
+                    <div class="p-3 rounded-xl bg-gradient-to-r from-purple-50 via-white to-purple-50 border border-purple-200 flex flex-wrap items-center justify-between gap-3 text-xs shadow-2xs">
+                        <div class="flex items-center gap-3">
+                            <!-- Deal Lock / Unlock Status Button -->
+                            <div v-if="form.isLocked" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-100 border border-amber-300 text-amber-900 font-bold">
+                                <Lock class="h-3.5 w-3.5 text-amber-700 shrink-0" />
+                                <span>🔒 DEAL LOCKED ({{ form.lockedAt || 'Confirmed' }})</span>
+                                <button
+                                    type="button"
+                                    @click="toggleDealLock"
+                                    class="ml-2 px-2 py-0.5 rounded bg-amber-200 hover:bg-amber-300 text-amber-900 text-[11px] font-black cursor-pointer transition"
+                                >
+                                    Unlock
+                                </button>
+                            </div>
+                            <div v-else class="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    @click="toggleDealLock"
+                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold transition shadow-2xs cursor-pointer"
+                                    title="Freeze catering choices so no further edits can be made"
+                                >
+                                    <Lock class="h-3.5 w-3.5" />
+                                    <span>Lock Deal (Freeze Menu)</span>
+                                </button>
+                                <span class="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
+                                    🟢 Menu Editing Open
+                                </span>
+                            </div>
+
+                            <div class="hidden sm:block text-slate-300">|</div>
+
+                            <!-- Selected Dishes Counter -->
+                            <div class="flex items-center gap-1.5 text-[11px] text-slate-700">
+                                <Utensils class="h-3.5 w-3.5 text-[#673DE6]" />
+                                <span>Dishes Picked:</span>
+                                <strong class="font-mono text-purple-700 font-black">{{ form.selectedMenuCatalogItems?.length || 0 }} Items</strong>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <button
+                                type="button"
+                                @click="selectAllDefaults"
+                                :disabled="form.isLocked"
+                                class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                title="Auto-select recommended dishes according to official tier quotas"
+                            >
+                                ✨ Pick Recommended
+                            </button>
+                            <button
+                                type="button"
+                                @click="clearMenuSelection"
+                                :disabled="form.isLocked"
+                                class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-rose-50 hover:text-rose-700 text-slate-500 text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                title="Clear all chosen items"
+                            >
+                                Clear
+                            </button>
+                            <button
+                                type="button"
+                                @click="showShareModal = true"
+                                class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#673DE6] hover:bg-[#5832D0] text-white font-bold transition shadow-xs cursor-pointer"
+                                title="Share guest portal link with client to choose dishes"
+                            >
+                                <Share2 class="h-3.5 w-3.5" />
+                                <span>Share Link to Guest</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- 3-COLUMN FULL-WIDTH LAYOUT -->
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
@@ -1339,37 +1363,229 @@ const triggerPrint = () => {
                                     </div>
                                 </div>
 
-                                <!-- Official Docx Menu Preview Accordion -->
+                                <!-- Official Docx Menu Selection Panel (Interactive Checkboxes for Manager) -->
                                 <div class="pt-2 border-t border-slate-100">
                                     <div class="flex items-center justify-between mb-2">
-                                        <span class="text-[11px] font-bold text-slate-900">
-                                            Included Menu Course Preview (Docx Catalog)
-                                        </span>
-                                        <span class="text-[10px] text-[#673DE6] font-bold">
-                                            Tier: ₹{{ activeMenuPreviewTier }}
-                                        </span>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-[11px] font-bold text-slate-900">
+                                                Catering Courses & Dish Selection
+                                            </span>
+                                            <span class="text-[10px] text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded font-bold border border-purple-200">
+                                                Tier ₹{{ effectiveMenuRate }}
+                                            </span>
+                                        </div>
+                                        <div class="text-[10px] font-mono font-bold text-purple-700">
+                                            {{ form.selectedMenuCatalogItems?.length || 0 }} Dishes Selected
+                                        </div>
                                     </div>
 
-                                    <div class="max-h-48 overflow-y-auto p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-[11px] space-y-2 custom-scrollbar">
-                                        <div>
-                                            <strong class="text-purple-800">Welcome Drinks (Any {{ menuCatalogs[activeMenuPreviewTier].welcomeDrinksCount }}):</strong>
-                                            <p class="text-slate-600">{{ menuCatalogs[activeMenuPreviewTier].welcomeDrinks.join(', ') }}</p>
+                                    <div class="max-h-64 overflow-y-auto p-2.5 rounded-lg bg-slate-50/80 border border-slate-200 text-[11px] space-y-3 custom-scrollbar">
+                                        <!-- Welcome Drinks -->
+                                        <div class="p-2 rounded bg-white border border-slate-200/80">
+                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
+                                                <span>🍹 Welcome Drinks</span>
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.welcomeDrinks) >= currentMenuCatalog.welcomeDrinksCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.welcomeDrinks) }}/{{ currentMenuCatalog.welcomeDrinksCount }} Picked
+                                                </span>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
+                                                <label v-for="item in currentMenuCatalog.welcomeDrinks" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
+                                                </label>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <strong class="text-purple-800">Starters (Any {{ menuCatalogs[activeMenuPreviewTier].startersCount }}):</strong>
-                                            <p class="text-slate-600">{{ menuCatalogs[activeMenuPreviewTier].starters.join(', ') }}</p>
+
+                                        <!-- Hot Drinks -->
+                                        <div class="p-2 rounded bg-white border border-slate-200/80">
+                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
+                                                <span>☕ Hot Beverages</span>
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.hotDrinks) >= currentMenuCatalog.hotDrinksCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.hotDrinks) }}/{{ currentMenuCatalog.hotDrinksCount }} Picked
+                                                </span>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
+                                                <label v-for="item in currentMenuCatalog.hotDrinks" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
+                                                </label>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <strong class="text-purple-800">Paneer Specials (Any {{ menuCatalogs[activeMenuPreviewTier].paneerCount }}):</strong>
-                                            <p class="text-slate-600">{{ menuCatalogs[activeMenuPreviewTier].paneer.join(', ') }}</p>
+
+                                        <!-- Soups -->
+                                        <div v-if="currentMenuCatalog.soups.length" class="p-2 rounded bg-white border border-slate-200/80">
+                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
+                                                <span>🍲 Soups</span>
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.soups) >= currentMenuCatalog.soupsCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.soups) }}/{{ currentMenuCatalog.soupsCount }} Picked
+                                                </span>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
+                                                <label v-for="item in currentMenuCatalog.soups" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
+                                                </label>
+                                            </div>
                                         </div>
-                                        <div v-if="menuCatalogs[activeMenuPreviewTier].liveCounters.length > 0">
-                                            <strong class="text-purple-800">Live Counters (Any {{ menuCatalogs[activeMenuPreviewTier].liveCountersCount }}):</strong>
-                                            <p class="text-slate-600">{{ menuCatalogs[activeMenuPreviewTier].liveCounters.join(', ') }}</p>
+
+                                        <!-- Starters -->
+                                        <div class="p-2 rounded bg-white border border-slate-200/80">
+                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
+                                                <span>🍢 Starters & Snacks</span>
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.starters) >= currentMenuCatalog.startersCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.starters) }}/{{ currentMenuCatalog.startersCount }} Picked
+                                                </span>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
+                                                <label v-for="item in currentMenuCatalog.starters" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
+                                                </label>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <strong class="text-purple-800">Desserts (Any {{ menuCatalogs[activeMenuPreviewTier].dessertsCount }}):</strong>
-                                            <p class="text-slate-600">{{ menuCatalogs[activeMenuPreviewTier].desserts.join(', ') }}</p>
+
+                                        <!-- Dal -->
+                                        <div class="p-2 rounded bg-white border border-slate-200/80">
+                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
+                                                <span>🍲 Dal Preparation</span>
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.dal) >= currentMenuCatalog.dalCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.dal) }}/{{ currentMenuCatalog.dalCount }} Picked
+                                                </span>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
+                                                <label v-for="item in currentMenuCatalog.dal" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Paneer -->
+                                        <div class="p-2 rounded bg-white border border-slate-200/80">
+                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
+                                                <span>🧀 Paneer Specialty</span>
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.paneer) >= currentMenuCatalog.paneerCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.paneer) }}/{{ currentMenuCatalog.paneerCount }} Picked
+                                                </span>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
+                                                <label v-for="item in currentMenuCatalog.paneer" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Dry Veg -->
+                                        <div class="p-2 rounded bg-white border border-slate-200/80">
+                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
+                                                <span>🥦 Dry Seasonal Veg</span>
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.dryVeg) >= currentMenuCatalog.dryVegCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.dryVeg) }}/{{ currentMenuCatalog.dryVegCount }} Picked
+                                                </span>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
+                                                <label v-for="item in currentMenuCatalog.dryVeg" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Gravy Veg -->
+                                        <div v-if="currentMenuCatalog.gravyVeg.length" class="p-2 rounded bg-white border border-slate-200/80">
+                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
+                                                <span>🥘 Rich Gravy Veg</span>
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.gravyVeg) >= currentMenuCatalog.gravyVegCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.gravyVeg) }}/{{ currentMenuCatalog.gravyVegCount }} Picked
+                                                </span>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
+                                                <label v-for="item in currentMenuCatalog.gravyVeg" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Rice -->
+                                        <div class="p-2 rounded bg-white border border-slate-200/80">
+                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
+                                                <span>🍚 Basmati Rice & Pulao</span>
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.rice) >= currentMenuCatalog.riceCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.rice) }}/{{ currentMenuCatalog.riceCount }} Picked
+                                                </span>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
+                                                <label v-for="item in currentMenuCatalog.rice" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Raita -->
+                                        <div class="p-2 rounded bg-white border border-slate-200/80">
+                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
+                                                <span>🥣 Curd & Raita</span>
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.raita) >= currentMenuCatalog.raitaCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.raita) }}/{{ currentMenuCatalog.raitaCount }} Picked
+                                                </span>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
+                                                <label v-for="item in currentMenuCatalog.raita" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Breads -->
+                                        <div class="p-2 rounded bg-white border border-slate-200/80">
+                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
+                                                <span>🫓 Assorted Tandoor Breads</span>
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.breads) >= currentMenuCatalog.breadsCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.breads) }}/{{ currentMenuCatalog.breadsCount }} Picked
+                                                </span>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
+                                                <label v-for="item in currentMenuCatalog.breads" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Desserts -->
+                                        <div class="p-2 rounded bg-white border border-slate-200/80">
+                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
+                                                <span>🍨 Desserts & Halwas</span>
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.desserts) >= currentMenuCatalog.dessertsCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.desserts) }}/{{ currentMenuCatalog.dessertsCount }} Picked
+                                                </span>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
+                                                <label v-for="item in currentMenuCatalog.desserts" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Live Counters -->
+                                        <div v-if="currentMenuCatalog.liveCounters.length" class="p-2 rounded bg-white border border-slate-200/80">
+                                            <div class="flex items-center justify-between font-bold text-slate-900 pb-1 mb-1.5 border-b border-slate-100">
+                                                <span>🍳 Live Cooking Stations</span>
+                                                <span class="text-[9.5px] font-bold px-1.5 py-0.5 rounded" :class="getCategorySelectedCount(currentMenuCatalog.liveCounters) >= currentMenuCatalog.liveCountersCount ? 'bg-emerald-50 text-emerald-700' : 'bg-purple-50 text-purple-700'">
+                                                    {{ getCategorySelectedCount(currentMenuCatalog.liveCounters) }}/{{ currentMenuCatalog.liveCountersCount }} Picked
+                                                </span>
+                                            </div>
+                                            <div class="grid grid-cols-2 gap-1 text-[10.5px]">
+                                                <label v-for="item in currentMenuCatalog.liveCounters" :key="item" class="flex items-center gap-1.5 cursor-pointer select-none">
+                                                    <input type="checkbox" :checked="isItemSelected(item)" @change="toggleMenuItem(item)" :disabled="form.isLocked" class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-50 cursor-pointer" />
+                                                    <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
+                                                </label>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -2056,7 +2272,7 @@ const triggerPrint = () => {
                         <!-- ("every singal detail kya menuhai etc sab kuch page me")   -->
                         <!-- ========================================================= -->
                         <div class="border border-slate-400 p-4 sm:p-5 bg-white print-avoid-break">
-                            <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-300 bg-slate-50 p-2 rounded-xs">
+                            <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-300 bg-slate-50 p-2 rounded-xs">
                                 <div class="flex items-center gap-2">
                                     <img src="/images/emblem-dark.png" alt="Senani" class="h-4.5 w-auto object-contain" />
                                     <div>
@@ -2071,18 +2287,61 @@ const triggerPrint = () => {
                                 </div>
                             </div>
 
+                            <!-- Lock Status & Interactive Checkbox Guidance Bar -->
+                            <div class="flex items-center justify-between px-2.5 py-1.5 mb-2.5 rounded bg-purple-50/70 border border-purple-200 text-xs print:hidden">
+                                <div class="flex items-center gap-2">
+                                    <span v-if="form.isLocked" class="inline-flex items-center gap-1 font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 text-[10px]">
+                                        <Lock class="h-3 w-3 text-amber-700" />
+                                        DEAL LOCKED ({{ form.lockedAt || 'Confirmed' }})
+                                    </span>
+                                    <span v-else class="inline-flex items-center gap-1 font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300 text-[10px]">
+                                        <Unlock class="h-3 w-3 text-emerald-600" />
+                                        DEAL UNLOCKED (Interactive Checkboxes Enabled)
+                                    </span>
+                                    <span class="text-[11px] text-slate-600">
+                                        {{ form.isLocked ? 'Dishes are frozen for catering operations. Click Unlock to amend.' : 'Check or uncheck dishes to customize this banquet voucher.' }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        @click="toggleDealLock"
+                                        class="px-2.5 py-1 rounded text-[10px] font-black tracking-wide uppercase transition cursor-pointer"
+                                        :class="form.isLocked ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'"
+                                    >
+                                        {{ form.isLocked ? '🔓 Unlock Deal' : '🔒 Lock Deal' }}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        @click="showShareModal = true"
+                                        class="px-2.5 py-1 rounded bg-[#673DE6] hover:bg-[#5832D0] text-white text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
+                                    >
+                                        <Share2 class="h-3 w-3" />
+                                        <span>Share Link</span>
+                                    </button>
+                                </div>
+                            </div>
+
                             <!-- Menu Courses Grid (Extracted from official hotel docx catalog) -->
                             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
                                 <!-- Welcome Drinks -->
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
                                     <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
                                         <span class="text-[11px]">🍹 Welcome Drinks</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.welcomeDrinksCount }} Choices</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
+                                            {{ getCategorySelectedCount(currentMenuCatalog.welcomeDrinks) }}/{{ currentMenuCatalog.welcomeDrinksCount }} Picked
+                                        </span>
                                     </div>
                                     <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
                                         <li v-for="item in currentMenuCatalog.welcomeDrinks" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
-                                            <span class="leading-tight">{{ item }}</span>
+                                            <input
+                                                type="checkbox"
+                                                :checked="isItemSelected(item)"
+                                                @change="toggleMenuItem(item)"
+                                                :disabled="form.isLocked"
+                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
+                                            />
+                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -2091,12 +2350,20 @@ const triggerPrint = () => {
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
                                     <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
                                         <span class="text-[11px]">☕ Hot Beverages</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.hotDrinksCount }} Choices</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
+                                            {{ getCategorySelectedCount(currentMenuCatalog.hotDrinks) }}/{{ currentMenuCatalog.hotDrinksCount }} Picked
+                                        </span>
                                     </div>
                                     <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
                                         <li v-for="item in currentMenuCatalog.hotDrinks" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
-                                            <span class="leading-tight">{{ item }}</span>
+                                            <input
+                                                type="checkbox"
+                                                :checked="isItemSelected(item)"
+                                                @change="toggleMenuItem(item)"
+                                                :disabled="form.isLocked"
+                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
+                                            />
+                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -2105,12 +2372,20 @@ const triggerPrint = () => {
                                 <div v-if="currentMenuCatalog.soups.length" class="p-2 rounded border border-slate-200 bg-slate-50/40">
                                     <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
                                         <span class="text-[11px]">🍲 Soups</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.soupsCount }} Choices</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
+                                            {{ getCategorySelectedCount(currentMenuCatalog.soups) }}/{{ currentMenuCatalog.soupsCount }} Picked
+                                        </span>
                                     </div>
                                     <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
                                         <li v-for="item in currentMenuCatalog.soups" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
-                                            <span class="leading-tight">{{ item }}</span>
+                                            <input
+                                                type="checkbox"
+                                                :checked="isItemSelected(item)"
+                                                @change="toggleMenuItem(item)"
+                                                :disabled="form.isLocked"
+                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
+                                            />
+                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -2119,12 +2394,20 @@ const triggerPrint = () => {
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
                                     <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
                                         <span class="text-[11px]">🍢 Starters & Snacks</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.startersCount }} Choices</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
+                                            {{ getCategorySelectedCount(currentMenuCatalog.starters) }}/{{ currentMenuCatalog.startersCount }} Picked
+                                        </span>
                                     </div>
                                     <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
                                         <li v-for="item in currentMenuCatalog.starters" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
-                                            <span class="leading-tight">{{ item }}</span>
+                                            <input
+                                                type="checkbox"
+                                                :checked="isItemSelected(item)"
+                                                @change="toggleMenuItem(item)"
+                                                :disabled="form.isLocked"
+                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
+                                            />
+                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -2133,12 +2416,20 @@ const triggerPrint = () => {
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
                                     <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
                                         <span class="text-[11px]">🍲 Dal Preparation</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.dalCount }} Choice</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
+                                            {{ getCategorySelectedCount(currentMenuCatalog.dal) }}/{{ currentMenuCatalog.dalCount }} Picked
+                                        </span>
                                     </div>
                                     <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
                                         <li v-for="item in currentMenuCatalog.dal" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
-                                            <span class="leading-tight">{{ item }}</span>
+                                            <input
+                                                type="checkbox"
+                                                :checked="isItemSelected(item)"
+                                                @change="toggleMenuItem(item)"
+                                                :disabled="form.isLocked"
+                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
+                                            />
+                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -2147,12 +2438,20 @@ const triggerPrint = () => {
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
                                     <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
                                         <span class="text-[11px]">🧀 Paneer Specialty</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.paneerCount }} Choice(s)</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
+                                            {{ getCategorySelectedCount(currentMenuCatalog.paneer) }}/{{ currentMenuCatalog.paneerCount }} Picked
+                                        </span>
                                     </div>
                                     <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
                                         <li v-for="item in currentMenuCatalog.paneer" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
-                                            <span class="leading-tight">{{ item }}</span>
+                                            <input
+                                                type="checkbox"
+                                                :checked="isItemSelected(item)"
+                                                @change="toggleMenuItem(item)"
+                                                :disabled="form.isLocked"
+                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
+                                            />
+                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -2161,12 +2460,20 @@ const triggerPrint = () => {
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
                                     <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
                                         <span class="text-[11px]">🥦 Dry Seasonal Veg</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.dryVegCount }} Choice</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
+                                            {{ getCategorySelectedCount(currentMenuCatalog.dryVeg) }}/{{ currentMenuCatalog.dryVegCount }} Picked
+                                        </span>
                                     </div>
                                     <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
                                         <li v-for="item in currentMenuCatalog.dryVeg" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
-                                            <span class="leading-tight">{{ item }}</span>
+                                            <input
+                                                type="checkbox"
+                                                :checked="isItemSelected(item)"
+                                                @change="toggleMenuItem(item)"
+                                                :disabled="form.isLocked"
+                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
+                                            />
+                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -2175,12 +2482,20 @@ const triggerPrint = () => {
                                 <div v-if="currentMenuCatalog.gravyVeg.length" class="p-2 rounded border border-slate-200 bg-slate-50/40">
                                     <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
                                         <span class="text-[11px]">🥘 Rich Gravy Veg</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.gravyVegCount }} Choice</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
+                                            {{ getCategorySelectedCount(currentMenuCatalog.gravyVeg) }}/{{ currentMenuCatalog.gravyVegCount }} Picked
+                                        </span>
                                     </div>
                                     <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
                                         <li v-for="item in currentMenuCatalog.gravyVeg" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
-                                            <span class="leading-tight">{{ item }}</span>
+                                            <input
+                                                type="checkbox"
+                                                :checked="isItemSelected(item)"
+                                                @change="toggleMenuItem(item)"
+                                                :disabled="form.isLocked"
+                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
+                                            />
+                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -2189,12 +2504,20 @@ const triggerPrint = () => {
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
                                     <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
                                         <span class="text-[11px]">🍚 Basmati Rice & Pulao</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.riceCount }} Choice(s)</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
+                                            {{ getCategorySelectedCount(currentMenuCatalog.rice) }}/{{ currentMenuCatalog.riceCount }} Picked
+                                        </span>
                                     </div>
                                     <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
                                         <li v-for="item in currentMenuCatalog.rice" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
-                                            <span class="leading-tight">{{ item }}</span>
+                                            <input
+                                                type="checkbox"
+                                                :checked="isItemSelected(item)"
+                                                @change="toggleMenuItem(item)"
+                                                :disabled="form.isLocked"
+                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
+                                            />
+                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -2203,12 +2526,20 @@ const triggerPrint = () => {
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
                                     <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
                                         <span class="text-[11px]">🥣 Curd & Raita</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.raitaCount }} Choice</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
+                                            {{ getCategorySelectedCount(currentMenuCatalog.raita) }}/{{ currentMenuCatalog.raitaCount }} Picked
+                                        </span>
                                     </div>
                                     <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
                                         <li v-for="item in currentMenuCatalog.raita" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
-                                            <span class="leading-tight">{{ item }}</span>
+                                            <input
+                                                type="checkbox"
+                                                :checked="isItemSelected(item)"
+                                                @change="toggleMenuItem(item)"
+                                                :disabled="form.isLocked"
+                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
+                                            />
+                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -2217,12 +2548,20 @@ const triggerPrint = () => {
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
                                     <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
                                         <span class="text-[11px]">🫓 Assorted Tandoor Breads</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.breadsCount }} Choices</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
+                                            {{ getCategorySelectedCount(currentMenuCatalog.breads) }}/{{ currentMenuCatalog.breadsCount }} Picked
+                                        </span>
                                     </div>
                                     <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
                                         <li v-for="item in currentMenuCatalog.breads" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
-                                            <span class="leading-tight">{{ item }}</span>
+                                            <input
+                                                type="checkbox"
+                                                :checked="isItemSelected(item)"
+                                                @change="toggleMenuItem(item)"
+                                                :disabled="form.isLocked"
+                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
+                                            />
+                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -2231,12 +2570,20 @@ const triggerPrint = () => {
                                 <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
                                     <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
                                         <span class="text-[11px]">🍨 Desserts & Halwas</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.dessertsCount }} Choices</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
+                                            {{ getCategorySelectedCount(currentMenuCatalog.desserts) }}/{{ currentMenuCatalog.dessertsCount }} Picked
+                                        </span>
                                     </div>
                                     <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
                                         <li v-for="item in currentMenuCatalog.desserts" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
-                                            <span class="leading-tight">{{ item }}</span>
+                                            <input
+                                                type="checkbox"
+                                                :checked="isItemSelected(item)"
+                                                @change="toggleMenuItem(item)"
+                                                :disabled="form.isLocked"
+                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
+                                            />
+                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -2249,8 +2596,14 @@ const triggerPrint = () => {
                                     </div>
                                     <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
                                         <li v-for="item in currentMenuCatalog.salads" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
-                                            <span class="leading-tight">{{ item }}</span>
+                                            <input
+                                                type="checkbox"
+                                                :checked="isItemSelected(item)"
+                                                @change="toggleMenuItem(item)"
+                                                :disabled="form.isLocked"
+                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
+                                            />
+                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -2259,12 +2612,20 @@ const triggerPrint = () => {
                                 <div v-if="currentMenuCatalog.liveCounters.length" class="p-2 rounded border border-slate-200 bg-slate-50/40 sm:col-span-2">
                                     <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
                                         <span class="text-[11px]">🍳 Live Cooking Counters</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">{{ currentMenuCatalog.liveCountersCount }} Live Stations</span>
+                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
+                                            {{ getCategorySelectedCount(currentMenuCatalog.liveCounters) }}/{{ currentMenuCatalog.liveCountersCount }} Picked
+                                        </span>
                                     </div>
                                     <ul class="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1 text-[11px] font-semibold text-slate-800">
                                         <li v-for="item in currentMenuCatalog.liveCounters" :key="item" class="flex items-start gap-1 leading-tight">
-                                            <span class="text-[#673DE6] font-black shrink-0">•</span>
-                                            <span class="leading-tight">{{ item }}</span>
+                                            <input
+                                                type="checkbox"
+                                                :checked="isItemSelected(item)"
+                                                @change="toggleMenuItem(item)"
+                                                :disabled="form.isLocked"
+                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
+                                            />
+                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
                                         </li>
                                     </ul>
                                 </div>
@@ -2335,6 +2696,82 @@ const triggerPrint = () => {
                             </div>
                         </div>
 
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===================================================== -->
+            <!-- SHARE MENU SELECTION LINK MODAL                      -->
+            <!-- ===================================================== -->
+            <div
+                v-if="showShareModal"
+                class="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in"
+            >
+                <div class="w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-2xl p-5 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                        <div class="flex items-center gap-2">
+                            <div class="p-2 rounded-xl bg-purple-100 text-[#673DE6]">
+                                <Share2 class="h-4 w-4" />
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-bold text-slate-900">Share Menu Selection with Guest</h3>
+                                <p class="text-[11px] text-slate-500 font-mono">Voucher #{{ form.voucherNo }} • {{ form.guestName }}</p>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            @click="showShareModal = false"
+                            class="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"
+                        >
+                            <X class="h-4 w-4" />
+                        </button>
+                    </div>
+
+                    <div class="space-y-3.5 text-xs">
+                        <p class="text-slate-600 text-[11px] leading-relaxed">
+                            Share this private portal link with the guest. They can review the menu options, check off desired dishes, customize breakfast/baina services, and save preferences.
+                        </p>
+
+                        <!-- Direct URL Box -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Direct Guest Selection URL</label>
+                            <div class="flex items-center gap-2">
+                                <input
+                                    type="text"
+                                    readonly
+                                    :value="getGuestPortalUrl"
+                                    class="flex-1 h-8.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 font-mono text-[11px] text-slate-800 focus:outline-none select-all"
+                                />
+                                <button
+                                    type="button"
+                                    @click="copyGuestLink"
+                                    class="h-8.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs flex items-center gap-1 transition cursor-pointer"
+                                >
+                                    <Check v-if="copySuccess" class="h-3.5 w-3.5 text-emerald-400" />
+                                    <Copy v-else class="h-3.5 w-3.5" />
+                                    <span>{{ copySuccess ? 'Copied!' : 'Copy' }}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- WhatsApp Share -->
+                        <button
+                            type="button"
+                            @click="shareOnWhatsApp"
+                            class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-2 shadow-xs transition cursor-pointer"
+                        >
+                            <span>💬 Send via WhatsApp to {{ form.phonePrimary }}</span>
+                        </button>
+
+                        <!-- Preview in New Tab -->
+                        <a
+                            :href="getGuestPortalUrl"
+                            target="_blank"
+                            class="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center justify-center gap-1.5 transition text-center"
+                        >
+                            <ExternalLink class="h-3.5 w-3.5" />
+                            <span>Preview Guest Portal in New Tab</span>
+                        </a>
                     </div>
                 </div>
             </div>

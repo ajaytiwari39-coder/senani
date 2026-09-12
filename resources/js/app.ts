@@ -13,6 +13,7 @@ void createInertiaApp({
         switch (true) {
             case name === 'Welcome':
             case name === 'Dashboard':
+            case name === 'GuestMenuSelection':
                 return null;
             case name === 'auth/Login':
                 return null;
