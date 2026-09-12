@@ -44,6 +44,7 @@ import {
     Eye
 } from '@lucide/vue';
 import { home } from '@/routes';
+import InquiryWizardModal, { type BanquetInquiry } from '@/components/banquet/InquiryWizardModal.vue';
 
 defineOptions({
     layout: null,
@@ -60,7 +61,8 @@ const logout = () => {
 // Active Tab State (0ms SPA Instant Transition)
 // -------------------------------------------------------------
 type AdminTab = 'dashboard' | 'rooms' | 'banquet' | 'billing' | 'invoices' | 'guests' | 'security';
-const currentTab = ref<AdminTab>('dashboard');
+const queryTab = typeof window !== 'undefined' ? (new URLSearchParams(window.location.search).get('tab') as AdminTab) : null;
+const currentTab = ref<AdminTab>(queryTab || 'dashboard');
 const isMobileMenuOpen = ref(false);
 const isSidebarCollapsed = ref(typeof window !== 'undefined' && (new URLSearchParams(window.location.search).get('collapsed') === 'true' || localStorage.getItem('senani_sidebar_collapsed') === 'true'));
 const toggleSidebarCollapse = () => {
@@ -208,6 +210,148 @@ const banquetBookings = ref<BanquetBooking[]>([
         status: 'confirmed',
     },
 ]);
+
+// -------------------------------------------------------------
+// 3-Stage Event Inquiry Pipeline (Physical Voucher #250 Replica)
+// -------------------------------------------------------------
+const queryInquiry = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('inquiry') === 'true';
+const queryStep = typeof window !== 'undefined' ? Number(new URLSearchParams(window.location.search).get('step')) || 1 : 1;
+const showInquiryModal = ref(queryInquiry);
+const selectedInquiry = ref<BanquetInquiry | null>(null);
+const inquiryDefaultStep = ref(queryStep);
+
+const banquetInquiries = ref<BanquetInquiry[]>([
+    {
+        id: 'inq-250',
+        voucherNo: '250',
+        inquiryDate: '15/Nov/2026',
+        guestName: 'Mr. Tushar Gupta Jee',
+        phonePrimary: '8115711507',
+        phoneSecondary: '7081219880',
+        address: 'RBL (Civil Lines, Raebareli)',
+        email: 'tushar.gupta@gmail.com',
+        functionDateFrom: '2026-11-15',
+        functionDateTo: '2026-11-15',
+        timeFrom: '19:00',
+        timeTo: '00:00',
+        eventType: 'Wedding Reception',
+        paxGuaranteed: 350,
+        menuType: 'Royal Deluxe Buffet',
+        menuRate: 799,
+        areasNeeded: ['Ground Hall', '1st Floor Banquet'],
+        roomsNeeded: 5,
+        roomArrival: '16:00',
+        roomDeparture: '09:00',
+        roomRate: 0,
+        packageIncludes: ['Hall Rental', 'Grand Stage Setup', 'Theme Floral Decor', 'DJ & Acoustic Sound', 'Genset & 100% Power Backup'],
+        selfArrangements: ['Photographer / Cinematography', 'Phool / Varmala', 'Cake / Gift Counter'],
+        additionalHallCharges: 30000,
+        additionalDecorCharges: 68000,
+        specialArrangements: 'VIP Sofa seating setup for groom party. Stage entry cold pyros arranged by guest.',
+        discountPercent: 5,
+        discountType: 'percent',
+        flatDiscountAmount: 0,
+        amountPaid: 20000,
+        paymentMode: 'Cash',
+        paymentDate: '09/09/2026',
+        status: 'pending_md',
+        mdApprovedAt: undefined,
+        mdRemarks: 'VIP client discount 5% pending final MD lock',
+    },
+    {
+        id: 'inq-251',
+        voucherNo: '251',
+        inquiryDate: '16/Nov/2026',
+        guestName: 'Dr. Vivek Sharma',
+        phonePrimary: '9839012345',
+        phoneSecondary: '9450123456',
+        address: 'Indira Nagar, Raebareli',
+        email: 'dr.vivek@gmail.com',
+        functionDateFrom: '2026-11-20',
+        functionDateTo: '2026-11-20',
+        timeFrom: '18:30',
+        timeTo: '23:30',
+        eventType: 'Daughter Tilak Ceremony',
+        paxGuaranteed: 250,
+        menuType: 'Standard Gold',
+        menuRate: 699,
+        areasNeeded: ['Ground Hall'],
+        roomsNeeded: 2,
+        roomArrival: '14:00',
+        roomDeparture: '10:00',
+        roomRate: 0,
+        packageIncludes: ['Hall Rental', 'Grand Stage Setup', 'Theme Floral Decor', 'DJ & Acoustic Sound'],
+        selfArrangements: ['Photographer / Cinematography', 'Cake / Gift Counter'],
+        additionalHallCharges: 25000,
+        additionalDecorCharges: 35000,
+        specialArrangements: 'Vegetarian live counter required with kulhad chai station',
+        discountPercent: 0,
+        discountType: 'percent',
+        flatDiscountAmount: 0,
+        amountPaid: 15000,
+        paymentMode: 'UPI / QR',
+        paymentDate: '11/09/2026',
+        status: 'draft_reception',
+    },
+    {
+        id: 'inq-249',
+        voucherNo: '249',
+        inquiryDate: '10/Nov/2026',
+        guestName: 'Adv. Rameshwar Singh',
+        phonePrimary: '9918099881',
+        phoneSecondary: '',
+        address: 'Kacheri Road, Raebareli',
+        email: 'rameshwar.singh@law.in',
+        functionDateFrom: '2026-11-12',
+        functionDateTo: '2026-11-12',
+        timeFrom: '11:00',
+        timeTo: '17:00',
+        eventType: 'Annual Leadership Summit',
+        paxGuaranteed: 180,
+        menuType: 'High Tea & Lunch',
+        menuRate: 650,
+        areasNeeded: ['1st Floor Banquet'],
+        roomsNeeded: 1,
+        roomArrival: '09:00',
+        roomDeparture: '18:00',
+        roomRate: 0,
+        packageIncludes: ['Hall Rental', 'DJ & Acoustic Sound', 'Genset & 100% Power Backup', 'VIP Lounge Seating'],
+        selfArrangements: ['Photographer / Cinematography', 'Live Band / Orchestra'],
+        additionalHallCharges: 20000,
+        additionalDecorCharges: 15000,
+        specialArrangements: 'Projector, podium & wireless mic setup',
+        discountPercent: 10,
+        discountType: 'percent',
+        flatDiscountAmount: 0,
+        amountPaid: 50000,
+        paymentMode: 'Bank Transfer',
+        paymentDate: '08/09/2026',
+        status: 'approved_md',
+        mdApprovedAt: '09 Sep 2026, 04:30 PM',
+        mdRemarks: 'Approved by MD with corporate 10% privilege discount',
+    },
+]);
+
+const openNewInquiry = (step: number = 1) => {
+    selectedInquiry.value = null;
+    inquiryDefaultStep.value = step;
+    showInquiryModal.value = true;
+};
+
+const openExistingInquiry = (inq: BanquetInquiry, step: number = 1) => {
+    selectedInquiry.value = inq;
+    inquiryDefaultStep.value = step;
+    showInquiryModal.value = true;
+};
+
+const handleSaveInquiry = (inq: BanquetInquiry) => {
+    const existingIdx = banquetInquiries.value.findIndex(i => i.voucherNo === inq.voucherNo);
+    if (existingIdx > -1) {
+        banquetInquiries.value[existingIdx] = inq;
+    } else {
+        banquetInquiries.value.unshift(inq);
+    }
+};
 
 // -------------------------------------------------------------
 // Interactive Data: Recent GST Tax Invoices
@@ -469,6 +613,15 @@ const submitCheckIn = () => {
                     </span>
                     Hostinger MySQL Live
                 </div>
+
+                <!-- 3-Step Event Inquiry Button -->
+                <button
+                    @click="openNewInquiry(1)"
+                    class="hidden lg:inline-flex items-center gap-1.5 h-7 rounded-lg border border-purple-200 bg-[#F0EBFF] px-2.5 text-[11px] font-bold text-[#673DE6] hover:bg-[#E5DBFE] transition shadow-2xs"
+                >
+                    <Sparkles class="h-3 w-3 text-[#673DE6]" />
+                    <span>+ Event Inquiry</span>
+                </button>
 
                 <!-- Quick Check-in Button -->
                 <button
@@ -1273,10 +1426,143 @@ const submitCheckIn = () => {
                             </p>
                         </div>
                         <button
+                            @click="openNewInquiry(1)"
                             class="inline-flex items-center gap-1.5 rounded-xl bg-[#673DE6] px-3.5 py-2 text-xs font-bold text-white hover:bg-[#5832D0] transition shadow-xs"
                         >
-                            <Plus class="h-4 w-4" /> New Banquet Contract
+                            <Plus class="h-4 w-4" /> New 3-Step Inquiry (Slip #250)
                         </button>
+                    </div>
+
+                    <!-- 3-Stage Event Inquiry & Physical Voucher Pipeline -->
+                    <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h2 class="text-base font-extrabold text-slate-900">
+                                        3-Stage Event Booking & Inquiry Pipeline
+                                    </h2>
+                                    <span class="rounded-full bg-purple-50 text-[#673DE6] text-[10px] font-bold px-2 py-0.5 border border-purple-200">
+                                        Physical Voucher #250 System
+                                    </span>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-0.5">
+                                    Stage 1: Reception Capture → Stage 2: Manager Costing → Stage 3: MD Discount Slider & Authorization
+                                </p>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button
+                                    @click="openNewInquiry(1)"
+                                    class="inline-flex items-center gap-1.5 rounded-xl bg-[#673DE6] px-3.5 py-2 text-xs font-bold text-white hover:bg-[#5832D0] transition shadow-xs"
+                                >
+                                    <Plus class="h-4 w-4" />
+                                    <span>+ New Inquiry</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Inquiry Pipeline Table -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                        <th class="pb-3 font-semibold">Slip #</th>
+                                        <th class="pb-3 font-semibold">Guest & Contacts</th>
+                                        <th class="pb-3 font-semibold">Event & Date</th>
+                                        <th class="pb-3 font-semibold">Pax & Menu</th>
+                                        <th class="pb-3 font-semibold text-right">Gross Total</th>
+                                        <th class="pb-3 font-semibold text-right">MD Discount</th>
+                                        <th class="pb-3 font-semibold text-right">Net Payable</th>
+                                        <th class="pb-3 font-semibold text-right">Advance Paid</th>
+                                        <th class="pb-3 font-semibold text-center">Pipeline Stage</th>
+                                        <th class="pb-3 font-semibold text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 text-slate-600 font-medium">
+                                    <tr v-for="inq in banquetInquiries" :key="inq.voucherNo" class="hover:bg-slate-50/80 transition">
+                                        <td class="py-3 font-mono font-bold text-[#673DE6]">
+                                            #{{ inq.voucherNo }}
+                                        </td>
+                                        <td class="py-3">
+                                            <div class="font-bold text-slate-900">{{ inq.guestName }}</div>
+                                            <div class="text-[11px] text-slate-500 font-mono">{{ inq.phonePrimary }} • {{ inq.address }}</div>
+                                        </td>
+                                        <td class="py-3">
+                                            <div class="font-semibold text-slate-800">{{ inq.eventType }}</div>
+                                            <div class="text-[11px] text-slate-500">{{ inq.functionDateFrom }} ({{ inq.timeFrom }}-{{ inq.timeTo }})</div>
+                                        </td>
+                                        <td class="py-3">
+                                            <div class="font-bold text-slate-900">{{ inq.paxGuaranteed }} Pax</div>
+                                            <div class="text-[11px] text-purple-700">₹{{ inq.menuRate }}/plate ({{ inq.areasNeeded.join(', ') }})</div>
+                                        </td>
+                                        <td class="py-3 text-right font-mono font-bold text-slate-900">
+                                            ₹{{ ((inq.paxGuaranteed * inq.menuRate) + (inq.additionalHallCharges || 0) + (inq.additionalDecorCharges || 0)).toLocaleString('en-IN') }}
+                                        </td>
+                                        <td class="py-3 text-right font-mono">
+                                            <span v-if="inq.discountPercent > 0" class="text-amber-600 font-bold">
+                                                -{{ inq.discountPercent }}%
+                                            </span>
+                                            <span v-else class="text-slate-400">0%</span>
+                                        </td>
+                                        <td class="py-3 text-right font-mono font-black text-emerald-700">
+                                            ₹{{ (Math.max(0, ((inq.paxGuaranteed * inq.menuRate) + (inq.additionalHallCharges || 0) + (inq.additionalDecorCharges || 0)) * (1 - inq.discountPercent / 100))).toLocaleString('en-IN') }}
+                                        </td>
+                                        <td class="py-3 text-right font-mono text-slate-700">
+                                            <span class="font-bold">₹{{ inq.amountPaid.toLocaleString('en-IN') }}</span>
+                                            <div class="text-[10px] text-slate-400">Bal: ₹{{ (Math.max(0, ((inq.paxGuaranteed * inq.menuRate) + (inq.additionalHallCharges || 0) + (inq.additionalDecorCharges || 0)) * (1 - inq.discountPercent / 100) - inq.amountPaid)).toLocaleString('en-IN') }}</div>
+                                        </td>
+                                        <td class="py-3 text-center">
+                                            <span
+                                                v-if="inq.status === 'approved_md'"
+                                                class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1"
+                                            >
+                                                <CheckCircle2 class="h-3 w-3" /> MD Approved
+                                            </span>
+                                            <span
+                                                v-else-if="inq.status === 'pending_md'"
+                                                class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-purple-50 text-[#673DE6] border border-purple-200"
+                                            >
+                                                Pending MD
+                                            </span>
+                                            <span
+                                                v-else
+                                                class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-amber-50 text-amber-700 border border-amber-200"
+                                            >
+                                                Reception Draft
+                                            </span>
+                                        </td>
+                                        <td class="py-3 text-right">
+                                            <div class="flex items-center justify-end gap-1.5">
+                                                <button
+                                                    v-if="inq.status === 'draft_reception'"
+                                                    @click="openExistingInquiry(inq, 2)"
+                                                    class="rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-600 hover:text-white px-2.5 py-1 text-[11px] font-bold transition"
+                                                    title="Fill Manager Costing"
+                                                >
+                                                    Step 2: Manager
+                                                </button>
+                                                <button
+                                                    v-else-if="inq.status === 'pending_md'"
+                                                    @click="openExistingInquiry(inq, 3)"
+                                                    class="rounded-lg bg-[#F0EBFF] text-[#673DE6] hover:bg-[#673DE6] hover:text-white px-2.5 py-1 text-[11px] font-bold transition"
+                                                    title="MD Discount Slider & Approval"
+                                                >
+                                                    Step 3: MD Slider
+                                                </button>
+                                                <button
+                                                    v-else
+                                                    @click="openExistingInquiry(inq, 3)"
+                                                    class="rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white px-2.5 py-1 text-[11px] font-bold transition"
+                                                    title="View Approved Voucher"
+                                                >
+                                                    Voucher #{{ inq.voucherNo }}
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <!-- 3 Master Halls Display -->
@@ -1946,6 +2232,17 @@ const submitCheckIn = () => {
                 </form>
             </div>
         </div>
+
+        <!-- ========================================================= -->
+        <!-- MODAL 3: 3-STEP BANQUET INQUIRY WIZARD & VOUCHER #250     -->
+        <!-- ========================================================= -->
+        <InquiryWizardModal
+            :show="showInquiryModal"
+            :initialInquiry="selectedInquiry"
+            :defaultStep="inquiryDefaultStep"
+            @close="showInquiryModal = false"
+            @save="handleSaveInquiry"
+        />
 
     </div>
 </template>
