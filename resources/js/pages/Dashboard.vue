@@ -399,70 +399,70 @@ const submitCheckIn = () => {
     <Head title="Executive Admin Portal - Senani ERP" />
 
     <!-- App Main Container: Hostinger Light Theme (#F8F9FD) -->
-    <div class="min-h-screen bg-[#F8F9FD] text-[#18181B] font-sans antialiased flex flex-col selection:bg-[#673DE6] selection:text-white">
+    <div class="h-screen w-full bg-[#F8F9FD] text-[#18181B] font-sans antialiased flex flex-col overflow-hidden selection:bg-[#673DE6] selection:text-white">
 
         <!-- ========================================================= -->
-        <!-- TOP EXECUTIVE NAVBAR (Sleek Minimal Glass Bar)              -->
+        <!-- TOP EXECUTIVE NAVBAR (Ultra-Sleek Minimal 40px Stripe)      -->
         <!-- ========================================================= -->
-        <header class="sticky top-0 z-30 h-11 sm:h-12 border-b border-slate-200/80 bg-white/95 backdrop-blur-md px-3 sm:px-5 flex items-center justify-between shadow-2xs">
+        <header class="shrink-0 h-10 border-b border-slate-200/80 bg-white px-3 sm:px-4 flex items-center justify-between z-30 select-none shadow-2xs">
             <!-- Left: Brand Logo, Desktop Collapse Toggle & Mobile Trigger -->
-            <div class="flex items-center gap-2 sm:gap-3">
+            <div class="flex items-center gap-2">
                 <!-- Mobile Drawer Toggle -->
                 <button
                     type="button"
                     @click="isMobileMenuOpen = !isMobileMenuOpen"
-                    class="lg:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 transition"
+                    class="lg:hidden p-1 rounded-md text-slate-600 hover:bg-slate-100 transition"
                     aria-label="Toggle mobile navigation"
                 >
-                    <Menu v-if="!isMobileMenuOpen" class="h-4.5 w-4.5" />
-                    <X v-else class="h-4.5 w-4.5" />
+                    <Menu v-if="!isMobileMenuOpen" class="h-4 w-4" />
+                    <X v-else class="h-4 w-4" />
                 </button>
 
                 <!-- Desktop Sidebar Collapse/Expand Toggle Button -->
                 <button
                     type="button"
                     @click="toggleSidebarCollapse"
-                    class="hidden lg:flex items-center justify-center h-8 w-8 rounded-lg text-slate-500 hover:text-[#673DE6] hover:bg-[#F0EBFF] transition"
+                    class="hidden lg:flex items-center justify-center h-7 w-7 rounded-md text-slate-500 hover:text-[#673DE6] hover:bg-[#F0EBFF] transition"
                     :title="isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'"
                 >
-                    <PanelLeftOpen v-if="isSidebarCollapsed" class="h-4 w-4" />
-                    <PanelLeftClose v-else class="h-4 w-4" />
+                    <PanelLeftOpen v-if="isSidebarCollapsed" class="h-3.5 w-3.5" />
+                    <PanelLeftClose v-else class="h-3.5 w-3.5" />
                 </button>
 
-                <div class="hidden lg:block h-4 w-px bg-slate-200"></div>
+                <div class="hidden lg:block h-3.5 w-px bg-slate-200"></div>
 
-                <Link :href="home()" class="flex items-center gap-2 group">
+                <Link :href="home()" class="flex items-center gap-1.5 group">
                     <img
                         src="/images/logo-dark.png"
                         alt="Senani Hotel Pleasant View"
-                        class="h-6.5 sm:h-7 w-auto object-contain group-hover:opacity-90 transition"
+                        class="h-5 sm:h-5.5 w-auto object-contain group-hover:opacity-90 transition"
                     />
-                    <span class="rounded-full bg-[#F0EBFF] px-1.5 py-0.2 text-[9px] font-bold text-[#673DE6] border border-[#E0D7FE] hidden sm:inline-flex">
+                    <span class="rounded-md bg-[#F0EBFF] px-1.5 py-0.5 text-[9px] font-bold text-[#673DE6] border border-[#E0D7FE] hidden sm:inline-flex leading-none">
                         v2.4
                     </span>
                 </Link>
             </div>
 
-            <!-- Center: Quick Universal Search Bar (Thin & Sleek) -->
-            <div class="hidden md:flex items-center max-w-sm w-full mx-4">
+            <!-- Center: Quick Universal Search Bar (Sleek Thin 28px) -->
+            <div class="hidden md:flex items-center max-w-xs lg:max-w-sm w-full mx-3">
                 <div class="relative w-full">
-                    <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                    <Search class="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-400" />
                     <input
                         v-model="searchQuery"
                         type="text"
                         placeholder="Search rooms, guests, invoice #..."
-                        class="w-full h-8 rounded-lg border border-slate-200 bg-[#F8F9FD] pl-8 pr-10 text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#673DE6] focus:outline-none focus:ring-1 focus:ring-[#673DE6]/20 transition"
+                        class="w-full h-7 rounded-lg border border-slate-200/80 bg-[#F8F9FD] pl-7.5 pr-8 text-[11px] text-slate-900 placeholder-slate-400 focus:bg-white focus:border-[#673DE6] focus:outline-none focus:ring-1 focus:ring-[#673DE6]/20 transition"
                     />
-                    <kbd class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center rounded border border-slate-200 bg-white px-1 py-0.2 text-[9px] font-semibold text-slate-400">
+                    <kbd class="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center rounded border border-slate-200 bg-white px-1 py-0.2 text-[8px] font-semibold text-slate-400">
                         ⌘K
                     </kbd>
                 </div>
             </div>
 
             <!-- Right: Live Cloud Pill, Fast Actions & Admin Profile -->
-            <div class="flex items-center gap-2 sm:gap-2.5">
+            <div class="flex items-center gap-2">
                 <!-- Hostinger Live Cloud Badge -->
-                <div class="hidden xl:inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700">
+                <div class="hidden xl:inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 h-6">
                     <span class="relative flex h-1.5 w-1.5">
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
@@ -473,18 +473,18 @@ const submitCheckIn = () => {
                 <!-- Quick Check-in Button -->
                 <button
                     @click="showCheckInModal = true"
-                    class="hidden sm:inline-flex items-center gap-1.5 h-8 rounded-lg border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 hover:border-[#673DE6] hover:text-[#673DE6] transition shadow-2xs"
+                    class="hidden sm:inline-flex items-center gap-1.5 h-7 rounded-lg border border-slate-200 bg-white px-2.5 text-[11px] font-semibold text-slate-700 hover:border-[#673DE6] hover:text-[#673DE6] transition shadow-2xs"
                 >
-                    <Plus class="h-3.5 w-3.5 text-[#673DE6]" />
+                    <Plus class="h-3 w-3 text-[#673DE6]" />
                     <span>Check-In</span>
                 </button>
 
                 <!-- Fast GST Bill Button -->
                 <button
                     @click="currentTab = 'billing'"
-                    class="inline-flex items-center gap-1.5 h-8 rounded-lg bg-[#673DE6] px-3 text-xs font-bold text-white hover:bg-[#5832D0] transition shadow-xs shadow-[#673DE6]/20"
+                    class="inline-flex items-center gap-1.5 h-7 rounded-lg bg-[#673DE6] px-2.5 text-[11px] font-bold text-white hover:bg-[#5832D0] transition shadow-xs shadow-[#673DE6]/20"
                 >
-                    <Receipt class="h-3.5 w-3.5" />
+                    <Receipt class="h-3 w-3" />
                     <span class="hidden sm:inline">Fast GST Bill</span>
                     <span class="sm:hidden">Bill</span>
                 </button>
@@ -493,29 +493,29 @@ const submitCheckIn = () => {
                 <button
                     @click="logout"
                     title="Sign Out"
-                    class="h-8 w-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition border border-transparent hover:border-rose-200"
+                    class="h-7 w-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition border border-transparent hover:border-rose-200"
                 >
-                    <LogOut class="h-3.5 w-3.5" />
+                    <LogOut class="h-3 w-3" />
                 </button>
             </div>
         </header>
 
         <!-- ========================================================= -->
-        <!-- CORE BODY LAYOUT (Modern Dual-Panel Architecture)        -->
+        <!-- CORE WORKSPACE (Fixed Height App Shell)                   -->
         <!-- ========================================================= -->
-        <div class="flex-1 flex w-full max-w-[1720px] mx-auto overflow-hidden">
+        <div class="flex-1 flex w-full overflow-hidden">
 
             <!-- ----------------------------------------------------- -->
             <!-- SLEEK COLLAPSIBLE SIDEBAR                             -->
             <!-- ----------------------------------------------------- -->
             <aside
                 :class="[
-                    'fixed inset-y-0 left-0 z-40 bg-white border-r border-slate-200/80 transition-all duration-200 lg:sticky lg:top-12 lg:h-[calc(100vh-3rem)] flex flex-col justify-between shadow-sm lg:shadow-none',
-                    isSidebarCollapsed ? 'lg:w-[68px] p-2' : 'lg:w-64 p-3.5',
-                    isMobileMenuOpen ? 'w-64 translate-x-0 p-4' : '-translate-x-full lg:translate-x-0'
+                    'fixed inset-y-0 left-0 z-40 bg-white border-r border-slate-200/80 transition-all duration-200 lg:static lg:h-full flex flex-col shrink-0 shadow-sm lg:shadow-none select-none',
+                    isSidebarCollapsed ? 'lg:w-[64px] p-2' : 'lg:w-60 p-3',
+                    isMobileMenuOpen ? 'w-60 translate-x-0 p-3' : '-translate-x-full lg:translate-x-0'
                 ]"
             >
-                <div class="space-y-4">
+                <div class="flex-1 overflow-y-auto space-y-4 pr-0.5 custom-scrollbar">
                     <!-- Navigation Category: Overview -->
                     <div>
                         <div v-if="!isSidebarCollapsed" class="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -664,32 +664,32 @@ const submitCheckIn = () => {
                     </div>
                 </div>
 
-                <!-- Sidebar Bottom: Collapse Toggle & User Profile -->
-                <div class="pt-3 border-t border-slate-200/80 space-y-2">
+                <!-- Sidebar Bottom: Collapse Toggle & User Profile (Pinned at bottom) -->
+                <div class="shrink-0 pt-2 mt-1 border-t border-slate-200/80 space-y-1.5">
                     <!-- Collapse Toggle Inside Sidebar -->
                     <button
                         type="button"
                         @click="toggleSidebarCollapse"
                         class="w-full hidden lg:flex items-center rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 text-xs font-medium transition"
-                        :class="isSidebarCollapsed ? 'justify-center p-2' : 'gap-2.5 px-3 py-2'"
+                        :class="isSidebarCollapsed ? 'justify-center p-2' : 'gap-2.5 px-2.5 py-1.5'"
                         :title="isSidebarCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'"
                     >
-                        <PanelLeftOpen v-if="isSidebarCollapsed" class="h-4 w-4 shrink-0 text-slate-500" />
-                        <PanelLeftClose v-else class="h-4 w-4 shrink-0 text-slate-500" />
-                        <span v-if="!isSidebarCollapsed" class="truncate text-slate-600 font-semibold">Collapse</span>
+                        <PanelLeftOpen v-if="isSidebarCollapsed" class="h-3.5 w-3.5 shrink-0 text-slate-500" />
+                        <PanelLeftClose v-else class="h-3.5 w-3.5 shrink-0 text-slate-500" />
+                        <span v-if="!isSidebarCollapsed" class="truncate text-slate-600 font-semibold text-xs">Collapse</span>
                     </button>
 
                     <!-- User Profile Card -->
                     <div
                         v-if="!isSidebarCollapsed"
-                        class="flex items-center gap-2.5 p-2 rounded-xl bg-[#F8F9FD] border border-slate-200/60"
+                        class="flex items-center gap-2 p-1.5 rounded-xl bg-[#F8F9FD] border border-slate-200/60"
                     >
-                        <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-[#673DE6] to-[#5025d1] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                        <div class="h-7 w-7 rounded-lg bg-gradient-to-br from-[#673DE6] to-[#5025d1] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                             {{ user.name.charAt(0).toUpperCase() }}
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-xs font-bold text-slate-900 truncate">{{ user.name }}</p>
-                            <p class="text-[10px] text-slate-400 truncate">{{ user.email }}</p>
+                            <p class="text-[9px] text-slate-400 truncate">{{ user.email }}</p>
                         </div>
                     </div>
                     <div
@@ -697,7 +697,7 @@ const submitCheckIn = () => {
                         class="flex justify-center"
                         :title="`${user.name} (${user.email})`"
                     >
-                        <div class="h-8 w-8 rounded-lg bg-gradient-to-br from-[#673DE6] to-[#5025d1] text-white flex items-center justify-center font-bold text-xs shadow-2xs cursor-pointer hover:ring-2 hover:ring-[#673DE6]/30 transition">
+                        <div class="h-7 w-7 rounded-lg bg-gradient-to-br from-[#673DE6] to-[#5025d1] text-white flex items-center justify-center font-bold text-xs shadow-2xs cursor-pointer hover:ring-2 hover:ring-[#673DE6]/30 transition">
                             {{ user.name.charAt(0).toUpperCase() }}
                         </div>
                     </div>
@@ -712,14 +712,15 @@ const submitCheckIn = () => {
             ></div>
 
             <!-- ----------------------------------------------------- -->
-            <!-- MAIN CONTENT AREA                                     -->
+            <!-- MAIN CONTENT AREA (Independent Native Smooth Scroll) -->
             <!-- ----------------------------------------------------- -->
-            <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto max-w-full">
+            <main class="flex-1 h-full overflow-y-auto bg-[#F8F9FD] scroll-smooth custom-scrollbar">
+                <div class="max-w-[1600px] mx-auto p-4 sm:p-5 lg:p-6">
 
-                <!-- ================================================= -->
-                <!-- VIEW 1: EXECUTIVE DASHBOARD (Overview Tab)        -->
-                <!-- ================================================= -->
-                <div v-if="currentTab === 'dashboard'" class="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
+                    <!-- ================================================= -->
+                    <!-- VIEW 1: EXECUTIVE DASHBOARD (Overview Tab)        -->
+                    <!-- ================================================= -->
+                    <div v-if="currentTab === 'dashboard'" class="space-y-5 sm:space-y-6 animate-in fade-in duration-200">
 
                     <!-- Welcome Header & Live Date Bar -->
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1727,8 +1728,9 @@ const submitCheckIn = () => {
                     </div>
                 </div>
 
-            </main>
-        </div>
+            </div>
+        </main>
+    </div>
 
         <!-- ========================================================= -->
         <!-- MODAL 1: OFFICIAL GST TAX INVOICE PRINT PREVIEW           -->
@@ -1947,3 +1949,21 @@ const submitCheckIn = () => {
 
     </div>
 </template>
+
+<style scoped>
+/* Ultra-Sleek Modern Minimal Scrollbars */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.65);
+}
+</style>
