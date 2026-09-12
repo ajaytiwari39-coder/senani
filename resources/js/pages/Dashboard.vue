@@ -229,35 +229,49 @@ const banquetInquiries = ref<BanquetInquiry[]>([
         guestName: 'Mr. Tushar Gupta Jee',
         phonePrimary: '8115711507',
         phoneSecondary: '7081219880',
-        address: 'RBL (Civil Lines, Raebareli)',
+        address: 'Civil Lines, Raebareli',
         email: 'tushar.gupta@gmail.com',
         functionDateFrom: '2026-11-15',
         functionDateTo: '2026-11-15',
         timeFrom: '19:00',
-        timeTo: '00:00',
+        timeTo: '23:30',
         eventType: 'Wedding Reception',
         paxGuaranteed: 350,
-        menuType: 'Royal Deluxe Buffet',
-        menuRate: 799,
-        areasNeeded: ['Ground Hall', '1st Floor Banquet'],
+        selectedVenues: ['swarnim', 'swadhistam'],
+        isEngagementPackage: false,
+        engagementPackageType: 'none',
+        isMeetingSetup: false,
+        menuRateTier: 799,
+        effectiveMenuRate: 799,
+        menuTitle: 'Royal Deluxe Buffet',
+        selectedMenuCatalogItems: [],
+        engagementBreakfastPax: 0,
+        regularBreakfastPax: 0,
+        bainaBoxes: 0,
+        mandapServingsPax: 0,
         roomsNeeded: 5,
         roomArrival: '16:00',
         roomDeparture: '09:00',
-        roomRate: 0,
+        roomRate: 2500,
+        decorPackageType: 'standard',
+        soundMicSetup: true,
+        projectorSetup: false,
+        ledWallSetup: false,
         packageIncludes: ['Hall Rental', 'Grand Stage Setup', 'Theme Floral Decor', 'DJ & Acoustic Sound', 'Genset & 100% Power Backup'],
         selfArrangements: ['Photographer / Cinematography', 'Phool / Varmala', 'Cake / Gift Counter'],
         additionalHallCharges: 30000,
         additionalDecorCharges: 68000,
         specialArrangements: 'VIP Sofa seating setup for groom party. Stage entry cold pyros arranged by guest.',
         discountPercent: 5,
-        discountType: 'percent',
-        flatDiscountAmount: 0,
+        discountRupees: 18883,
+        discountInputMode: 'amount',
+        approverRole: 'manager',
         amountPaid: 20000,
         paymentMode: 'Cash',
         paymentDate: '09/09/2026',
         status: 'pending_md',
         mdApprovedAt: undefined,
-        mdRemarks: 'VIP client discount 5% pending final MD lock',
+        mdRemarks: 'VIP client discount 5% (₹18,883) authorized by Banquet Manager',
     },
     {
         id: 'inq-251',
@@ -272,23 +286,37 @@ const banquetInquiries = ref<BanquetInquiry[]>([
         functionDateTo: '2026-11-20',
         timeFrom: '18:30',
         timeTo: '23:30',
-        eventType: 'Daughter Tilak Ceremony',
-        paxGuaranteed: 250,
-        menuType: 'Standard Gold',
-        menuRate: 699,
-        areasNeeded: ['Ground Hall'],
+        eventType: 'Daughter Engagement & Tilak',
+        paxGuaranteed: 150,
+        selectedVenues: ['swarnim'],
+        isEngagementPackage: true,
+        engagementPackageType: 'swarnim',
+        isMeetingSetup: false,
+        menuRateTier: 499,
+        effectiveMenuRate: 499,
+        menuTitle: 'Executive Vegetarian Buffet',
+        selectedMenuCatalogItems: [],
+        engagementBreakfastPax: 80,
+        regularBreakfastPax: 0,
+        bainaBoxes: 50,
+        mandapServingsPax: 0,
         roomsNeeded: 2,
         roomArrival: '14:00',
         roomDeparture: '10:00',
-        roomRate: 0,
-        packageIncludes: ['Hall Rental', 'Grand Stage Setup', 'Theme Floral Decor', 'DJ & Acoustic Sound'],
+        roomRate: 2500,
+        decorPackageType: 'none',
+        soundMicSetup: false,
+        projectorSetup: false,
+        ledWallSetup: false,
+        packageIncludes: ['Swarnim Hall (G)', 'Full Decoration', 'DJ Setup'],
         selfArrangements: ['Photographer / Cinematography', 'Cake / Gift Counter'],
-        additionalHallCharges: 25000,
-        additionalDecorCharges: 35000,
-        specialArrangements: 'Vegetarian live counter required with kulhad chai station',
+        additionalHallCharges: 0,
+        additionalDecorCharges: 0,
+        specialArrangements: 'Baina box handover at registration counter',
         discountPercent: 0,
-        discountType: 'percent',
-        flatDiscountAmount: 0,
+        discountRupees: 0,
+        discountInputMode: 'amount',
+        approverRole: 'manager',
         amountPaid: 15000,
         paymentMode: 'UPI / QR',
         paymentDate: '11/09/2026',
@@ -307,29 +335,43 @@ const banquetInquiries = ref<BanquetInquiry[]>([
         functionDateTo: '2026-11-12',
         timeFrom: '11:00',
         timeTo: '17:00',
-        eventType: 'Annual Leadership Summit',
-        paxGuaranteed: 180,
-        menuType: 'High Tea & Lunch',
-        menuRate: 650,
-        areasNeeded: ['1st Floor Banquet'],
+        eventType: 'Corporate Leadership Meeting',
+        paxGuaranteed: 120,
+        selectedVenues: ['swadhistam'],
+        isEngagementPackage: false,
+        engagementPackageType: 'none',
+        isMeetingSetup: true,
+        menuRateTier: 499,
+        effectiveMenuRate: 799,
+        menuTitle: 'Meeting Executive Buffet',
+        selectedMenuCatalogItems: [],
+        engagementBreakfastPax: 0,
+        regularBreakfastPax: 120,
+        bainaBoxes: 0,
+        mandapServingsPax: 0,
         roomsNeeded: 1,
         roomArrival: '09:00',
         roomDeparture: '18:00',
-        roomRate: 0,
-        packageIncludes: ['Hall Rental', 'DJ & Acoustic Sound', 'Genset & 100% Power Backup', 'VIP Lounge Seating'],
-        selfArrangements: ['Photographer / Cinematography', 'Live Band / Orchestra'],
-        additionalHallCharges: 20000,
-        additionalDecorCharges: 15000,
-        specialArrangements: 'Projector, podium & wireless mic setup',
-        discountPercent: 10,
-        discountType: 'percent',
-        flatDiscountAmount: 0,
+        roomRate: 2500,
+        decorPackageType: 'none',
+        soundMicSetup: true,
+        projectorSetup: true,
+        ledWallSetup: false,
+        packageIncludes: ['Swadhistam (1)', 'Sound & Mic Setup', 'Projector & Screen', 'VIP Seating'],
+        selfArrangements: ['Photographer / Cinematography'],
+        additionalHallCharges: 0,
+        additionalDecorCharges: 0,
+        specialArrangements: 'Meeting setup converted to ₹799/pax + Breakfast @ ₹300',
+        discountPercent: 7,
+        discountRupees: 12383,
+        discountInputMode: 'amount',
+        approverRole: 'gm',
         amountPaid: 50000,
         paymentMode: 'Bank Transfer',
         paymentDate: '08/09/2026',
         status: 'approved_md',
         mdApprovedAt: '09 Sep 2026, 04:30 PM',
-        mdRemarks: 'Approved by MD with corporate 10% privilege discount',
+        mdRemarks: 'Approved by GM within 7% corporate discount limit (₹12,383)',
     },
 ]);
 
@@ -1516,15 +1558,15 @@ const submitCheckIn = () => {
 
                         <!-- Inquiry Pipeline Table -->
                         <div class="overflow-x-auto">
-                            <table class="w-full text-left text-xs">
+                            <table class="w-full text-left text-xs whitespace-nowrap">
                                 <thead>
                                     <tr class="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                                         <th class="pb-3 font-semibold">Slip #</th>
                                         <th class="pb-3 font-semibold">Guest & Contacts</th>
                                         <th class="pb-3 font-semibold">Event & Date</th>
-                                        <th class="pb-3 font-semibold">Pax & Menu</th>
+                                        <th class="pb-3 font-semibold">Pax & Menu Tier</th>
                                         <th class="pb-3 font-semibold text-right">Gross Total</th>
-                                        <th class="pb-3 font-semibold text-right">MD Discount</th>
+                                        <th class="pb-3 font-semibold text-right">Discount (₹)</th>
                                         <th class="pb-3 font-semibold text-right">Net Payable</th>
                                         <th class="pb-3 font-semibold text-right">Advance Paid</th>
                                         <th class="pb-3 font-semibold text-center">Pipeline Stage</th>
@@ -1546,23 +1588,50 @@ const submitCheckIn = () => {
                                         </td>
                                         <td class="py-3">
                                             <div class="font-bold text-slate-900">{{ inq.paxGuaranteed }} Pax</div>
-                                            <div class="text-[11px] text-purple-700">₹{{ inq.menuRate }}/plate ({{ inq.areasNeeded.join(', ') }})</div>
+                                            <div class="text-[11px] text-purple-700">
+                                                ₹{{ inq.effectiveMenuRate || inq.menuRate }}/plate
+                                                <span v-if="inq.isMeetingSetup" class="text-[9px] text-amber-700 font-bold bg-amber-50 px-1 py-0.5 rounded ml-0.5">Meeting</span>
+                                            </div>
                                         </td>
                                         <td class="py-3 text-right font-mono font-bold text-slate-900">
-                                            ₹{{ ((inq.paxGuaranteed * inq.menuRate) + (inq.additionalHallCharges || 0) + (inq.additionalDecorCharges || 0)).toLocaleString('en-IN') }}
+                                            ₹{{ (
+                                                (inq.paxGuaranteed * (inq.effectiveMenuRate || inq.menuRate)) +
+                                                (inq.additionalHallCharges || 0) +
+                                                (inq.additionalDecorCharges || 0) +
+                                                (inq.isEngagementPackage ? (inq.engagementPackageType === 'swarnim' ? 45000 : 40000) : (inq.selectedVenues?.length ? inq.selectedVenues.length * 35000 : 0)) +
+                                                ((inq.roomsNeeded || 0) * (inq.roomRate || 2500))
+                                            ).toLocaleString('en-IN') }}
                                         </td>
                                         <td class="py-3 text-right font-mono">
-                                            <span v-if="inq.discountPercent > 0" class="text-amber-600 font-bold">
+                                            <div v-if="(inq.discountRupees || 0) > 0" class="text-amber-600 font-bold">
+                                                -₹{{ inq.discountRupees.toLocaleString('en-IN') }}
+                                                <span class="text-[10px] text-slate-400 font-normal">({{ inq.discountPercent }}%)</span>
+                                            </div>
+                                            <div v-else-if="inq.discountPercent > 0" class="text-amber-600 font-bold">
                                                 -{{ inq.discountPercent }}%
-                                            </span>
-                                            <span v-else class="text-slate-400">0%</span>
+                                            </div>
+                                            <span v-else class="text-slate-400">₹0</span>
                                         </td>
                                         <td class="py-3 text-right font-mono font-black text-emerald-700">
-                                            ₹{{ (Math.max(0, ((inq.paxGuaranteed * inq.menuRate) + (inq.additionalHallCharges || 0) + (inq.additionalDecorCharges || 0)) * (1 - inq.discountPercent / 100))).toLocaleString('en-IN') }}
+                                            ₹{{ Math.max(0, (
+                                                (inq.paxGuaranteed * (inq.effectiveMenuRate || inq.menuRate)) +
+                                                (inq.additionalHallCharges || 0) +
+                                                (inq.additionalDecorCharges || 0) +
+                                                (inq.isEngagementPackage ? (inq.engagementPackageType === 'swarnim' ? 45000 : 40000) : (inq.selectedVenues?.length ? inq.selectedVenues.length * 35000 : 0)) +
+                                                ((inq.roomsNeeded || 0) * (inq.roomRate || 2500))
+                                            ) - (inq.discountRupees || 0)).toLocaleString('en-IN') }}
                                         </td>
                                         <td class="py-3 text-right font-mono text-slate-700">
                                             <span class="font-bold">₹{{ inq.amountPaid.toLocaleString('en-IN') }}</span>
-                                            <div class="text-[10px] text-slate-400">Bal: ₹{{ (Math.max(0, ((inq.paxGuaranteed * inq.menuRate) + (inq.additionalHallCharges || 0) + (inq.additionalDecorCharges || 0)) * (1 - inq.discountPercent / 100) - inq.amountPaid)).toLocaleString('en-IN') }}</div>
+                                            <div class="text-[10px] text-slate-400">
+                                                Bal: ₹{{ Math.max(0, (
+                                                    (inq.paxGuaranteed * (inq.effectiveMenuRate || inq.menuRate)) +
+                                                    (inq.additionalHallCharges || 0) +
+                                                    (inq.additionalDecorCharges || 0) +
+                                                    (inq.isEngagementPackage ? (inq.engagementPackageType === 'swarnim' ? 45000 : 40000) : (inq.selectedVenues?.length ? inq.selectedVenues.length * 35000 : 0)) +
+                                                    ((inq.roomsNeeded || 0) * (inq.roomRate || 2500))
+                                                ) - (inq.discountRupees || 0) - inq.amountPaid).toLocaleString('en-IN') }}
+                                            </div>
                                         </td>
                                         <td class="py-3 text-center">
                                             <span
