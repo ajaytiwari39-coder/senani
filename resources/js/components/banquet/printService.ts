@@ -72,6 +72,18 @@ export function printElement(elementId: string, customTitle: string = 'Senani Ho
                     page-break-inside: avoid !important;
                     break-inside: avoid !important;
                 }
+                .page-1 {
+                    page-break-after: always !important;
+                    break-after: page !important;
+                }
+                .page-2 {
+                    page-break-before: always !important;
+                    break-before: page !important;
+                }
+                .pdf-page-break {
+                    page-break-before: always !important;
+                    break-before: page !important;
+                }
                 table {
                     border-collapse: collapse !important;
                     width: 100% !important;

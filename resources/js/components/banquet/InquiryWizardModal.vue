@@ -47,6 +47,7 @@ import {
 } from '@lucide/vue';
 import {
     renderSlimBarcode,
+    generateBarcodeDataUrl,
     generateDigitalSignature,
     generateQrCodeDataUrl,
     diffInquiryChanges,
@@ -668,6 +669,7 @@ const handleDownloadPdf = async () => {
 // -------------------------------------------------------------
 const barcodeSvgStep2 = ref<SVGSVGElement | null>(null);
 const barcodeSvgPrint = ref<SVGSVGElement | null>(null);
+const barcodeDataUrl = ref<string>('');
 const qrCodeDataUrl = ref<string>('');
 const showAuditModal = ref(false);
 const unlockSnapshot = ref<Partial<BanquetInquiry> | null>(null);
@@ -686,6 +688,37 @@ const isCategoryFull = (items: string[], maxCount: number) => {
     if (!items || !items.length || maxCount <= 0) return false;
     return getCategorySelectedCount(items) >= maxCount;
 };
+
+// Culinary Tasting Menu (Clean, without unchecked clutter) for the Luxury Voucher
+const confirmedMenuCategories = computed(() => {
+    const catalog = currentMenuCatalog.value;
+    const selected = form.value.selectedMenuCatalogItems || [];
+    
+    const getItems = (catalogList: string[] = [], quota: number = 1) => {
+        const picked = catalogList.filter(item => selected.includes(item));
+        if (picked.length > 0) return picked;
+        return catalogList.slice(0, Math.max(1, quota));
+    };
+
+    const categories = [
+        { key: 'welcomeDrinks', label: 'Welcome Drinks & Mocktails', icon: '🍹', items: getItems(catalog.welcomeDrinks, catalog.welcomeDrinksCount) },
+        { key: 'hotDrinks', label: 'Hot Beverages', icon: '☕', items: getItems(catalog.hotDrinks, catalog.hotDrinksCount) },
+        { key: 'soups', label: 'Gourmet Soups', icon: '🍲', items: getItems(catalog.soups, catalog.soupsCount) },
+        { key: 'starters', label: 'Starters & Finger Food', icon: '🍢', items: getItems(catalog.starters, catalog.startersCount) },
+        { key: 'paneer', label: 'Paneer Specialty', icon: '🥘', items: getItems(catalog.paneer, catalog.paneerCount) },
+        { key: 'dal', label: 'Dal Preparation', icon: '🍲', items: getItems(catalog.dal, catalog.dalCount) },
+        { key: 'dryVeg', label: 'Dry Seasonal Veg', icon: '🥦', items: getItems(catalog.dryVeg, catalog.dryVegCount) },
+        { key: 'gravyVeg', label: 'Rich Gravy Specialties', icon: '🍛', items: getItems(catalog.gravyVeg, catalog.gravyVegCount) },
+        { key: 'rice', label: 'Basmati Rice & Pulao', icon: '🍚', items: getItems(catalog.rice, catalog.riceCount) },
+        { key: 'raita', label: 'Curd & Raita', icon: '🥣', items: getItems(catalog.raita, catalog.raitaCount) },
+        { key: 'breads', label: 'Assorted Tandoor Breads', icon: '🍞', items: getItems(catalog.breads, catalog.breadsCount) },
+        { key: 'desserts', label: 'Royal Desserts & Halwas', icon: '🍨', items: getItems(catalog.desserts, catalog.dessertsCount) },
+        { key: 'salads', label: 'Salads & Accompaniments', icon: '🥗', items: catalog.salads && catalog.salads.length ? catalog.salads.slice(0, 4) : ['Sirka Pyaaz', 'Green Salad', 'Achaar', 'Chutney'] },
+        { key: 'liveCounters', label: 'Live Chef Counters', icon: '🍳', items: getItems(catalog.liveCounters, catalog.liveCountersCount) },
+    ];
+
+    return categories.filter(c => c.items.length > 0);
+});
 
 // Strict Quota Limit Enforcement (Never allow more than allowed limit)
 const toggleMenuItem = (item: string, categoryItems?: string[], maxAllowed?: number) => {
@@ -767,8 +800,10 @@ const updateBarcodeAndQr = async () => {
     const verifyUrl = `${window.location.origin}/verify/voucher?v=${form.value.voucherNo}`;
     qrCodeDataUrl.value = await generateQrCodeDataUrl(verifyUrl, 160);
 
-    await nextTick();
     const sig = form.value.digitalSignature || `SN-SIG-${form.value.voucherNo}`;
+    barcodeDataUrl.value = generateBarcodeDataUrl(sig, 28);
+
+    await nextTick();
     if (barcodeSvgStep2.value) {
         renderSlimBarcode(barcodeSvgStep2.value, sig, 22);
     }
@@ -2195,750 +2230,380 @@ const shareOnWhatsApp = () => {
                         </div>
                     </div>
 
-                    <!-- COMPLETE PRINTABLE DOCUMENT REPLICA -->
-                    <div id="printable-voucher" class="space-y-4 bg-white text-slate-900 text-[11px] font-sans">
+                    <!-- COMPLETE 2-PAGE LUXURY EXECUTIVE DOSSIER -->
+                    <div id="printable-voucher" class="bg-white text-slate-900 text-[11px] font-sans">
                         
                         <!-- ========================================================= -->
-                        <!-- PART 1: COMMERCIAL INVOICE SLIP (User's Current Invoice)   -->
+                        <!-- PAGE 1: COMMERCIAL CONTRACT & INFRASTRUCTURE LOGISTICS   -->
                         <!-- ========================================================= -->
-                        <div class="border border-slate-400 p-4 sm:p-5 bg-white print-avoid-break">
-                            <!-- Top Header Contacts & Logo -->
-                            <div class="flex items-start justify-between border-b border-slate-400 pb-2.5">
-                                <div class="flex items-center gap-3">
+                        <div class="print-page page-1 bg-white p-4 sm:p-6 border border-slate-300 print:border-none rounded-xl print:rounded-none space-y-3" style="page-break-after: always; break-after: page;">
+                            <!-- Top Regal Letterhead -->
+                            <div class="flex items-start justify-between border-b-2 border-slate-900 pb-2.5">
+                                <div class="flex items-center gap-3.5">
                                     <img src="/images/logo-dark.png" alt="Senani Hotel Pleasant View" class="h-14 sm:h-16 w-auto object-contain" />
-                                    <div class="hidden sm:block border-l border-slate-300 pl-3">
-                                        <div class="text-[11px] font-black tracking-wider text-purple-900 uppercase">Banquet & Convention Booking Voucher</div>
-                                        <div class="text-[9px] text-slate-600 font-medium">A Premium Hospitality Unit of Senani Group</div>
-                                        <div class="text-[8px] text-slate-400 font-mono">Civil Lines, Raebareli, UP • GSTIN: 09AAAAA0000A1Z5</div>
+                                    <div class="border-l-2 border-amber-600/40 pl-3">
+                                        <div class="text-[13px] font-serif font-black tracking-wider text-slate-950 uppercase">Hotel Pleasant View</div>
+                                        <div class="text-[10px] font-bold text-amber-900 tracking-wide">BANQUET & CONVENTION CONTRACT DOSSIER</div>
+                                        <div class="text-[8.5px] text-slate-600 font-medium">A Premium Hospitality Unit of Senani Group • Civil Lines, Raebareli, UP</div>
+                                        <div class="text-[8px] text-slate-500 font-mono">GSTIN: 09AAAAA0000A1Z5 • 24x7 Executive Front Desk</div>
                                     </div>
                                 </div>
-                                <div class="text-right text-[10px] leading-tight text-slate-700 font-mono">
-                                    <div class="font-bold text-[#673DE6] pb-0.5">HELPLINE & BOOKING DESK</div>
-                                    <div>RECEPTION : +91 9794152222</div>
-                                    <div>MANAGER : +91 9794152223</div>
-                                    <div class="font-bold text-slate-900">MD OFFICE : +91 9794152224</div>
-                                    <div>BANQUET SALES : +91 9794152225</div>
+                                <div class="text-right text-[9.5px] leading-tight text-slate-700 bg-slate-50 border border-slate-200 rounded p-2">
+                                    <div class="font-bold text-slate-900 pb-0.5 border-b border-slate-200 mb-1">HELPLINE & BOOKING DESK</div>
+                                    <div class="font-mono">RECEPTION : <span class="font-bold text-slate-900">+91 9794152222</span></div>
+                                    <div class="font-mono">MANAGER : <span class="font-bold text-slate-900">+91 9794152223</span></div>
+                                    <div class="font-mono">MD OFFICE : <span class="font-bold text-slate-900">+91 9794152224</span></div>
+                                    <div class="font-mono">BANQUET SALES : <span class="font-bold text-slate-900">+91 9794152225</span></div>
                                 </div>
                             </div>
 
-                            <!-- Tagline banner -->
-                            <div class="text-center font-bold text-[11px] tracking-wider py-1 border-b border-slate-400 bg-slate-100">
-                                PLEASE COLLECT RECEIPT OF ALL PAYMENT
+                            <!-- Booking Reference Strip -->
+                            <div class="flex items-center justify-between py-1.5 px-3 bg-slate-900 text-white rounded font-medium text-xs">
+                                <div>
+                                    <span class="text-amber-400 font-bold">VOUCHER NO :</span>
+                                    <span class="font-mono font-black ml-1 text-white text-sm">#{{ form.voucherNo }}</span>
+                                </div>
+                                <div class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-white/10 text-amber-300 border border-white/20 font-bold">
+                                    {{ form.status === 'approved_md' ? 'OFFICIAL BOOKING CONFIRMATION' : 'PROVISIONAL INQUIRY QUOTATION' }}
+                                </div>
+                                <div>
+                                    <span class="text-slate-300">BOOKING DATE :</span>
+                                    <span class="font-mono font-bold ml-1 text-white">{{ form.inquiryDate }}</span>
+                                </div>
                             </div>
 
-                            <!-- Sl No. & Date -->
-                            <div class="flex justify-between py-1.5 border-b border-slate-300 font-bold text-xs">
-                                <span>Voucher No. : <span class="font-mono text-[#673DE6]">#{{ form.voucherNo }}</span></span>
-                                <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-slate-100 border border-slate-200">
-                                    {{ form.status === 'approved_md' ? 'OFFICIAL BOOKING VOUCHER' : 'PROVISIONAL INQUIRY QUOTATION' }}
-                                </span>
-                                <span>Date: <span class="font-mono">{{ form.inquiryDate }}</span></span>
-                            </div>
-
-                            <!-- Guest Fields -->
-                            <div class="py-2 space-y-1.5 border-b border-slate-300 text-[11px]">
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div class="flex"><span class="w-28 font-bold text-slate-600">Guest Name:</span> <span class="font-bold text-slate-900">{{ form.guestName }}</span></div>
-                                    <div class="flex"><span class="w-28 font-bold text-slate-600">Phone No.:</span> <span class="font-mono font-bold">{{ form.phonePrimary }}</span> <span v-if="form.phoneSecondary" class="font-mono ml-2">, {{ form.phoneSecondary }}</span></div>
+                            <!-- Client & Event Matrix (Clean Grid) -->
+                            <div class="p-3 bg-slate-50/80 border border-slate-200 rounded-lg text-[10.5px] space-y-1.5">
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+                                    <div class="flex">
+                                        <span class="w-28 font-bold text-slate-600">Client / Host:</span>
+                                        <span class="font-black text-slate-950">{{ form.guestName }}</span>
+                                    </div>
+                                    <div class="flex">
+                                        <span class="w-28 font-bold text-slate-600">Contact Number:</span>
+                                        <span class="font-mono font-bold text-slate-900">{{ form.phonePrimary }}</span>
+                                        <span v-if="form.phoneSecondary" class="font-mono ml-2 text-slate-600">, {{ form.phoneSecondary }}</span>
+                                    </div>
                                 </div>
-                                <div class="flex"><span class="w-28 font-bold text-slate-600">Address:</span> <span class="text-slate-800">{{ form.address }}</span></div>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div><span class="w-28 inline-block font-bold text-slate-600">Function Date:</span> <span class="font-bold text-slate-900">{{ form.functionDateFrom }}</span> to <span class="font-bold text-slate-900">{{ form.functionDateTo }}</span></div>
-                                    <div><span class="font-bold text-slate-600">Timing Slot:</span> <span class="font-semibold">{{ form.timeFrom }} to {{ form.timeTo }}</span></div>
+                                <div class="flex">
+                                    <span class="w-28 font-bold text-slate-600">Address:</span>
+                                    <span class="text-slate-800">{{ form.address || 'Civil Lines, Raebareli' }}</span>
                                 </div>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <div><span class="w-28 inline-block font-bold text-slate-600">Event Type:</span> <span class="font-bold text-[#673DE6]">{{ form.eventType }}</span></div>
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-1 pt-1 border-t border-slate-200/70">
+                                    <div>
+                                        <span class="w-28 inline-block font-bold text-slate-600">Function Date:</span>
+                                        <span class="font-bold text-slate-900">{{ form.functionDateFrom }}</span>
+                                        <span v-if="form.functionDateTo && form.functionDateTo !== form.functionDateFrom"> to <span class="font-bold text-slate-900">{{ form.functionDateTo }}</span></span>
+                                    </div>
+                                    <div>
+                                        <span class="font-bold text-slate-600">Timing Slot:</span>
+                                        <span class="font-semibold text-slate-900 ml-1.5">{{ form.timeFrom }} to {{ form.timeTo }}</span>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+                                    <div>
+                                        <span class="w-28 inline-block font-bold text-slate-600">Event Type:</span>
+                                        <span class="font-bold text-amber-900">{{ form.eventType }}</span>
+                                    </div>
                                     <div>
                                         <span class="font-bold text-slate-600">Catering Tier:</span>
-                                        <span class="font-bold">₹{{ effectiveMenuRate }}/plate</span>
-                                        <span v-if="form.isMeetingSetup" class="text-[9px] text-purple-700 font-bold bg-purple-50 px-1 py-0.5 rounded ml-1 border border-purple-200">Meeting Setup</span>
+                                        <span class="font-bold text-slate-900 ml-1.5">₹{{ effectiveMenuRate }}/plate ({{ currentMenuCatalog.title }})</span>
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-2 gap-2">
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-1">
                                     <div>
-                                        <span class="w-28 inline-block font-bold text-slate-600">No. of person:</span>
-                                        <span class="font-black text-slate-900">(Guaranteed) {{ form.paxGuaranteed }} Pax</span>
+                                        <span class="w-28 inline-block font-bold text-slate-600">Guaranteed Pax:</span>
+                                        <span class="font-black text-slate-950">{{ form.paxGuaranteed }} Persons</span>
                                     </div>
                                     <div>
                                         <span class="font-bold text-slate-600">Allocated Area:</span>
-                                        <span v-if="form.isEngagementPackage" class="font-bold text-purple-700">Engagement Package ({{ form.engagementPackageType.toUpperCase() }})</span>
-                                        <span v-else class="font-bold text-slate-800">{{ form.selectedVenues.map(v => v.toUpperCase()).join(', ') }}</span>
+                                        <span v-if="form.isEngagementPackage" class="font-bold text-amber-900 ml-1.5">Engagement Package ({{ form.engagementPackageType.toUpperCase() }})</span>
+                                        <span v-else class="font-bold text-slate-900 ml-1.5">{{ form.selectedVenues.map(v => v.toUpperCase()).join(', ') }}</span>
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-2 gap-2">
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-1">
                                     <div>
-                                        <span class="w-28 inline-block font-bold text-slate-600">Rooms Needed:</span>
-                                        <span class="font-bold">{{ form.roomsNeeded }} Rooms</span> (@ ₹{{ form.roomRate || 2500 }}/night)
+                                        <span class="w-28 inline-block font-bold text-slate-600">Rooms Allotted:</span>
+                                        <span class="font-bold text-slate-900">{{ form.roomsNeeded }} Executive AC Rooms</span>
+                                        <span class="text-slate-500 text-[9.5px] ml-1">(@ ₹{{ form.roomRate || 2500 }}/night)</span>
                                     </div>
                                     <div>
                                         <span class="font-bold text-slate-600">Room Stay:</span>
-                                        <span>{{ form.roomArrival }} to {{ form.roomDeparture }}</span>
+                                        <span class="text-slate-800 ml-1.5">{{ form.roomArrival }} to {{ form.roomDeparture }}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Financials / Breakdown (Amount in Numbers!) -->
-                            <div class="py-2.5 border-b border-slate-400 bg-slate-50/80 p-2.5 font-mono text-[11px] space-y-1 my-2 rounded-xs">
-                                <div class="flex justify-between text-slate-600 text-[10px]">
-                                    <span>Fooding ({{ form.paxGuaranteed }} Pax × ₹{{ effectiveMenuRate }}):</span>
-                                    <span>₹{{ foodTotal.toLocaleString('en-IN') }}</span>
+                            <!-- Commercial Billing & Settlement Breakdown -->
+                            <div class="border border-slate-300 rounded-lg overflow-hidden">
+                                <div class="bg-slate-100 px-3 py-1.5 border-b border-slate-300 flex items-center justify-between font-bold text-xs text-slate-900">
+                                    <span>COMMERCIAL INVOICE BREAKDOWN</span>
+                                    <span class="text-[10px] font-mono text-slate-500 font-normal">All amounts in Indian National Rupee (INR)</span>
                                 </div>
-                                <div v-if="extraFoodingTotal > 0" class="flex justify-between text-slate-600 text-[10px]">
-                                    <span>Extra Fooding & Ritual Servings:</span>
-                                    <span>₹{{ extraFoodingTotal.toLocaleString('en-IN') }}</span>
-                                </div>
-                                <div v-if="venueTotal > 0" class="flex justify-between text-slate-600 text-[10px]">
-                                    <span>Hall / Venue Charges:</span>
-                                    <span>₹{{ venueTotal.toLocaleString('en-IN') }}</span>
-                                </div>
-                                <div v-if="roomsTotal > 0" class="flex justify-between text-slate-600 text-[10px]">
-                                    <span>Room Accommodations ({{ form.roomsNeeded }} Rms):</span>
-                                    <span>₹{{ roomsTotal.toLocaleString('en-IN') }}</span>
-                                </div>
-                                <div v-if="decorAvTotal > 0" class="flex justify-between text-slate-600 text-[10px]">
-                                    <span>Decoration & AV Equipment:</span>
-                                    <span>₹{{ decorAvTotal.toLocaleString('en-IN') }}</span>
-                                </div>
-                                <div v-if="otherAddonsTotal > 0" class="flex justify-between text-slate-600 text-[10px]">
-                                    <span>Add-ons / Meeting Pax Surcharge:</span>
-                                    <span>₹{{ otherAddonsTotal.toLocaleString('en-IN') }}</span>
-                                </div>
-                                <div class="flex justify-between font-bold border-t border-slate-200 pt-1 text-slate-900 text-xs">
-                                    <span>Total Estimated Baseline Amount:</span>
-                                    <span>₹{{ totalGrossAmount.toLocaleString('en-IN') }}</span>
-                                </div>
-                                <div v-if="calculatedDiscountAmount > 0" class="flex justify-between text-emerald-700 font-bold">
-                                    <span>{{ authorityLevel.title }} Concession ({{ calculatedDiscountPercent }}%):</span>
-                                    <span>- ₹{{ calculatedDiscountAmount.toLocaleString('en-IN') }}</span>
-                                </div>
-                                <div class="flex justify-between font-black text-sm border-t border-slate-300 pt-1 text-slate-900">
-                                    <span>Net Payable Amount:</span>
-                                    <span>₹{{ netPayableAmount.toLocaleString('en-IN') }}</span>
-                                </div>
-                                <div class="flex justify-between text-slate-700 pt-0.5 text-xs">
-                                    <span>Advance Token Paid:</span>
-                                    <span class="font-bold">₹{{ form.amountPaid.toLocaleString('en-IN') }} ({{ form.paymentMode }})</span>
-                                </div>
-                                <div class="flex justify-between font-black text-xs text-rose-600 border-t border-slate-200 pt-1">
-                                    <span>Balance Due on Event Day:</span>
-                                    <span>₹{{ balanceDueAmount.toLocaleString('en-IN') }}</span>
-                                </div>
-                            </div>
-
-                            <!-- Signatures Box: Dynamic Authority Designation with Official Emblem Seal -->
-                            <div class="pt-4 pb-1 grid grid-cols-2 gap-8 text-center text-[11px]">
-                                <div>
-                                    <div class="border-t border-slate-400 pt-1 font-bold text-slate-700">Guest / Client Signature</div>
-                                    <div class="text-[9px] text-slate-500 font-mono">{{ form.guestName }}</div>
-                                </div>
-                                <div class="flex flex-col items-center">
-                                    <div class="flex items-center gap-1.5 mb-1">
-                                        <img src="/images/emblem-dark.png" alt="Senani" class="h-6 w-auto object-contain" />
-                                        <span class="text-[8px] font-mono font-bold text-purple-950 uppercase tracking-wider">Senani Official Seal</span>
+                                <div class="p-2.5 space-y-1 font-mono text-[10.5px]">
+                                    <div class="flex justify-between text-slate-700">
+                                        <span>Catering Buffet ({{ form.paxGuaranteed }} Pax × ₹{{ effectiveMenuRate }}):</span>
+                                        <span class="font-bold">₹{{ foodTotal.toLocaleString('en-IN') }}</span>
                                     </div>
-                                    <div class="w-full border-t border-slate-400 pt-1 font-bold text-slate-700">
-                                        {{ authorityLevel.signatureLabel }}
+                                    <div v-if="extraFoodingTotal > 0" class="flex justify-between text-slate-700">
+                                        <span>Extra Ritual Servings & Breakfast Add-ons:</span>
+                                        <span class="font-bold">₹{{ extraFoodingTotal.toLocaleString('en-IN') }}</span>
                                     </div>
-                                    <div class="text-[9px] text-emerald-700 font-bold">
-                                        {{ form.status === 'approved_md' ? '✔ DIGITALLY AUTHORIZED' : 'PENDING AUTHORIZATION' }}
+                                    <div v-if="venueTotal > 0" class="flex justify-between text-slate-700">
+                                        <span>Banquet Hall & Allocated Spaces:</span>
+                                        <span class="font-bold">₹{{ venueTotal.toLocaleString('en-IN') }}</span>
+                                    </div>
+                                    <div v-if="roomsTotal > 0" class="flex justify-between text-slate-700">
+                                        <span>Executive Room Stays ({{ form.roomsNeeded }} Rooms):</span>
+                                        <span class="font-bold">₹{{ roomsTotal.toLocaleString('en-IN') }}</span>
+                                    </div>
+                                    <div v-if="decorAvTotal > 0" class="flex justify-between text-slate-700">
+                                        <span>Stage Backdrop, Floral Ambience & AV Setup:</span>
+                                        <span class="font-bold">₹{{ decorAvTotal.toLocaleString('en-IN') }}</span>
+                                    </div>
+                                    <div v-if="otherAddonsTotal > 0" class="flex justify-between text-slate-700">
+                                        <span>Meeting Pax Surcharge / Specialized Add-ons:</span>
+                                        <span class="font-bold">₹{{ otherAddonsTotal.toLocaleString('en-IN') }}</span>
+                                    </div>
+                                    <div class="flex justify-between font-bold border-t border-slate-200 pt-1 text-slate-900">
+                                        <span>Total Estimated Baseline:</span>
+                                        <span>₹{{ totalGrossAmount.toLocaleString('en-IN') }}</span>
+                                    </div>
+                                    <div v-if="calculatedDiscountAmount > 0" class="flex justify-between text-emerald-800 font-bold">
+                                        <span>Authorized Management Concession ({{ calculatedDiscountPercent }}%):</span>
+                                        <span>- ₹{{ calculatedDiscountAmount.toLocaleString('en-IN') }}</span>
+                                    </div>
+                                    <div class="flex justify-between font-black text-xs sm:text-sm border-t-2 border-slate-900 pt-1.5 text-slate-950 bg-amber-50/60 -mx-2.5 px-2.5 py-1">
+                                        <span class="uppercase tracking-wide">Net Contract Amount:</span>
+                                        <span class="font-black">₹{{ netPayableAmount.toLocaleString('en-IN') }}</span>
+                                    </div>
+                                    <div class="flex justify-between text-slate-800 pt-1">
+                                        <span>Advance Token Received:</span>
+                                        <span class="font-bold text-slate-950">₹{{ form.amountPaid.toLocaleString('en-IN') }} (Mode: {{ form.paymentMode }})</span>
+                                    </div>
+                                    <div class="flex justify-between font-black text-xs text-rose-700 border-t border-slate-200 pt-1">
+                                        <span>Balance Due on Event Day:</span>
+                                        <span>₹{{ balanceDueAmount.toLocaleString('en-IN') }}</span>
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- ========================================================= -->
-                        <!-- PART 2: PACKAGE INCLUSIONS & LOGISTICS SPECIFICATIONS      -->
-                        <!-- ("bus neeche kya hai package me wo add ho jay")           -->
-                        <!-- ========================================================= -->
-                        <div class="border border-slate-400 p-4 sm:p-5 bg-white print-avoid-break">
-                            <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-300 bg-slate-50 p-2 rounded-xs">
-                                <div class="flex items-center gap-2">
-                                    <img src="/images/emblem-dark.png" alt="Senani" class="h-4.5 w-auto object-contain" />
-                                    <span class="font-black text-xs uppercase tracking-wider text-slate-900">Package Inclusions & Infrastructure Logistics</span>
+                            <!-- Package Inclusions & Infrastructure Logistics Grid -->
+                            <div class="border border-slate-300 rounded-lg overflow-hidden">
+                                <div class="bg-slate-100 px-3 py-1.5 border-b border-slate-300 flex items-center justify-between font-bold text-xs text-slate-900">
+                                    <span>PACKAGE INCLUSIONS & INFRASTRUCTURE LOGISTICS</span>
+                                    <span class="text-[10px] font-mono text-slate-500 font-normal">Hotel Venue Specifications</span>
                                 </div>
-                                <span class="text-[10px] font-mono text-slate-500 font-semibold">Official Venue & Hospitality Breakdown</span>
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
-                                <!-- 1. Venue & Halls Booked -->
-                                <div class="p-2.5 rounded border border-slate-200 bg-slate-50/50 space-y-1.5">
-                                    <div class="font-bold text-slate-800 text-xs flex items-center justify-between border-b border-slate-200 pb-1">
-                                        <span>1. Allocated Halls & Spaces</span>
-                                        <span class="font-mono text-purple-700 font-extrabold">₹{{ venueTotal.toLocaleString('en-IN') }}</span>
+                                <div class="p-2.5 grid grid-cols-2 gap-2 text-[10px]">
+                                    <!-- Box 1 -->
+                                    <div class="p-2 rounded bg-slate-50 border border-slate-200">
+                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-0.5 mb-1 flex justify-between">
+                                            <span>1. Allocated Halls & Spaces</span>
+                                            <span class="font-mono font-bold text-slate-900">₹{{ venueTotal.toLocaleString('en-IN') }}</span>
+                                        </div>
+                                        <div class="text-slate-700 space-y-0.5">
+                                            <div v-for="venue in selectedVenuesDetailed" :key="venue.name">• {{ venue.name }} (₹{{ venue.price.toLocaleString('en-IN') }})</div>
+                                            <div class="text-[9px] text-slate-500">Min Guaranteed Pax: {{ paxRules.minPax }} • Max: {{ paxRules.maxPax }}</div>
+                                        </div>
                                     </div>
-                                    <div v-if="form.isEngagementPackage" class="text-xs">
-                                        <p class="font-bold text-purple-800">
-                                            {{ form.engagementPackageType === 'swarnim' ? 'Swarnim Hall with Decoration + DJ Setup' : 'Swarnmahal Hall with Decoration + DJ Setup' }}
-                                        </p>
-                                        <p class="text-[10px] text-slate-500">Standalone Engagement Combo Package</p>
+                                    <!-- Box 2 -->
+                                    <div class="p-2 rounded bg-slate-50 border border-slate-200">
+                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-0.5 mb-1 flex justify-between">
+                                            <span>2. Executive Deluxe Rooms</span>
+                                            <span class="font-mono font-bold text-slate-900">₹{{ roomsTotal.toLocaleString('en-IN') }}</span>
+                                        </div>
+                                        <div class="text-slate-700 space-y-0.5">
+                                            <div>• {{ form.roomsNeeded }} Executive AC Rooms (@ ₹{{ form.roomRate || 2500 }}/night)</div>
+                                            <div class="text-[9px] text-slate-500">Stay: {{ form.roomArrival }} to {{ form.roomDeparture }} • 24/7 Hot Water, Room Service</div>
+                                        </div>
                                     </div>
-                                    <ul v-else class="space-y-1">
-                                        <li v-for="venue in selectedVenuesDetailed" :key="venue.name" class="flex justify-between items-center text-[10px]">
-                                            <span class="font-medium text-slate-700">• {{ venue.name }}</span>
-                                            <span class="font-mono font-bold text-slate-900">₹{{ venue.price.toLocaleString('en-IN') }}</span>
-                                        </li>
-                                    </ul>
-                                    <div class="text-[10px] text-slate-500 pt-1 border-t border-slate-200 space-y-0.5">
-                                        <div>Capacity: <span class="font-semibold">{{ paxRules.minPax }} Min Guaranteed Pax</span> (Max {{ paxRules.maxPax }} Pax)</div>
-                                        <div v-if="form.isMeetingSetup" class="text-purple-700 font-semibold">
-                                            Meeting Setup 6-hr Slot (Below min pax surcharge: ₹20k Banquet / ₹5k Mandap)
+                                    <!-- Box 3 -->
+                                    <div class="p-2 rounded bg-slate-50 border border-slate-200">
+                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-0.5 mb-1 flex justify-between">
+                                            <span>3. Stage & Theme Decor</span>
+                                            <span class="font-mono font-bold text-slate-900" v-if="selectedDecorDetails">₹{{ selectedDecorDetails.price.toLocaleString('en-IN') }}</span>
+                                            <span class="text-slate-500 font-normal" v-else>Included</span>
+                                        </div>
+                                        <div class="text-slate-700 text-[9.5px]">
+                                            <div v-if="selectedDecorDetails" class="font-semibold text-slate-900">{{ selectedDecorDetails.name }}: {{ selectedDecorDetails.inclusions }}</div>
+                                            <div v-else>Stage backdrop, VIP sofa seating, red carpet walkway & ambient lighting.</div>
+                                        </div>
+                                    </div>
+                                    <!-- Box 4 -->
+                                    <div class="p-2 rounded bg-slate-50 border border-slate-200">
+                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-0.5 mb-1 flex justify-between">
+                                            <span>4. Audio-Visual & Central AC</span>
+                                            <span class="font-mono font-bold text-slate-900">₹{{ selectedAvItems.reduce((s, i) => s + i.price, 0).toLocaleString('en-IN') }}</span>
+                                        </div>
+                                        <div class="text-slate-700 space-y-0.5 text-[9.5px]">
+                                            <div>• Acoustic PA sound system, wireless mics & central air-conditioning.</div>
+                                            <div class="text-[9px] text-slate-500">100% DG Genset silent power backup throughout function duration.</div>
                                         </div>
                                     </div>
                                 </div>
-
-                                <!-- 2. Room Accommodations -->
-                                <div class="p-2.5 rounded border border-slate-200 bg-slate-50/50 space-y-1.5">
-                                    <div class="font-bold text-slate-800 text-xs flex items-center justify-between border-b border-slate-200 pb-1">
-                                        <span>2. Deluxe Room Stays</span>
-                                        <span class="font-mono text-purple-700 font-extrabold">₹{{ roomsTotal.toLocaleString('en-IN') }}</span>
-                                    </div>
-                                    <div class="space-y-1">
-                                        <div class="flex justify-between">
-                                            <span class="text-slate-600">Rooms Allocated:</span>
-                                            <span class="font-bold text-slate-900">{{ form.roomsNeeded }} Executive AC Rooms</span>
-                                        </div>
-                                        <div class="flex justify-between text-[10px]">
-                                            <span class="text-slate-600">Standard Room Tariff:</span>
-                                            <span class="font-mono font-semibold">₹{{ form.roomRate || 2500 }} / room / night</span>
-                                        </div>
-                                        <div class="flex justify-between text-[10px]">
-                                            <span class="text-slate-600">Check-in / Check-out:</span>
-                                            <span class="font-medium">{{ form.roomArrival }} to {{ form.roomDeparture }}</span>
-                                        </div>
-                                        <p class="text-[9px] text-slate-500 pt-1 border-t border-slate-200">
-                                            Includes: Air Conditioning, Attached Bath, 24/7 Hot Water, Daily Housekeeping & Room Service.
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <!-- 3. Stage & Theme Decor Setup -->
-                                <div class="p-2.5 rounded border border-slate-200 bg-slate-50/50 space-y-1.5">
-                                    <div class="font-bold text-slate-800 text-xs flex items-center justify-between border-b border-slate-200 pb-1">
-                                        <span>3. Stage & Floral Decor</span>
-                                        <span class="font-mono text-purple-700 font-extrabold" v-if="selectedDecorDetails">₹{{ selectedDecorDetails.price.toLocaleString('en-IN') }}</span>
-                                        <span class="text-[10px] text-slate-400" v-else>Included</span>
-                                    </div>
-                                    <div v-if="selectedDecorDetails">
-                                        <p class="font-bold text-slate-900 text-[11px]">{{ selectedDecorDetails.name }}</p>
-                                        <p class="text-[10px] text-slate-600 mt-0.5 leading-tight">{{ selectedDecorDetails.inclusions }}</p>
-                                    </div>
-                                    <div v-else class="text-[10px] text-slate-600">
-                                        Stage backdrop, seating & ambient lighting arranged as per package.
-                                    </div>
-                                    <p class="text-[9px] text-slate-500 pt-1 border-t border-slate-200">
-                                        Includes: VIP Sofa Seating, Red Carpet Walkway, Round Tables with Satin Linen & Banquet Chair Covers.
-                                    </p>
-                                </div>
-
-                                <!-- 4. AV & Sound Technology -->
-                                <div class="p-2.5 rounded border border-slate-200 bg-slate-50/50 space-y-1.5">
-                                    <div class="font-bold text-slate-800 text-xs flex items-center justify-between border-b border-slate-200 pb-1">
-                                        <span>4. Audio-Visual & Tech Setup</span>
-                                        <span class="font-mono text-purple-700 font-extrabold">
-                                            ₹{{ selectedAvItems.reduce((s, i) => s + i.price, 0).toLocaleString('en-IN') }}
-                                        </span>
-                                    </div>
-                                    <ul v-if="selectedAvItems.length" class="space-y-1">
-                                        <li v-for="av in selectedAvItems" :key="av.name" class="flex justify-between items-center text-[10px]">
-                                            <span class="text-slate-700">• {{ av.name }}</span>
-                                            <span class="font-mono font-bold text-slate-900">₹{{ av.price.toLocaleString('en-IN') }}</span>
-                                        </li>
-                                    </ul>
-                                    <p v-else class="text-[10px] text-slate-500 italic">
-                                        Standard acoustic PA system included. Projector / LED wall available on request.
-                                    </p>
-                                    <p class="text-[9px] text-slate-500 pt-1 border-t border-slate-200">
-                                        100% DG Genset Silent Power Backup & Central AC throughout the function.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <!-- Hotel Deliverables vs Self Arrangements -->
-                            <div class="mt-3 pt-2.5 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3 text-[10px]">
-                                <div>
-                                    <span class="font-bold text-slate-700 uppercase tracking-wider block mb-1">Hotel Hospitality Deliverables:</span>
-                                    <ul class="list-disc list-inside text-slate-600 space-y-0.5">
-                                        <li>Fine Bone China Tableware, Cutlery, Glassware & Stainless Food Warmers</li>
-                                        <li>Service Captains, Uniformed Banquet Waiters & Housekeeping Staff</li>
-                                        <li>Continuous DG Generator Backup for Air-Conditioning & Stage Lighting</li>
-                                        <li>Hygienic RO Filtered Drinking Water Dispensary</li>
-                                    </ul>
-                                </div>
-                                <div>
-                                    <span class="font-bold text-slate-700 uppercase tracking-wider block mb-1">Guest Self-Arrangements:</span>
-                                    <ul class="list-disc list-inside text-slate-600 space-y-0.5">
-                                        <li v-for="self in form.selfArrangements" :key="self">{{ self }}</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- ========================================================= -->
-                        <!-- PART 3: DETAILED CATERING & DOCX FOOD MENU DOSSIER         -->
-                        <!-- ("every singal detail kya menuhai etc sab kuch page me")   -->
-                        <!-- ========================================================= -->
-                        <div class="border border-slate-400 p-4 sm:p-5 bg-white print-avoid-break">
-                            <div class="flex items-center justify-between pb-2 mb-2.5 border-b border-slate-300 bg-slate-50 p-2 rounded-xs">
-                                <div class="flex items-center gap-2">
-                                    <img src="/images/emblem-dark.png" alt="Senani" class="h-4.5 w-auto object-contain" />
+                                <!-- Deliverables & Arrangements Footer -->
+                                <div class="bg-slate-50 px-3 py-1.5 border-t border-slate-200 grid grid-cols-2 gap-3 text-[9px] text-slate-600">
                                     <div>
-                                        <span class="font-black text-xs uppercase tracking-wider text-slate-900">Official Catering Menu Specifications</span>
-                                        <span class="ml-2 text-[10px] font-bold text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded">
-                                            {{ currentMenuCatalog.title }} (@ ₹{{ effectiveMenuRate }}/pax)
-                                        </span>
+                                        <strong class="text-slate-800">Hotel Hospitality Deliverables:</strong> Fine Bone China tableware, cutlery, glassware, service captains & uniformed banquet waiters.
                                     </div>
-                                </div>
-                                <div class="text-right font-mono text-[11px] font-bold text-slate-900">
-                                    <span>{{ form.paxGuaranteed }} Pax × ₹{{ effectiveMenuRate }} = ₹{{ foodTotal.toLocaleString('en-IN') }}</span>
+                                    <div>
+                                        <strong class="text-slate-800">Guest Self-Arrangements:</strong> Photographer, Cinematography, Varmala & Personal Gift/Cake counters.
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Lock Status & Interactive Checkbox Guidance Bar -->
-                            <div class="flex items-center justify-between px-2.5 py-1.5 mb-2.5 rounded bg-purple-50/70 border border-purple-200 text-xs print:hidden">
-                                <div class="flex items-center gap-2">
-                                    <span v-if="form.isLocked" class="inline-flex items-center gap-1 font-bold text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 text-[10px]">
-                                        <Lock class="h-3 w-3 text-amber-700" />
-                                        DEAL LOCKED ({{ form.lockedAt || 'Confirmed' }})
-                                    </span>
-                                    <span v-else class="inline-flex items-center gap-1 font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300 text-[10px]">
-                                        <Unlock class="h-3 w-3 text-emerald-600" />
-                                        DEAL UNLOCKED (Interactive Checkboxes Enabled)
-                                    </span>
-                                    <span class="text-[11px] text-slate-600">
-                                        {{ form.isLocked ? 'Dishes are frozen for catering operations. Click Unlock to amend.' : 'Check or uncheck dishes to customize this banquet voucher.' }}
-                                    </span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        @click="toggleDealLock"
-                                        class="px-2.5 py-1 rounded text-[10px] font-black tracking-wide uppercase transition cursor-pointer"
-                                        :class="form.isLocked ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'bg-amber-500 hover:bg-amber-600 text-white'"
-                                    >
-                                        {{ form.isLocked ? '🔓 Unlock Deal' : '🔒 Lock Deal' }}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        @click="showShareModal = true"
-                                        class="px-2.5 py-1 rounded bg-[#673DE6] hover:bg-[#5832D0] text-white text-[10px] font-bold transition flex items-center gap-1 cursor-pointer"
-                                    >
-                                        <Share2 class="h-3 w-3" />
-                                        <span>Share Link</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Menu Courses Grid (Extracted from official hotel docx catalog) -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-                                <!-- Welcome Drinks -->
-                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
-                                        <span class="text-[11px]">🍹 Welcome Drinks</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
-                                            {{ getCategorySelectedCount(currentMenuCatalog.welcomeDrinks) }}/{{ currentMenuCatalog.welcomeDrinksCount }} Picked
-                                        </span>
-                                    </div>
-                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
-                                        <li v-for="item in currentMenuCatalog.welcomeDrinks" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <input
-                                                type="checkbox"
-                                                :checked="isItemSelected(item)"
-                                                @change="toggleMenuItem(item)"
-                                                :disabled="form.isLocked"
-                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
-                                            />
-                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <!-- Hot Drinks -->
-                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
-                                        <span class="text-[11px]">☕ Hot Beverages</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
-                                            {{ getCategorySelectedCount(currentMenuCatalog.hotDrinks) }}/{{ currentMenuCatalog.hotDrinksCount }} Picked
-                                        </span>
-                                    </div>
-                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
-                                        <li v-for="item in currentMenuCatalog.hotDrinks" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <input
-                                                type="checkbox"
-                                                :checked="isItemSelected(item)"
-                                                @change="toggleMenuItem(item)"
-                                                :disabled="form.isLocked"
-                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
-                                            />
-                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <!-- Soups (if present) -->
-                                <div v-if="currentMenuCatalog.soups.length" class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
-                                        <span class="text-[11px]">🍲 Soups</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
-                                            {{ getCategorySelectedCount(currentMenuCatalog.soups) }}/{{ currentMenuCatalog.soupsCount }} Picked
-                                        </span>
-                                    </div>
-                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
-                                        <li v-for="item in currentMenuCatalog.soups" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <input
-                                                type="checkbox"
-                                                :checked="isItemSelected(item)"
-                                                @change="toggleMenuItem(item)"
-                                                :disabled="form.isLocked"
-                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
-                                            />
-                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <!-- Starters / Appetizers -->
-                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
-                                        <span class="text-[11px]">🍢 Starters & Snacks</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
-                                            {{ getCategorySelectedCount(currentMenuCatalog.starters) }}/{{ currentMenuCatalog.startersCount }} Picked
-                                        </span>
-                                    </div>
-                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
-                                        <li v-for="item in currentMenuCatalog.starters" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <input
-                                                type="checkbox"
-                                                :checked="isItemSelected(item)"
-                                                @change="toggleMenuItem(item)"
-                                                :disabled="form.isLocked"
-                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
-                                            />
-                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <!-- Dal Preparation -->
-                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
-                                        <span class="text-[11px]">🍲 Dal Preparation</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
-                                            {{ getCategorySelectedCount(currentMenuCatalog.dal) }}/{{ currentMenuCatalog.dalCount }} Picked
-                                        </span>
-                                    </div>
-                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
-                                        <li v-for="item in currentMenuCatalog.dal" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <input
-                                                type="checkbox"
-                                                :checked="isItemSelected(item)"
-                                                @change="toggleMenuItem(item)"
-                                                :disabled="form.isLocked"
-                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
-                                            />
-                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <!-- Paneer Delicacies -->
-                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
-                                        <span class="text-[11px]">🧀 Paneer Specialty</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
-                                            {{ getCategorySelectedCount(currentMenuCatalog.paneer) }}/{{ currentMenuCatalog.paneerCount }} Picked
-                                        </span>
-                                    </div>
-                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
-                                        <li v-for="item in currentMenuCatalog.paneer" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <input
-                                                type="checkbox"
-                                                :checked="isItemSelected(item)"
-                                                @change="toggleMenuItem(item)"
-                                                :disabled="form.isLocked"
-                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
-                                            />
-                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <!-- Seasonal Dry Veg -->
-                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
-                                        <span class="text-[11px]">🥦 Dry Seasonal Veg</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
-                                            {{ getCategorySelectedCount(currentMenuCatalog.dryVeg) }}/{{ currentMenuCatalog.dryVegCount }} Picked
-                                        </span>
-                                    </div>
-                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
-                                        <li v-for="item in currentMenuCatalog.dryVeg" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <input
-                                                type="checkbox"
-                                                :checked="isItemSelected(item)"
-                                                @change="toggleMenuItem(item)"
-                                                :disabled="form.isLocked"
-                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
-                                            />
-                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <!-- Gravy Veg (if present) -->
-                                <div v-if="currentMenuCatalog.gravyVeg.length" class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
-                                        <span class="text-[11px]">🥘 Rich Gravy Veg</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
-                                            {{ getCategorySelectedCount(currentMenuCatalog.gravyVeg) }}/{{ currentMenuCatalog.gravyVegCount }} Picked
-                                        </span>
-                                    </div>
-                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
-                                        <li v-for="item in currentMenuCatalog.gravyVeg" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <input
-                                                type="checkbox"
-                                                :checked="isItemSelected(item)"
-                                                @change="toggleMenuItem(item)"
-                                                :disabled="form.isLocked"
-                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
-                                            />
-                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <!-- Basmati Rice & Pulao -->
-                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
-                                        <span class="text-[11px]">🍚 Basmati Rice & Pulao</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
-                                            {{ getCategorySelectedCount(currentMenuCatalog.rice) }}/{{ currentMenuCatalog.riceCount }} Picked
-                                        </span>
-                                    </div>
-                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
-                                        <li v-for="item in currentMenuCatalog.rice" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <input
-                                                type="checkbox"
-                                                :checked="isItemSelected(item)"
-                                                @change="toggleMenuItem(item)"
-                                                :disabled="form.isLocked"
-                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
-                                            />
-                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <!-- Curd & Raita -->
-                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
-                                        <span class="text-[11px]">🥣 Curd & Raita</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
-                                            {{ getCategorySelectedCount(currentMenuCatalog.raita) }}/{{ currentMenuCatalog.raitaCount }} Picked
-                                        </span>
-                                    </div>
-                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
-                                        <li v-for="item in currentMenuCatalog.raita" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <input
-                                                type="checkbox"
-                                                :checked="isItemSelected(item)"
-                                                @change="toggleMenuItem(item)"
-                                                :disabled="form.isLocked"
-                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
-                                            />
-                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <!-- Assorted Tandoori Breads -->
-                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
-                                        <span class="text-[11px]">🫓 Assorted Tandoor Breads</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
-                                            {{ getCategorySelectedCount(currentMenuCatalog.breads) }}/{{ currentMenuCatalog.breadsCount }} Picked
-                                        </span>
-                                    </div>
-                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
-                                        <li v-for="item in currentMenuCatalog.breads" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <input
-                                                type="checkbox"
-                                                :checked="isItemSelected(item)"
-                                                @change="toggleMenuItem(item)"
-                                                :disabled="form.isLocked"
-                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
-                                            />
-                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <!-- Desserts & Sweets -->
-                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
-                                        <span class="text-[11px]">🍨 Desserts & Halwas</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
-                                            {{ getCategorySelectedCount(currentMenuCatalog.desserts) }}/{{ currentMenuCatalog.dessertsCount }} Picked
-                                        </span>
-                                    </div>
-                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
-                                        <li v-for="item in currentMenuCatalog.desserts" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <input
-                                                type="checkbox"
-                                                :checked="isItemSelected(item)"
-                                                @change="toggleMenuItem(item)"
-                                                :disabled="form.isLocked"
-                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
-                                            />
-                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <!-- Salads & Accompaniments -->
-                                <div class="p-2 rounded border border-slate-200 bg-slate-50/40">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
-                                        <span class="text-[11px]">🥗 Salads & Accompaniments</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">Included</span>
-                                    </div>
-                                    <ul class="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px] font-semibold text-slate-800">
-                                        <li v-for="item in currentMenuCatalog.salads" :key="item" :class="[item.length > 26 ? 'col-span-2' : '', 'flex items-start gap-1 leading-tight']">
-                                            <input
-                                                type="checkbox"
-                                                :checked="isItemSelected(item)"
-                                                @change="toggleMenuItem(item)"
-                                                :disabled="form.isLocked"
-                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
-                                            />
-                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
-                                        </li>
-                                    </ul>
-                                </div>
-
-                                <!-- Live Cooking Counters -->
-                                <div v-if="currentMenuCatalog.liveCounters.length" class="p-2 rounded border border-slate-200 bg-slate-50/40 sm:col-span-2">
-                                    <div class="flex items-center justify-between font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1.5">
-                                        <span class="text-[11px]">🍳 Live Cooking Counters</span>
-                                        <span class="text-[9.5px] bg-purple-50 text-purple-700 font-bold px-1.5 py-0.5 rounded border border-purple-100">
-                                            {{ getCategorySelectedCount(currentMenuCatalog.liveCounters) }}/{{ currentMenuCatalog.liveCountersCount }} Picked
-                                        </span>
-                                    </div>
-                                    <ul class="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1 text-[11px] font-semibold text-slate-800">
-                                        <li v-for="item in currentMenuCatalog.liveCounters" :key="item" class="flex items-start gap-1 leading-tight">
-                                            <input
-                                                type="checkbox"
-                                                :checked="isItemSelected(item)"
-                                                @change="toggleMenuItem(item)"
-                                                :disabled="form.isLocked"
-                                                class="mt-0.5 h-3 w-3 rounded text-[#673DE6] focus:ring-[#673DE6] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed print:accent-[#673DE6]"
-                                            />
-                                            <span :class="[isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600', 'leading-tight select-none']">{{ item }}</span>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <!-- Extra Fooding / Ritual Catering Table -->
-                            <div v-if="extraFoodingItemsDetailed.length" class="mt-3 pt-2.5 border-t border-slate-200">
-                                <span class="font-bold text-slate-800 text-[11px] block mb-1">Extra Fooding & Ritual Catering Add-ons:</span>
-                                <table class="w-full text-left text-[10px] font-mono">
-                                    <thead>
-                                        <tr class="border-b border-slate-200 text-slate-500 font-bold">
-                                            <th class="pb-1">Item Description</th>
-                                            <th class="pb-1 text-center">Quantity / Pax</th>
-                                            <th class="pb-1 text-right">Unit Rate</th>
-                                            <th class="pb-1 text-right">Total (₹)</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-slate-100">
-                                        <tr v-for="item in extraFoodingItemsDetailed" :key="item.name">
-                                            <td class="py-1 font-sans text-slate-800">{{ item.name }}</td>
-                                            <td class="py-1 text-center">{{ item.qty }}</td>
-                                            <td class="py-1 text-right">{{ item.rate }}</td>
-                                            <td class="py-1 text-right font-bold text-slate-900">₹{{ item.total.toLocaleString('en-IN') }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <!-- Page 1 Bottom Signature Marker -->
+                            <div class="pt-2 flex items-center justify-between text-[9px] text-slate-500 border-t border-slate-200">
+                                <span>Hotel Pleasant View • A Unit of Senani Group • Civil Lines, Raebareli, UP</span>
+                                <span class="font-mono font-bold text-slate-700">PAGE 1 OF 2 (COMMERCIAL & INFRASTRUCTURE SPECIFICATIONS)</span>
                             </div>
                         </div>
 
-                        <!-- ========================================================= -->
-                        <!-- PART 4: CONTRACT TERMS & FINAL SIGN-OFF                   -->
-                        <!-- ========================================================= -->
-                        <div class="border border-slate-400 p-4 bg-white print-avoid-break text-[10px] text-slate-600 space-y-2">
-                            <div class="font-bold text-slate-800 text-xs border-b border-slate-200 pb-1 flex items-center justify-between">
-                                <div class="flex items-center gap-1.5">
-                                    <img src="/images/emblem-dark.png" alt="Senani" class="h-3.5 w-auto object-contain" />
-                                    <span>Official Booking Terms & Conditions</span>
-                                </div>
-                                <span class="font-mono text-[9px] text-slate-400">Hotel Pleasant View Policy</span>
-                            </div>
-                            <ol class="list-decimal list-inside space-y-0.5 leading-tight">
-                                <li><strong>Guaranteed Attendance Billing</strong>: Billed for contracted guaranteed pax ({{ form.paxGuaranteed }} Pax) even if actual attendance is lower. Extra pax billed at contracted per-plate rate.</li>
-                                <li><strong>Slot Timings</strong>: Event timings ({{ form.timeFrom }} to {{ form.timeTo }}) must be strictly adhered to. Extension requires management approval and incurs hourly overtime charges.</li>
-                                <li><strong>Prohibitions</strong>: Outside food/liquor, commercial firecrackers, and illegal substances strictly barred on hotel premises without statutory municipal/excise permits.</li>
-                                <li><strong>Cancellation Policy</strong>: Advance token deposit is strictly non-refundable and non-transferable under any circumstances.</li>
-                                <li><strong>Settlement</strong>: 100% net balance (₹{{ balanceDueAmount.toLocaleString('en-IN') }}) must be cleared before event commencement prior to hall key handover.</li>
-                            </ol>
+                        <!-- PAGE BREAK DIVIDER FOR PRINT & PDF ENGINE -->
+                        <div class="pdf-page-break print:hidden my-4 border-t-2 border-dashed border-slate-300 relative text-center">
+                            <span class="bg-white px-3 text-[10px] font-mono text-slate-400 font-bold uppercase tracking-widest relative -top-2.5">
+                                --- PAGE 2 BREAK (CULINARY MENU & LEGAL SEAL) ---
+                            </span>
+                        </div>
 
-                            <!-- Digital Integrity Seal & Slim Barcode Block ("Ptla sa Barcode") -->
-                            <div class="p-2.5 rounded border border-slate-300 bg-slate-50 flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <!-- ========================================================= -->
+                        <!-- PAGE 2: OFFICIAL CULINARY MENU & CONTRACT AUTHORIZATION  -->
+                        <!-- ========================================================= -->
+                        <div class="print-page page-2 bg-white p-4 sm:p-6 border border-slate-300 print:border-none rounded-xl print:rounded-none space-y-3" style="page-break-before: always; break-before: page;">
+                            <!-- Page 2 Header Strip -->
+                            <div class="flex items-center justify-between border-b-2 border-slate-900 pb-2">
+                                <div class="flex items-center gap-3">
+                                    <img src="/images/logo-dark.png" alt="Senani" class="h-10 w-auto object-contain" />
+                                    <div>
+                                        <div class="text-xs font-serif font-black tracking-wider text-slate-950 uppercase">Hotel Pleasant View • Catering Services</div>
+                                        <div class="text-[9.5px] font-bold text-amber-900">OFFICIAL BANQUET CULINARY TASTING MENU SPECIFICATIONS</div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-[10.5px] font-mono font-black text-slate-900">
+                                        {{ currentMenuCatalog.title }} (@ ₹{{ effectiveMenuRate }}/pax)
+                                    </div>
+                                    <div class="text-[9px] font-mono text-slate-600">
+                                        Guaranteed for {{ form.paxGuaranteed }} Guests • Voucher #{{ form.voucherNo }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Executive Culinary Tasting Menu (NO UNCHECKED BOXES - ONLY CONFIRMED DISHES!) -->
+                            <div class="border border-slate-300 rounded-lg overflow-hidden">
+                                <div class="bg-amber-950 text-amber-200 px-3 py-1.5 flex items-center justify-between text-xs font-bold">
+                                    <div class="flex items-center gap-2">
+                                        <span>👑 CONFIRMED ROYAL BANQUET TASTING MENU</span>
+                                        <span class="text-[9px] font-normal text-amber-300 font-mono">({{ confirmedMenuCategories.length }} Specialized Courses)</span>
+                                    </div>
+                                    <span class="text-[9.5px] font-mono bg-amber-900/80 px-2 py-0.5 rounded text-white border border-amber-700">
+                                        Catering Code: SEC-{{ form.voucherNo }}-{{ form.menuRateTier }}
+                                    </span>
+                                </div>
+
+                                <div class="p-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px]">
+                                    <div
+                                        v-for="cat in confirmedMenuCategories"
+                                        :key="cat.key"
+                                        class="p-2 rounded bg-slate-50 border border-slate-200/80 space-y-1"
+                                    >
+                                        <div class="flex items-center justify-between border-b border-slate-200 pb-0.5">
+                                            <span class="font-black text-slate-900 text-[10.5px] uppercase tracking-wide">
+                                                {{ cat.icon }} {{ cat.label }}
+                                            </span>
+                                            <span class="text-[8px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-200">
+                                                {{ cat.items.length }} Selected
+                                            </span>
+                                        </div>
+                                        <div class="flex flex-wrap gap-1 pt-0.5">
+                                            <span
+                                                v-for="dish in cat.items"
+                                                :key="dish"
+                                                class="inline-flex items-center text-[9.5px] font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200 shadow-2xs"
+                                            >
+                                                <span class="text-amber-600 mr-1">•</span> {{ dish }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Official Booking Terms & Conditions -->
+                            <div class="border border-slate-300 rounded-lg p-2.5 bg-slate-50 text-[9.5px] text-slate-700 space-y-1">
+                                <div class="font-bold text-slate-900 text-[10px] border-b border-slate-200 pb-0.5 flex items-center justify-between">
+                                    <span>OFFICIAL BOOKING TERMS & CANCELLATION POLICY</span>
+                                    <span class="font-mono text-[8.5px] text-slate-400">Hotel Pleasant View Statutory Contract</span>
+                                </div>
+                                <ol class="list-decimal list-inside space-y-0.5 leading-tight">
+                                    <li><strong>Guaranteed Attendance Billing</strong>: Billed for contracted minimum guarantee ({{ form.paxGuaranteed }} Pax) even if actual attendance is lower. Extra pax billed at contracted per-plate rate.</li>
+                                    <li><strong>Slot Timings</strong>: Event timings ({{ form.timeFrom }} to {{ form.timeTo }}) must be strictly adhered to. Extension requires prior management approval and incurs overtime charges.</li>
+                                    <li><strong>Prohibitions</strong>: Outside food/liquor, commercial firecrackers, and hazardous materials strictly barred on hotel premises without statutory municipal permits.</li>
+                                    <li><strong>Cancellation Policy</strong>: Advance token deposit is non-refundable and non-transferable under any circumstances upon contract locking.</li>
+                                    <li><strong>Settlement</strong>: 100% net balance (₹{{ balanceDueAmount.toLocaleString('en-IN') }}) must be cleared before event commencement prior to hall key handover.</li>
+                                </ol>
+                            </div>
+
+                            <!-- Digital Integrity Seal & Barcode ("Ptla sa Barcode") -->
+                            <div class="p-2.5 rounded-lg border border-slate-300 bg-slate-50 flex items-center justify-between gap-3 text-xs">
                                 <div class="flex items-center gap-3">
                                     <!-- Scannable QR Code -->
-                                    <div class="flex flex-col items-center bg-white p-1 rounded border border-slate-300 shadow-2xs">
-                                        <img v-if="qrCodeDataUrl" :src="qrCodeDataUrl" alt="Verification QR" class="h-16 w-16" />
-                                        <span class="text-[8px] font-mono text-slate-500 font-bold mt-0.5">Scan to Verify</span>
+                                    <div class="flex flex-col items-center bg-white p-1 rounded border border-slate-300 shadow-2xs shrink-0">
+                                        <img v-if="qrCodeDataUrl" :src="qrCodeDataUrl" alt="Verification QR" class="h-14 w-14" />
+                                        <span class="text-[7.5px] font-mono text-slate-500 font-bold mt-0.5">Scan to Verify</span>
                                     </div>
                                     <div>
                                         <div class="flex items-center gap-1.5">
-                                            <ShieldCheck class="h-3.5 w-3.5 text-emerald-600" />
-                                            <span class="text-[11px] font-black uppercase tracking-wider text-slate-900">Official Digital Integrity Seal</span>
-                                            <span v-if="form.isLocked" class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                            <ShieldCheck class="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                                            <span class="text-[10.5px] font-black uppercase tracking-wider text-slate-900">Official Digital Integrity Seal</span>
+                                            <span v-if="form.isLocked" class="text-[8.5px] font-bold font-mono px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
                                                 🔒 SEALED & FROZEN
                                             </span>
-                                            <span v-else class="text-[9px] font-bold font-mono px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
-                                                🔓 UNLOCKED
+                                            <span v-else class="text-[8.5px] font-bold font-mono px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                                                🔓 UNLOCKED DRAFT
                                             </span>
                                         </div>
-                                        <div class="text-[10px] font-mono text-slate-700 mt-0.5">
-                                            Auth Token: <strong class="text-purple-900">{{ form.digitalSignature || `SN-SIG-${form.voucherNo}-CONFIRMED` }}</strong>
+                                        <div class="text-[9.5px] font-mono text-slate-700 mt-0.5">
+                                            Auth Token: <strong class="text-purple-900">{{ form.digitalSignature || `SN-SIG-${form.voucherNo}` }}</strong>
                                         </div>
-                                        <div class="text-[9px] text-slate-500 mt-0.5">
-                                            Sealed by: <strong>{{ form.lockedBy || 'Banquet Operations Manager' }}</strong> • {{ form.lockedAt || 'Official Record' }}
+                                        <div class="text-[8.5px] text-slate-500 mt-0.5">
+                                            Sealed by: <strong>{{ form.lockedBy || 'Banquet Operations Manager' }}</strong> • {{ form.lockedAt || form.inquiryDate }}
                                         </div>
-                                        <div class="text-[9px] text-purple-700 font-medium mt-0.5">
-                                            Scan QR with any smartphone to inspect full revision history audit log.
+                                        <div class="text-[8px] text-purple-700 font-medium">
+                                            Scan QR with any smartphone to inspect full tamper-evident revision audit log.
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Slim Barcode ("Ptla sa Barcode") -->
-                                <div class="flex flex-col items-center bg-white px-3 py-1 rounded border border-slate-300 shadow-2xs">
-                                    <svg ref="barcodeSvgPrint" class="h-6 w-48"></svg>
-                                    <span class="text-[9px] font-mono font-bold text-slate-700 mt-0.5">
+                                <!-- High-Resolution Barcode (Base64 PNG Image - Always Visible!) -->
+                                <div class="flex flex-col items-center bg-white px-3 py-1.5 rounded border border-slate-300 shadow-2xs shrink-0">
+                                    <img v-if="barcodeDataUrl" :src="barcodeDataUrl" alt="Digital Signature Barcode" class="h-6 w-44 object-contain" />
+                                    <svg v-else ref="barcodeSvgPrint" class="h-6 w-44"></svg>
+                                    <span class="text-[8.5px] font-mono font-bold text-slate-700 mt-0.5">
                                         {{ form.digitalSignature || `SN-SIG-${form.voucherNo}` }}
                                     </span>
                                 </div>
                             </div>
 
-                            <!-- Final Signatures with Official Senani Seal -->
-                            <div class="pt-4 grid grid-cols-2 gap-8 text-center text-[11px] border-t border-slate-200 mt-2">
+                            <!-- Dual Authorized Signatures with Official Senani Seal -->
+                            <div class="pt-3 grid grid-cols-2 gap-8 text-center text-[10.5px] border-t border-slate-200">
                                 <div>
-                                    <div class="border-t border-slate-400 pt-1 font-bold text-slate-800">Accepted & Confirmed By (Guest)</div>
-                                    <div class="text-[9px] text-slate-500 font-mono">{{ form.guestName }} (Ph: {{ form.phonePrimary }})</div>
+                                    <div class="border-t-2 border-slate-800 pt-1 font-bold text-slate-900">Accepted & Confirmed By (Guest / Host)</div>
+                                    <div class="text-[9px] text-slate-600 font-mono">{{ form.guestName }} (Ph: {{ form.phonePrimary }})</div>
                                 </div>
                                 <div class="flex flex-col items-center">
                                     <div class="flex items-center gap-1.5 mb-1">
-                                        <img src="/images/emblem-dark.png" alt="Senani" class="h-6 w-auto object-contain" />
-                                        <span class="text-[8px] font-mono font-bold text-purple-950 uppercase tracking-wider">Hotel Pleasant View Seal</span>
+                                        <img src="/images/emblem-dark.png" alt="Senani" class="h-5 w-auto object-contain" />
+                                        <span class="text-[7.5px] font-mono font-bold text-amber-950 uppercase tracking-wider">Hotel Pleasant View Official Seal</span>
                                     </div>
-                                    <div class="w-full border-t border-slate-400 pt-1 font-bold text-slate-800">For Hotel Pleasant View (Authorized Officer)</div>
-                                    <div class="text-[9px] text-emerald-700 font-bold font-mono">{{ authorityLevel.signatureLabel }}</div>
+                                    <div class="w-full border-t-2 border-slate-800 pt-1 font-bold text-slate-900">For Hotel Pleasant View (Authorized Officer)</div>
+                                    <div class="text-[9px] text-emerald-800 font-bold font-mono">{{ authorityLevel.signatureLabel }}</div>
                                 </div>
                             </div>
 
-                            <div class="flex items-center justify-center gap-2 text-center text-[9px] text-slate-500 pt-1.5 border-t border-slate-100">
-                                <img src="/images/emblem-dark.png" alt="Senani" class="h-3.5 w-auto object-contain opacity-75" />
-                                <span>Hotel Pleasant View • A Unit of Senani Group • Manika Cinema Road, Gandhi Nagar, Civil Lines, Raebareli, UP - 229001 • info@hotelpleasantview.com</span>
+                            <!-- Corporate Footer -->
+                            <div class="flex items-center justify-between text-[8.5px] text-slate-500 pt-2 border-t border-slate-200">
+                                <span>Hotel Pleasant View • A Unit of Senani Group • Manika Cinema Road, Gandhi Nagar, Civil Lines, Raebareli, UP - 229001</span>
+                                <span class="font-mono font-bold text-slate-700">PAGE 2 OF 2 (CULINARY & LEGAL AGREEMENT)</span>
                             </div>
                         </div>
 

@@ -48,6 +48,30 @@ export function renderSlimBarcode(element: SVGSVGElement | null, value: string, 
 }
 
 /**
+ * Generates an immutable, high-resolution Base64 PNG barcode data URL.
+ * Guaranteed to display reliably in print, iframe, and PDF exports without DOM timing issues.
+ */
+export function generateBarcodeDataUrl(value: string, height: number = 28): string {
+    if (typeof document === 'undefined' || !value) return '';
+    try {
+        const canvas = document.createElement('canvas');
+        JsBarcode(canvas, value, {
+            format: 'CODE128',
+            height,
+            displayValue: false,
+            margin: 2,
+            lineColor: '#0f172a',
+            background: '#ffffff',
+            width: 1.4,
+        });
+        return canvas.toDataURL('image/png');
+    } catch (e) {
+        console.warn('Failed to generate barcode data URL:', e);
+        return '';
+    }
+}
+
+/**
  * Generates a scannable Base64 PNG Data URL for a given verification URL or payload.
  */
 export async function generateQrCodeDataUrl(text: string, width: number = 180): Promise<string> {
