@@ -408,20 +408,14 @@ const submitCheckIn = () => {
                 </button>
 
                 <Link :href="home()" class="flex items-center gap-2.5 group">
-                    <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#673DE6] to-[#5025d1] text-white shadow-md shadow-[#673DE6]/25 group-hover:scale-105 transition-transform duration-200">
-                        <Building2 class="h-5 w-5 stroke-[2.5]" />
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-lg font-extrabold tracking-tight text-slate-900">SENANI</span>
-                            <span class="rounded-full bg-[#F0EBFF] px-2 py-0.5 text-[10px] font-bold text-[#673DE6] border border-[#E0D7FE]">
-                                ERP v2.4
-                            </span>
-                        </div>
-                        <p class="text-[10px] font-semibold text-slate-400 tracking-wider uppercase -mt-0.5 hidden sm:block">
-                            Hotel & Banquet Palace
-                        </p>
-                    </div>
+                    <img
+                        src="/images/logo-dark.png"
+                        alt="Senani Hotel Pleasant View"
+                        class="h-9 w-auto object-contain group-hover:scale-105 transition-transform duration-200"
+                    />
+                    <span class="rounded-full bg-[#F0EBFF] px-2 py-0.5 text-[10px] font-bold text-[#673DE6] border border-[#E0D7FE] hidden sm:inline-flex">
+                        ERP v2.4
+                    </span>
                 </Link>
             </div>
 

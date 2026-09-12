@@ -166,21 +166,12 @@ onUnmounted(() => {
 
             <!-- TOP BAR: Royal Crest, Hotel Identity & Google 4.2 Rating -->
             <div class="relative z-20 flex flex-wrap items-center justify-between gap-4">
-                <Link :href="home()" class="flex items-center gap-3.5 group">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-300 via-amber-500 to-amber-600 text-slate-950 shadow-xl shadow-amber-500/25 group-hover:scale-105 transition-transform duration-200">
-                        <Crown class="h-6 w-6 stroke-[2.2]" />
-                    </div>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-2xl font-black tracking-wider text-white font-serif">SENANI</span>
-                            <span class="rounded-full bg-amber-400/20 px-2.5 py-0.5 text-[10px] font-bold text-amber-300 border border-amber-400/40 uppercase tracking-wider">
-                                The Lap of Luxury
-                            </span>
-                        </div>
-                        <p class="text-xs font-semibold tracking-wider text-slate-300 uppercase">
-                            Hotel Pleasant View • Raebareli
-                        </p>
-                    </div>
+                <Link :href="home()" class="flex items-center gap-3 group">
+                    <img
+                        src="/images/logo-white.png"
+                        alt="Senani Hotel Pleasant View"
+                        class="h-14 sm:h-16 w-auto object-contain drop-shadow-xl group-hover:scale-105 transition-transform duration-200"
+                    />
                 </Link>
 
                 <!-- Verified Google Reviews Badge -->
@@ -299,13 +290,11 @@ onUnmounted(() => {
                 <!-- Top Brand Header -->
                 <div class="flex items-center justify-between pb-6 border-b border-slate-100">
                     <div class="flex items-center gap-3">
-                        <div class="h-10 w-10 rounded-2xl bg-[#673DE6] text-white flex items-center justify-center font-bold shadow-md shadow-[#673DE6]/25">
-                            <Building2 class="h-5 w-5 stroke-[2.5]" />
-                        </div>
-                        <div>
-                            <span class="text-sm font-black tracking-tight text-slate-900 block font-serif">SENANI ERP</span>
-                            <span class="text-[10px] font-semibold text-slate-400 tracking-wider uppercase">Hotel & Banquet Palace</span>
-                        </div>
+                        <img
+                            src="/images/logo-dark.png"
+                            alt="Senani Hotel Pleasant View"
+                            class="h-10 sm:h-11 w-auto object-contain"
+                        />
                     </div>
 
                     <div class="inline-flex items-center gap-1.5 rounded-full border border-purple-200/80 bg-purple-50/80 px-3 py-1 text-[11px] font-bold text-[#673DE6]">
