@@ -23,10 +23,12 @@ import {
     Wine,
     ChevronRight,
     ShieldCheck,
+    KeyRound,
+    X,
 } from 'lucide-vue-next';
 import { type BanquetInquiry } from '@/components/banquet/InquiryWizardModal.vue';
 import { menuCatalogs, type MenuCatalogTier } from '@/components/banquet/menuCatalog';
-import { renderSlimBarcode } from '@/components/banquet/auditTrail';
+import { renderSlimBarcode, generateDigitalSignature } from '@/components/banquet/auditTrail';
 import { printElement, downloadElementAsPdf } from '@/components/banquet/printService';
 import { decodeGuestPayload } from '@/components/banquet/guestShare';
 
@@ -113,8 +115,143 @@ const saveSuccessMessage = ref('');
 const isSaving = ref(false);
 const barcodeSvgGuest = ref<SVGSVGElement | null>(null);
 
-// Guest editing mode is active by default so client can freely customize dishes
+// Guest editing mode is active when in draft mode, locked when finalized
 const isGuestEditing = ref(true);
+
+// -------------------------------------------------------------
+// Lock & Manager Unlock Management
+// -------------------------------------------------------------
+const showLockConfirmModal = ref(false);
+const showManagerUnlockModal = ref(false);
+const managerPinInput = ref('');
+const managerPinError = ref('');
+const isProcessingLock = ref(false);
+const AUTHORIZED_MANAGER_PINS = ['1234', '9794', 'senani123', 'admin'];
+
+// 1. Lock Menu Action (Invoked by User/Guest to Finalize Selections)
+const confirmAndLockMenu = () => {
+    isProcessingLock.value = true;
+    try {
+        const timestamp = new Date().toLocaleString('en-IN', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        });
+        const actorName = currentInquiry.value.guestName
+            ? `${currentInquiry.value.guestName} (Guest Finalized)`
+            : 'Client (Finalized)';
+
+        currentInquiry.value.isLocked = true;
+        currentInquiry.value.lockedAt = timestamp;
+        currentInquiry.value.lockedBy = actorName;
+        isGuestEditing.value = false;
+
+        // Generate digital seal
+        const sig = generateDigitalSignature(currentInquiry.value.voucherNo || '250', (currentInquiry.value.auditLog?.length || 1) + 1);
+        currentInquiry.value.digitalSignature = sig;
+        currentInquiry.value.barcodeValue = sig;
+
+        // Append audit log
+        if (!currentInquiry.value.auditLog) {
+            currentInquiry.value.auditLog = [];
+        }
+        currentInquiry.value.auditLog.push({
+            id: 'aud-' + Date.now(),
+            timestamp,
+            action: 'locked',
+            actor: actorName,
+            details: 'Menu selections finalized and locked by client via Guest Portal.',
+            digitalSignature: sig,
+            changes: [`${currentInquiry.value.selectedMenuCatalogItems?.length || 0} Dishes Finalized`],
+        });
+
+        // Persist to localStorage
+        if (typeof window !== 'undefined') {
+            const raw = localStorage.getItem('senani_banquet_inquiries');
+            let list: BanquetInquiry[] = raw ? JSON.parse(raw) : [];
+            const idx = list.findIndex(i => String(i.voucherNo) === String(currentInquiry.value.voucherNo));
+            if (idx > -1) {
+                list[idx] = { ...currentInquiry.value };
+            } else {
+                list.unshift({ ...currentInquiry.value });
+            }
+            localStorage.setItem('senani_banquet_inquiries', JSON.stringify(list));
+        }
+
+        renderGuestBarcode();
+        showLockConfirmModal.value = false;
+        saveSuccessMessage.value = 'Catering menu finalized and locked successfully! Only Hotel Management can unlock this voucher.';
+        setTimeout(() => {
+            saveSuccessMessage.value = '';
+        }, 6000);
+    } catch (e) {
+        console.error('Error locking menu', e);
+    } finally {
+        isProcessingLock.value = false;
+    }
+};
+
+// 2. Unlock Action (Restricted to Authorized Hotel Staff with PIN)
+const handleManagerUnlock = () => {
+    managerPinError.value = '';
+    const pin = managerPinInput.value.trim();
+
+    if (!pin) {
+        managerPinError.value = 'Please enter Manager PIN';
+        return;
+    }
+
+    if (!AUTHORIZED_MANAGER_PINS.includes(pin)) {
+        managerPinError.value = 'Invalid Manager PIN. Only authorized hotel staff can unlock.';
+        return;
+    }
+
+    const timestamp = new Date().toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+
+    currentInquiry.value.isLocked = false;
+    currentInquiry.value.unlockedAt = timestamp;
+    currentInquiry.value.unlockedBy = 'Banquet Operations Manager';
+    isGuestEditing.value = true;
+
+    if (!currentInquiry.value.auditLog) {
+        currentInquiry.value.auditLog = [];
+    }
+    currentInquiry.value.auditLog.push({
+        id: 'aud-' + Date.now(),
+        timestamp,
+        action: 'unlocked',
+        actor: 'Banquet Operations Manager',
+        details: 'Deal unlocked by Hotel Manager for client revisions.',
+        previousSignature: currentInquiry.value.digitalSignature,
+    });
+
+    if (typeof window !== 'undefined') {
+        const raw = localStorage.getItem('senani_banquet_inquiries');
+        let list: BanquetInquiry[] = raw ? JSON.parse(raw) : [];
+        const idx = list.findIndex(i => String(i.voucherNo) === String(currentInquiry.value.voucherNo));
+        if (idx > -1) {
+            list[idx] = { ...currentInquiry.value };
+        } else {
+            list.unshift({ ...currentInquiry.value });
+        }
+        localStorage.setItem('senani_banquet_inquiries', JSON.stringify(list));
+    }
+
+    showManagerUnlockModal.value = false;
+    managerPinInput.value = '';
+    saveSuccessMessage.value = 'Manager PIN verified. Menu selection is now unlocked for revisions.';
+    setTimeout(() => {
+        saveSuccessMessage.value = '';
+    }, 6000);
+};
 
 // Menu Catalog for current tier
 const catalog = computed<MenuCatalogTier>(() => {
@@ -264,8 +401,13 @@ onMounted(async () => {
         }
     }
 
-    // Guest portal is explicitly editable by default
-    isGuestEditing.value = true;
+    // Clear stale demo lock if voucher 250 was only locked by dummy manager data
+    if (currentInquiry.value.voucherNo === '250' && currentInquiry.value.lockedBy === 'Banquet Operations Manager' && !currentInquiry.value.lockedBy.includes('Guest')) {
+        currentInquiry.value.isLocked = false;
+    }
+
+    // Sync editing state with current lock status
+    isGuestEditing.value = !currentInquiry.value.isLocked;
 
     sanitizeCatalogSelections();
     await nextTick();
@@ -298,7 +440,7 @@ const saveGuestPreferences = () => {
             localStorage.setItem('senani_banquet_inquiries', JSON.stringify(list));
         }
 
-        saveSuccessMessage.value = 'Your menu selections and service preferences have been saved successfully!';
+        saveSuccessMessage.value = 'Menu preferences saved as draft! Click "Finalize & Lock Menu" when ready to finalize.';
         setTimeout(() => {
             saveSuccessMessage.value = '';
         }, 6000);
@@ -411,72 +553,106 @@ const handleDownloadPdf = async () => {
                 </div>
             </div>
 
-            <!-- GUEST STATUS & MODE BANNER -->
+            <!-- GUEST STATUS & MODE BANNER: DRAFT VS LOCKED -->
+            <!-- 1. DRAFT STATE (Editable by user) -->
             <div
-                class="p-4 sm:p-5 rounded-2xl border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm"
-                :class="isGuestEditing ? 'bg-gradient-to-r from-purple-50 via-white to-purple-50 border-purple-200 text-slate-800' : 'bg-gradient-to-r from-amber-50 via-amber-50/60 to-white border-2 border-amber-300 text-amber-950'"
+                v-if="!currentInquiry.isLocked"
+                class="p-4 sm:p-5 rounded-2xl border border-purple-200 bg-gradient-to-r from-purple-50 via-white to-purple-50 text-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm"
             >
                 <div class="flex items-start gap-3.5">
-                    <div
-                        class="p-2.5 rounded-xl shrink-0 mt-0.5 shadow-2xs"
-                        :class="isGuestEditing ? 'bg-[#673DE6] text-white' : 'bg-amber-200 text-amber-900'"
-                    >
-                        <Utensils v-if="isGuestEditing" class="h-5 w-5" />
-                        <Lock v-else class="h-5 w-5" />
+                    <div class="p-2.5 rounded-xl bg-[#673DE6] text-white shrink-0 mt-0.5 shadow-2xs">
+                        <Utensils class="h-5 w-5" />
                     </div>
                     <div class="space-y-1">
                         <div class="flex items-center gap-2">
-                            <div class="text-sm font-black tracking-tight" :class="isGuestEditing ? 'text-[#673DE6]' : 'text-amber-950'">
-                                {{ isGuestEditing ? 'GUEST MENU CUSTOMIZATION ACTIVE' : 'SEALED VIEW MODE' }}
+                            <div class="text-sm font-black tracking-tight text-[#673DE6]">
+                                GUEST MENU CUSTOMIZATION PORTAL
                             </div>
-                            <span
-                                class="text-[10px] font-mono px-2 py-0.5 rounded font-bold"
-                                :class="isGuestEditing ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-200/80 text-amber-900'"
-                            >
-                                {{ isGuestEditing ? '🟢 EDITABLE' : '🔒 VIEW ONLY' }}
+                            <span class="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                🟢 DRAFT (EDITABLE)
                             </span>
                         </div>
-                        <p class="text-xs leading-relaxed max-w-2xl" :class="isGuestEditing ? 'text-slate-600' : 'text-amber-800'">
-                            {{ isGuestEditing
-                                ? 'Namaste ' + currentInquiry.guestName + ' Ji! You can select and customize your catering dishes below within your package quota. Click "Save My Choices" when finished.'
-                                : 'This selection is currently in view mode. Click "Enable Editing" to adjust dish selections.' }}
+                        <p class="text-xs text-slate-600 leading-relaxed max-w-2xl">
+                            Namaste <strong>{{ currentInquiry.guestName }} Ji</strong>! Select your catering dishes below. Click <strong>Save as Draft</strong> to save your progress, or <strong>Finalize & Lock Menu</strong> when you are ready to submit to hotel management.
                         </p>
                         <div v-if="currentInquiry.digitalSignature" class="flex flex-wrap items-center gap-2 pt-1">
                             <span class="text-[10px] font-mono text-purple-900 bg-purple-100/70 px-2 py-0.5 rounded border border-purple-200 font-semibold">
-                                🔒 Deal Seal: {{ currentInquiry.digitalSignature }}
-                            </span>
-                            <span v-if="currentInquiry.lockedAt" class="text-[10px] text-slate-500 font-medium">
-                                (Contract Sealed: {{ currentInquiry.lockedAt }})
+                                📋 Voucher Ref: {{ currentInquiry.digitalSignature }}
                             </span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Slim Barcode & Action Buttons -->
+                <!-- Action Buttons: Save as Draft & Lock Menu -->
+                <div class="flex flex-col sm:flex-row items-center gap-2 shrink-0 self-stretch sm:self-auto justify-end">
+                    <button
+                        @click="saveGuestPreferences"
+                        :disabled="isSaving"
+                        class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition shadow-xs cursor-pointer"
+                    >
+                        <Save class="h-3.5 w-3.5 text-slate-500" />
+                        <span>{{ isSaving ? 'Saving…' : 'Save as Draft' }}</span>
+                    </button>
+                    <button
+                        @click="showLockConfirmModal = true"
+                        class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#673DE6] hover:bg-[#5832D0] text-white text-xs font-bold transition shadow-sm cursor-pointer"
+                    >
+                        <Lock class="h-3.5 w-3.5" />
+                        <span>Finalize & Lock Menu</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. LOCKED STATE (Finalized - Only Manager can unlock) -->
+            <div
+                v-else
+                class="p-4 sm:p-5 rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-amber-50/60 to-white text-amber-950 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm"
+            >
+                <div class="flex items-start gap-3.5">
+                    <div class="p-2.5 rounded-xl bg-amber-200 text-amber-900 shrink-0 mt-0.5 shadow-2xs">
+                        <Lock class="h-5 w-5" />
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <div class="text-sm font-black tracking-tight text-amber-950">
+                                MENU SELECTION FINALIZED & LOCKED
+                            </div>
+                            <span class="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-amber-200/80 text-amber-900 border border-amber-300">
+                                🔒 LOCKED
+                            </span>
+                        </div>
+                        <p class="text-xs text-amber-800 leading-relaxed max-w-2xl">
+                            This catering selection was finalized and sealed on <strong>{{ currentInquiry.lockedAt || 'Event Confirmation' }}</strong> by {{ currentInquiry.lockedBy || 'Client' }}. Choices are frozen for kitchen prep and billing integrity. <strong>Only Hotel Banquet Management can unlock</strong> this selection.
+                        </p>
+                        <div v-if="currentInquiry.digitalSignature" class="flex flex-wrap items-center gap-2 pt-1">
+                            <span class="text-[10px] font-mono text-amber-900 bg-amber-100 px-2 py-0.5 rounded border border-amber-300 font-semibold">
+                                🔒 Deal Seal: {{ currentInquiry.digitalSignature }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slim Barcode & Manager Unlock Button -->
                 <div class="flex flex-col sm:flex-row items-center gap-3 shrink-0 self-stretch sm:self-auto justify-end">
-                    <div class="bg-white/90 p-2 rounded-xl border border-purple-100 flex flex-col items-center">
+                    <div class="bg-white/90 p-2 rounded-xl border border-amber-200 flex flex-col items-center">
                         <svg ref="barcodeSvgGuest" class="h-6 max-w-[150px]"></svg>
                         <span class="text-[9px] font-mono font-bold text-slate-500 mt-0.5">SN-BARCODE #{{ currentInquiry.voucherNo }}</span>
                     </div>
-                    <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <div class="flex flex-col gap-1.5 w-full sm:w-auto">
                         <button
-                            @click="isGuestEditing = !isGuestEditing"
-                            class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-bold shadow-xs transition cursor-pointer"
-                            :class="isGuestEditing ? 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-900 border-emerald-300 hover:bg-emerald-100'"
+                            @click="showManagerUnlockModal = true"
+                            class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-bold transition border border-amber-300 shadow-2xs cursor-pointer"
                         >
-                            <Lock v-if="isGuestEditing" class="h-3.5 w-3.5" />
-                            <Unlock v-else class="h-3.5 w-3.5" />
-                            <span>{{ isGuestEditing ? 'View Mode' : 'Enable Editing' }}</span>
+                            <KeyRound class="h-3.5 w-3.5 text-amber-700" />
+                            <span>Manager Unlock</span>
                         </button>
-                        <button
-                            v-if="isGuestEditing"
-                            @click="saveGuestPreferences"
-                            :disabled="isSaving"
-                            class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-[#673DE6] text-white hover:bg-[#5832D0] text-xs font-bold transition shadow-sm cursor-pointer"
+                        <a
+                            href="tel:+919794152223"
+                            class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition border border-slate-200 shadow-2xs"
                         >
-                            <Save class="h-3.5 w-3.5" />
-                            <span>{{ isSaving ? 'Saving…' : 'Save Choices' }}</span>
-                        </button>
+                            <Phone class="h-3.5 w-3.5 text-emerald-600" />
+                            <span>Call Manager</span>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -497,10 +673,10 @@ const handleDownloadPdf = async () => {
                         <span
                             :class="[
                                 'px-2.5 py-1 rounded-full text-xs font-bold uppercase',
-                                isGuestEditing ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                                currentInquiry.isLocked ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                             ]"
                         >
-                            {{ isGuestEditing ? '🟢 Customization Open' : '🔒 View Mode' }}
+                            {{ currentInquiry.isLocked ? '🔒 Locked (Finalized)' : '🟢 Draft Mode' }}
                         </span>
                     </div>
                 </div>
@@ -1229,36 +1405,49 @@ const handleDownloadPdf = async () => {
                             {{ currentInquiry.selectedMenuCatalogItems?.length || 0 }} Items Selected for {{ currentInquiry.guestName }}
                         </div>
                         <div class="text-[10px] text-slate-500">
-                            {{ isGuestEditing ? '🟢 Ready to save and transmit to hotel banquet team' : '🔒 Menu currently in view-only mode' }}
+                            {{ currentInquiry.isLocked ? '🔒 Menu finalized & locked. Only Hotel Management can unlock.' : '🟢 Draft choices in progress. Click "Finalize & Lock Menu" when ready.' }}
                         </div>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <button
-                        v-if="isGuestEditing"
-                        @click="saveGuestPreferences"
-                        :disabled="isSaving"
-                        class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#673DE6] text-white hover:bg-[#5832D0] text-xs font-bold transition shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                        <Save class="h-4 w-4" />
-                        <span>{{ isSaving ? 'Saving Changes...' : 'Save & Confirm Menu Choices' }}</span>
-                    </button>
-                    <button
-                        v-else
-                        @click="isGuestEditing = true"
-                        class="px-4 py-2 rounded-xl bg-amber-100 text-amber-900 hover:bg-amber-200 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
-                    >
-                        <Unlock class="h-4 w-4 text-amber-700" />
-                        <span>Enable Editing</span>
-                    </button>
-                    <button
-                        @click="shareSelectionsToWhatsApp"
-                        class="px-4 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-600 hover:text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                    >
-                        <Share2 class="h-4 w-4 text-emerald-600 group-hover:text-white" />
-                        <span>Send to WhatsApp</span>
-                    </button>
+                    <!-- Draft State Buttons: Save as Draft & Lock Menu -->
+                    <template v-if="!currentInquiry.isLocked">
+                        <button
+                            @click="saveGuestPreferences"
+                            :disabled="isSaving"
+                            class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                            <Save class="h-4 w-4 text-slate-500" />
+                            <span>{{ isSaving ? 'Saving…' : 'Save as Draft' }}</span>
+                        </button>
+                        <button
+                            @click="showLockConfirmModal = true"
+                            class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#673DE6] text-white hover:bg-[#5832D0] text-xs font-bold transition shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                            <Lock class="h-4 w-4" />
+                            <span>Finalize & Lock Menu</span>
+                        </button>
+                    </template>
+
+                    <!-- Locked State Buttons: Manager Unlock & WhatsApp -->
+                    <template v-else>
+                        <button
+                            @click="showManagerUnlockModal = true"
+                            class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-amber-100 text-amber-900 hover:bg-amber-200 border border-amber-300 text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                        >
+                            <KeyRound class="h-4 w-4 text-amber-700" />
+                            <span>Manager Unlock</span>
+                        </button>
+                        <button
+                            @click="shareSelectionsToWhatsApp"
+                            class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-600 hover:text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                        >
+                            <Share2 class="h-4 w-4 text-emerald-600" />
+                            <span>Send to WhatsApp</span>
+                        </button>
+                    </template>
+
                     <button
                         @click="handleDownloadPdf"
                         :disabled="isPdfDownloading"
@@ -1272,6 +1461,133 @@ const handleDownloadPdf = async () => {
             </div>
 
         </main>
+
+        <!-- ===================================================== -->
+        <!-- 1. LOCK CONFIRMATION MODAL (For Client/Guest)          -->
+        <!-- ===================================================== -->
+        <div
+            v-if="showLockConfirmModal"
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in print-hidden"
+        >
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-5 space-y-4 font-sans">
+                <div class="flex items-start gap-3">
+                    <div class="p-2.5 rounded-xl bg-amber-100 text-amber-700 shrink-0">
+                        <Lock class="h-6 w-6" />
+                    </div>
+                    <div class="space-y-1">
+                        <h3 class="text-base font-black text-slate-900">
+                            Finalize & Lock Menu Selection?
+                        </h3>
+                        <p class="text-xs text-slate-600 leading-relaxed">
+                            You have selected <strong>{{ currentInquiry.selectedMenuCatalogItems?.length || 0 }} dishes</strong> for <strong>{{ currentInquiry.guestName }}</strong> ({{ currentInquiry.paxGuaranteed }} Pax).
+                        </p>
+                    </div>
+                </div>
+
+                <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-relaxed space-y-1">
+                    <div class="font-bold flex items-center gap-1.5">
+                        <AlertTriangle class="h-4 w-4 text-amber-600 shrink-0" />
+                        <span>Important Confirmation</span>
+                    </div>
+                    <p class="text-[11px] text-amber-800">
+                        Once locked, your menu is submitted to hotel management for kitchen procurement and preparation. <strong>Only Hotel Banquet Management can unlock</strong> this voucher for future modifications.
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2">
+                    <button
+                        @click="showLockConfirmModal = false"
+                        class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
+                    >
+                        Cancel & Keep Editing
+                    </button>
+                    <button
+                        @click="confirmAndLockMenu"
+                        :disabled="isProcessingLock"
+                        class="px-4 py-2 rounded-xl bg-[#673DE6] hover:bg-[#5832D0] text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                        <Lock class="h-3.5 w-3.5" />
+                        <span>{{ isProcessingLock ? 'Locking…' : 'Yes, Finalize & Lock' }}</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================================================== -->
+        <!-- 2. MANAGER UNLOCK MODAL (Requires Manager PIN)         -->
+        <!-- ===================================================== -->
+        <div
+            v-if="showManagerUnlockModal"
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fade-in print-hidden"
+        >
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-5 space-y-4 font-sans">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="p-2 rounded-xl bg-purple-100 text-[#673DE6]">
+                            <KeyRound class="h-5 w-5" />
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-black text-slate-900">Hotel Manager Authorization</h3>
+                            <p class="text-[10px] text-slate-500">Only authorized staff can unlock a sealed voucher</p>
+                        </div>
+                    </div>
+                    <button
+                        @click="showManagerUnlockModal = false"
+                        class="text-slate-400 hover:text-slate-600 p-1 rounded-lg cursor-pointer"
+                    >
+                        <X class="h-4 w-4" />
+                    </button>
+                </div>
+
+                <div class="space-y-3">
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        This catering selection is locked for Voucher #<strong>{{ currentInquiry.voucherNo }}</strong>. Enter authorized Hotel Manager PIN to unlock for revisions:
+                    </p>
+
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Manager PIN / Access Code</label>
+                        <input
+                            v-model="managerPinInput"
+                            type="password"
+                            placeholder="Enter 4-digit PIN"
+                            @keydown.enter="handleManagerUnlock"
+                            class="w-full h-10 rounded-xl border border-slate-300 px-3 text-sm tracking-widest text-center font-mono font-bold focus:border-[#673DE6] focus:ring-1 focus:ring-[#673DE6] outline-none"
+                        />
+                        <div v-if="managerPinError" class="text-[11px] text-rose-600 font-bold mt-1.5 flex items-center gap-1">
+                            <AlertTriangle class="h-3.5 w-3.5 shrink-0" />
+                            <span>{{ managerPinError }}</span>
+                        </div>
+                    </div>
+
+                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+                        <span class="text-slate-500 text-[11px]">Need assistance?</span>
+                        <a
+                            href="tel:+919794152223"
+                            class="inline-flex items-center gap-1 text-[#673DE6] hover:underline font-bold text-xs"
+                        >
+                            <Phone class="h-3 w-3" />
+                            <span>Call Manager (+91 9794152223)</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button
+                        @click="showManagerUnlockModal = false"
+                        class="px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
+                    >
+                        Close
+                    </button>
+                    <button
+                        @click="handleManagerUnlock"
+                        class="px-4 py-2 rounded-xl bg-[#673DE6] hover:bg-[#5832D0] text-white text-xs font-bold transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+                    >
+                        <Unlock class="h-3.5 w-3.5" />
+                        <span>Verify & Unlock</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 

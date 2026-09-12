@@ -292,10 +292,10 @@ const banquetInquiries = ref<BanquetInquiry[]>([
         status: 'pending_md',
         mdApprovedAt: undefined,
         mdRemarks: 'VIP client discount (₹18,883) authorized by Banquet Manager',
-        isLocked: true,
-        lockedAt: '12/Nov/2026, 08:30 PM',
-        lockedBy: 'Banquet Operations Manager',
-        digitalSignature: 'SN-SIG-250-9F83A12E-V2',
+        isLocked: false,
+        lockedAt: undefined,
+        lockedBy: undefined,
+        digitalSignature: 'SN-SIG-250-9F83A12E',
         barcodeValue: 'SN-SIG-250-9F83A12E',
         auditLog: [
             {
