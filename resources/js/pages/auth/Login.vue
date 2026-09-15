@@ -20,7 +20,8 @@ import {
     ChevronRight,
     Calendar,
     Crown,
-    ArrowLeft
+    ArrowLeft,
+    Sparkles
 } from '@lucide/vue';
 import { request } from '@/routes/password';
 import { home } from '@/routes';
@@ -46,6 +47,20 @@ const submit = () => {
     form.post('/login', {
         onFinish: () => form.reset('password'),
     });
+};
+
+const quickLogin = (role: 'reception' | 'manager' | 'md') => {
+    if (role === 'reception') {
+        form.email = 'reception@senani.com';
+        form.password = 'Reception@123';
+    } else if (role === 'manager') {
+        form.email = 'manager@senani.com';
+        form.password = 'Manager@123';
+    } else if (role === 'md') {
+        form.email = 'md@senani.com';
+        form.password = 'MD@123';
+    }
+    submit();
 };
 
 // -------------------------------------------------------------
@@ -273,15 +288,17 @@ onUnmounted(() => {
             <div class="pointer-events-none absolute top-0 right-0 h-96 w-96 rounded-full bg-[#C5A880]/5 blur-[120px]"></div>
 
             <div class="w-full max-w-md mx-auto">
-                <!-- Top Brand Header -->
+                <!-- Top Brand Header with Official Logo -->
                 <div class="flex items-center justify-between pb-6 border-b border-[#ECE7DE]">
-                    <Link :href="home()" class="flex items-center gap-2.5">
-                        <div class="h-9 w-9 rounded-full bg-[#1C1B1A] flex items-center justify-center text-[#C5A880] shadow-sm">
-                            <Crown class="h-4 w-4" />
-                        </div>
-                        <div class="text-left">
-                            <span class="text-sm font-serif font-semibold tracking-wider text-[#1A1816] block uppercase">Hotel Pleasant View</span>
-                            <span class="text-[10px] text-[#8E744B] tracking-widest uppercase block">Hospitality ERP</span>
+                    <Link :href="home()" class="flex items-center gap-3">
+                        <img
+                            src="/images/logo-dark.png"
+                            alt="Senani Hotel Pleasant View"
+                            class="h-10 w-auto object-contain shrink-0"
+                        />
+                        <div class="text-left border-l-2 border-[#8E744B]/30 pl-3">
+                            <span class="text-sm font-serif font-black tracking-wider text-[#1A1816] block uppercase">Hotel Pleasant View</span>
+                            <span class="text-[10px] text-[#8E744B] font-bold tracking-widest uppercase block">Hospitality ERP</span>
                         </div>
                     </Link>
 
@@ -416,6 +433,56 @@ onUnmounted(() => {
                         <span>{{ form.processing ? 'Authenticating...' : 'Sign In to ERP Portal' }}</span>
                     </button>
                 </form>
+
+                <!-- 3-Level Staff Fast 1-Click Login Testing Links -->
+                <div class="mt-6 p-4 rounded-2xl bg-[#FAF8F5] border border-[#D9D1C7] space-y-3 shadow-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-[#7A633F] flex items-center gap-1.5">
+                            <Sparkles class="h-3.5 w-3.5 text-[#8E744B]" /> Express Staff Test Login (1-Click)
+                        </span>
+                        <span class="text-[9px] font-mono font-bold bg-amber-100 text-amber-900 border border-amber-300 px-1.5 py-0.5 rounded">
+                            Testing Mode Active
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                        <!-- Reception Desk -->
+                        <button
+                            type="button"
+                            @click="quickLogin('reception')"
+                            :disabled="form.processing"
+                            class="flex flex-col items-center justify-center p-2.5 rounded-xl bg-white border border-amber-200 hover:border-amber-400 hover:bg-amber-50/70 transition shadow-2xs group cursor-pointer text-center"
+                        >
+                            <span class="text-base mb-0.5">🏢</span>
+                            <span class="text-[11px] font-bold text-slate-900 group-hover:text-amber-800 leading-tight">Reception</span>
+                            <span class="text-[9.5px] font-medium text-amber-700 mt-0.5">Step 1 Intake</span>
+                        </button>
+
+                        <!-- Banquet Manager -->
+                        <button
+                            type="button"
+                            @click="quickLogin('manager')"
+                            :disabled="form.processing"
+                            class="flex flex-col items-center justify-center p-2.5 rounded-xl bg-white border border-purple-200 hover:border-purple-400 hover:bg-purple-50/70 transition shadow-2xs group cursor-pointer text-center"
+                        >
+                            <span class="text-base mb-0.5">👔</span>
+                            <span class="text-[11px] font-bold text-slate-900 group-hover:text-purple-800 leading-tight">Manager</span>
+                            <span class="text-[9.5px] font-medium text-[#673DE6] mt-0.5">Step 1 & 2 Setup</span>
+                        </button>
+
+                        <!-- MD Sir -->
+                        <button
+                            type="button"
+                            @click="quickLogin('md')"
+                            :disabled="form.processing"
+                            class="flex flex-col items-center justify-center p-2.5 rounded-xl bg-white border border-emerald-200 hover:border-emerald-400 hover:bg-emerald-50/70 transition shadow-2xs group cursor-pointer text-center"
+                        >
+                            <span class="text-base mb-0.5">👑</span>
+                            <span class="text-[11px] font-bold text-slate-900 group-hover:text-emerald-800 leading-tight">MD Sir</span>
+                            <span class="text-[9.5px] font-medium text-emerald-700 mt-0.5">Full & Seal</span>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <!-- Footer Security & Server Badges with Abhiram Technologies Credit -->
