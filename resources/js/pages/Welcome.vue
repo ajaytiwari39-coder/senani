@@ -79,7 +79,7 @@ const heroSlides: HeroSlide[] = [
         title: 'Swarnim Grand Ballroom',
         highlight: '1,000+ Guest Capacity',
         subtitle: "Raebareli's premier pillarless marriage ballroom featuring crystal chandeliers, grand bridal entry stage, and gourmet Awadhi catering.",
-        image: '/images/hotel/gmb_assets/mmt_banquet_hall.jpg',
+        image: '/images/hotel/gmb_assets/gmb_swarnim_banquet_stage_hd.jpg',
         badge: 'Swarnim Ballroom Gala • Verified Setup'
     },
     {
@@ -87,7 +87,7 @@ const heroSlides: HeroSlide[] = [
         title: 'Executive Quarters & Suites',
         highlight: 'Sanctuary of Peace & Solitude',
         subtitle: 'Spacious guest rooms with plush orthopedic bedding, ice-cold air conditioning, 24/7 hot water, and tranquil city vistas.',
-        image: '/images/hotel/gmb_assets/ibibo_room_interior.jpg',
+        image: '/images/hotel/gmb_assets/gmb_suite_interior_hd.jpg',
         badge: 'Verified Executive Suite'
     },
     {
@@ -101,10 +101,10 @@ const heroSlides: HeroSlide[] = [
     },
     {
         id: 5,
-        title: 'Regal Porte-Cochère & Entrance',
+        title: 'Regal Porte-Cochère & Reception',
         highlight: '24/7 Valet Concierge',
-        subtitle: 'Conveniently located 200m from Gol Chauraha on Manika Cinema Road with ample valet parking.',
-        image: '/images/hotel/gmb_assets/trip_hotel_view.jpg',
+        subtitle: 'Conveniently located 200m from Gol Chauraha on Manika Cinema Road with warm grand reception lobby and ample valet parking.',
+        image: '/images/hotel/gmb_assets/gmb_hotel_reception_hd.jpg',
         badge: '200m from Gol Chauraha'
     }
 ];
@@ -189,11 +189,12 @@ const rooms: Room[] = [
         occupancy: '2 Adults + 1 Child',
         bed: 'Comfort King / Twin Bed',
         view: 'Civil Lines City Vista',
-        image: '/images/hotel/gmb_assets/ibibo_room_interior.jpg',
+        image: '/images/hotel/gmb_assets/gmb_deluxe_room_hd.jpg',
         gallery: [
-            '/images/hotel/gmb_assets/ibibo_room_interior.jpg',
-            '/images/hotel/gmb_assets/budget_couple_hotel_thumb.jpg',
-            '/images/hotel/gmb_assets/trip_hotel_view.jpg'
+            '/images/hotel/gmb_assets/gmb_deluxe_room_hd.jpg',
+            '/images/hotel/gmb_assets/gmb_clean_room_bedding_hd.jpg',
+            '/images/hotel/gmb_assets/gmb_bathroom_clean_hd.jpg',
+            '/images/hotel/gmb_assets/gmb_deluxe_bed_corner.jpg'
         ],
         description: 'Impeccably designed for discerning business travelers and couples. Features plush orthopedic bedding, custom ambient warm lighting, high-speed Wi-Fi, and a spa-inspired ensuite bath with 24-hour hot water.',
         amenities: [
@@ -220,11 +221,12 @@ const rooms: Room[] = [
         occupancy: '2-3 Adults',
         bed: 'Royal King Bed + Sofa Lounge',
         view: 'Garden & Boulevard View',
-        image: '/images/hotel/gmb_assets/budget_couple_hotel_thumb.jpg',
+        image: '/images/hotel/gmb_assets/gmb_suite_interior_hd.jpg',
         gallery: [
-            '/images/hotel/gmb_assets/budget_couple_hotel_thumb.jpg',
-            '/images/hotel/gmb_assets/ibibo_room_interior.jpg',
-            '/images/hotel/gmb_assets/mmt_hotel_facade.jpg'
+            '/images/hotel/gmb_assets/gmb_suite_interior_hd.jpg',
+            '/images/hotel/gmb_assets/gmb_lounge_interior_hd.jpg',
+            '/images/hotel/gmb_assets/gmb_hotel_reception_hd.jpg',
+            '/images/hotel/gmb_assets/gmb_guest_suite_portrait_3.jpg'
         ],
         description: 'Tailored for corporate leaders and families who appreciate generous space. Includes a dedicated ergonomic work station, plush leatherette seating lounge, electric tea/coffee maker, and express laundry privileges.',
         amenities: [
@@ -251,10 +253,11 @@ const rooms: Room[] = [
         occupancy: 'Up to 4 Adults',
         bed: 'Master California King Bed',
         view: 'Panoramic Civil Lines Skyline',
-        image: '/images/hotel/gmb_assets/pleasant_view_tour_thumb.jpg',
+        image: '/images/hotel/gmb_assets/gmb_lounge_interior_hd.jpg',
         gallery: [
-            '/images/hotel/gmb_assets/pleasant_view_tour_thumb.jpg',
-            '/images/hotel/gmb_assets/mmt_banquet_hall.jpg',
+            '/images/hotel/gmb_assets/gmb_lounge_interior_hd.jpg',
+            '/images/hotel/gmb_assets/gmb_suite_interior_hd.jpg',
+            '/images/hotel/gmb_assets/gmb_swarnim_banquet_stage_hd.jpg',
             '/images/hotel/gmb_assets/mmt_hotel_facade.jpg'
         ],
         description: 'An expansive master suite offering unmatched royal dignity. Features a distinct living parlor for receiving guests, a magnificent king bedroom, luxury marble bathroom with rain shower, and dedicated butler concierge assistance.',
@@ -356,7 +359,7 @@ const banquetHalls: BanquetHall[] = [
             'Dedicated live catering buffets with Awadhi & Continental counters'
         ],
         idealFor: ['Grand Royal Weddings', 'Varmala & Sangeet Nights', 'High-Profile Corporate Galas'],
-        image: '/images/hotel/gmb_assets/mmt_banquet_hall.jpg'
+        image: '/images/hotel/gmb_assets/gmb_swarnim_banquet_stage_hd.jpg'
     },
     {
         id: 'swarnmahal',
@@ -372,7 +375,7 @@ const banquetHalls: BanquetHall[] = [
             'Flawless pure vegetarian gourmet catering with live counters'
         ],
         idealFor: ['Engagement & Ring Ceremony', 'Tilak & Roka Celebrations', 'Silver Jubilee & Anniversaries'],
-        image: '/images/hotel/gmb_assets/engagement_promo_thumb.jpg'
+        image: '/images/hotel/gmb_assets/gmb_banquet_mandap_3.jpg'
     },
     {
         id: 'summit',
@@ -388,7 +391,7 @@ const banquetHalls: BanquetHall[] = [
             'Executive corporate high-tea and buffet lunch packages'
         ],
         idealFor: ['Annual Corporate General Meetings', 'Dealer & Distributor Meets', 'Medical & Industrial Seminars'],
-        image: '/images/hotel/gmb_assets/mmt_hotel_facade.jpg'
+        image: '/images/hotel/gmb_assets/gmb_conference_hall.jpg'
     }
 ];
 
@@ -465,15 +468,24 @@ const galleryItems: GalleryItem[] = [
     },
     {
         id: 2,
-        title: 'Glass Double-Door Portico Entrance',
+        title: 'Grand Hotel Reception & Front Desk',
         category: 'property',
         categoryLabel: 'Property & Facade',
-        image: '/images/hotel/gmb_assets/trip_hotel_view.jpg',
-        caption: 'Welcoming porte-cochère portico with grand glass double doors and 24/7 valet concierge desk.',
-        badge: 'Authentic Entrance'
+        image: '/images/hotel/gmb_assets/gmb_hotel_reception_hd.jpg',
+        caption: 'Welcoming 24/7 reception desk and concierge lobby providing express check-in for guests.',
+        badge: 'Reception Lobby'
     },
     {
         id: 3,
+        title: 'Porte-Cochère & Valet Parking Area',
+        category: 'property',
+        categoryLabel: 'Property & Facade',
+        image: '/images/hotel/gmb_assets/gmb_valet_parking_area.jpg',
+        caption: 'Spacious driveway and 24/7 dedicated valet parking area on Manika Cinema Road.',
+        badge: 'Valet Parking'
+    },
+    {
+        id: 4,
         title: 'Official Landmark Signboard',
         category: 'property',
         categoryLabel: 'Property & Facade',
@@ -482,133 +494,124 @@ const galleryItems: GalleryItem[] = [
         badge: 'Official Sign'
     },
     {
-        id: 4,
-        title: 'Deluxe Heritage Room Interior',
-        category: 'rooms',
-        categoryLabel: 'Rooms & Suites',
-        image: '/images/hotel/gmb_assets/ibibo_room_interior.jpg',
-        caption: 'Authentic guest room featuring warm wood veneers, plush king bedding, and ambient reading illumination.',
-        badge: 'Authentic Room'
-    },
-    {
         id: 5,
-        title: 'Deluxe Room Suite Atmosphere',
+        title: 'Executive Suite Master Interior (1360x1020 HD)',
         category: 'rooms',
         categoryLabel: 'Rooms & Suites',
-        image: '/images/hotel/gmb_assets/budget_couple_hotel_thumb.jpg',
-        caption: 'Spacious guest sanctuary with modern air conditioning, flat screen TV, and crisp hotel linens.'
+        image: '/images/hotel/gmb_assets/gmb_suite_interior_hd.jpg',
+        caption: 'Authentic master suite with custom wood paneling, plush king bedding, and ambient illumination.',
+        badge: 'Executive Suite'
     },
     {
         id: 6,
-        title: 'Executive Business Suite Lounge',
+        title: 'Deluxe Heritage King Room',
         category: 'rooms',
         categoryLabel: 'Rooms & Suites',
-        image: '/images/hotel/gmb_assets/ibibo_room_interior.jpg',
-        caption: 'Generous suite with leatherette sofa seating, work desk, and private mini-bar console.'
+        image: '/images/hotel/gmb_assets/gmb_deluxe_room_hd.jpg',
+        caption: 'Spacious deluxe room featuring orthopedic bedding, modern AC, and flat-screen TV.',
+        badge: 'Deluxe Heritage'
     },
     {
         id: 7,
-        title: 'Royal Presidential Master Suite',
+        title: 'Sparkling Clean Guest Bedding & Linens',
         category: 'rooms',
         categoryLabel: 'Rooms & Suites',
-        image: '/images/hotel/gmb_assets/pleasant_view_tour_thumb.jpg',
-        caption: 'Expansive private master suite designed for wedding couples, VIPs, and distinguished families.'
+        image: '/images/hotel/gmb_assets/gmb_clean_room_bedding_hd.jpg',
+        caption: 'High-hygiene sanitization with crisp white linens and dedicated room service.',
+        badge: 'High Hygiene'
     },
     {
         id: 8,
-        title: 'Swarnim Grand Ballroom - Banquet Setup',
-        category: 'banquets',
-        categoryLabel: 'Banquets & Weddings',
-        image: '/images/hotel/gmb_assets/mmt_banquet_hall.jpg',
-        caption: 'Pillarless ballroom decorated for a royal wedding reception with crystal chandeliers and round-table seating.',
-        badge: '1,000 Capacity'
+        title: 'Sparkling Clean Ensuite Washroom',
+        category: 'rooms',
+        categoryLabel: 'Rooms & Suites',
+        image: '/images/hotel/gmb_assets/gmb_bathroom_clean_hd.jpg',
+        caption: 'Modern private bathroom with 24/7 hot & cold pressurized water, rain shower, and fresh amenities.',
+        badge: '24h Hot Water'
     },
     {
         id: 9,
-        title: 'Swarn Mahal Festive Banquet Setup',
+        title: 'Swarnim Grand Ballroom Stage & Crystal Chandeliers',
         category: 'banquets',
         categoryLabel: 'Banquets & Weddings',
-        image: '/images/hotel/gmb_assets/engagement_promo_thumb.jpg',
-        caption: 'Warm ambient banquet hall prepared with elegant table runners for an engagement celebration.'
+        image: '/images/hotel/gmb_assets/gmb_swarnim_banquet_stage_hd.jpg',
+        caption: 'Pillarless 1000-guest ballroom decorated with royal chandeliers and golden Varmala stage.',
+        badge: '1,000 Capacity'
     },
     {
         id: 10,
-        title: 'Royal Stage Floral Illumination',
+        title: 'Swarn Mahal Wedding Mandap Decor',
         category: 'banquets',
         categoryLabel: 'Banquets & Weddings',
-        image: '/images/hotel/gmb_assets/fairytale_wedding_thumb.jpg',
-        caption: 'Bespoke hand-crafted floral backdrop and golden thrones for the auspicious Varmala ceremony.'
+        image: '/images/hotel/gmb_assets/gmb_banquet_mandap_3.jpg',
+        caption: 'Traditional floral mandap configured with ceremonial seating for wedding rituals.',
+        badge: 'Wedding Mandap'
     },
     {
         id: 11,
-        title: 'Auspicious Wedding Mandap Decor',
+        title: 'Banquet Round-Table Dining & Seating Setup',
         category: 'banquets',
         categoryLabel: 'Banquets & Weddings',
-        image: '/images/hotel/gmb_assets/wedding_trailer_thumb.jpg',
-        caption: 'Traditional red and gold floral mandap configured with sacred havan kund and ceremonial seating.'
+        image: '/images/hotel/gmb_assets/gmb_banquet_seating_2.jpg',
+        caption: 'Elegantly draped guest seating with custom table runners for grand receptions.',
+        badge: 'Banquet Seating'
     },
     {
         id: 12,
-        title: 'Grand Wedding Gathering & Reception Gala',
+        title: 'The Imperial Boardroom & Conference Suite',
         category: 'gatherings',
         categoryLabel: 'Gatherings & Dining',
-        image: '/images/hotel/gmb_assets/fairytale_wedding_thumb.jpg',
-        caption: 'Vibrant wedding evening at Hotel Pleasant View hosting hundreds of joyful family guests in regal comfort.'
+        image: '/images/hotel/gmb_assets/gmb_conference_hall.jpg',
+        caption: 'High-tech conference hall equipped for corporate symposiums, medical seminars, and dealer meets.',
+        badge: 'Conference Suite'
     },
     {
         id: 13,
-        title: 'Royal Buffet Feast & Catering Spread',
+        title: 'Multi-Cuisine Dining & Buffet Spread',
         category: 'gatherings',
         categoryLabel: 'Gatherings & Dining',
-        image: '/images/hotel/gmb_assets/mmt_banquet_hall.jpg',
-        caption: 'Lavish multi-cuisine food display featuring authentic Awadhi gravies, live tandoor, and dessert counters.'
+        image: '/images/hotel/gmb_assets/gmb_dining_buffet_2.jpg',
+        caption: 'Gourmet Awadhi catering and multi-cuisine hot buffet counters prepared by master chefs.',
+        badge: 'Awadhi Catering'
     },
     {
         id: 14,
-        title: 'Corporate Conference & Delegate Gathering',
-        category: 'gatherings',
-        categoryLabel: 'Gatherings & Dining',
-        image: '/images/hotel/gmb_assets/mmt_hotel_facade.jpg',
-        caption: 'State-of-the-art conference setup hosting doctors and corporate executives with digital presentation screens.'
+        title: 'Hotel Pleasant View - Google Maps Verified',
+        category: 'google_media',
+        categoryLabel: 'Google & Portal Verified',
+        image: '/images/hotel/gmb_assets/gmb_suite_interior_hd.jpg',
+        caption: 'Verified Google Business suite photo showing high-standard accommodations.',
+        badge: 'Google Verified'
     },
     {
         id: 15,
-        title: 'Hotel Facade & Illumination (Google Verified)',
+        title: 'Swarnim Grand Ballroom - MakeMyTrip Verified',
         category: 'google_media',
         categoryLabel: 'Google & Portal Verified',
-        image: '/images/hotel/gmb_assets/mmt_hotel_facade.jpg',
-        caption: 'Verified Google Business facade showing the hotel exterior and parking driveway on Manika Cinema Road.',
-        badge: 'Google Business'
-    },
-    {
-        id: 16,
-        title: 'Swarnim Grand Ballroom Gala (MakeMyTrip Verified)',
-        category: 'google_media',
-        categoryLabel: 'Google & Portal Verified',
-        image: '/images/hotel/gmb_assets/mmt_banquet_hall.jpg',
+        image: '/images/hotel/gmb_assets/gmb_swarnim_banquet_stage_hd.jpg',
         caption: 'Verified MakeMyTrip photo showcasing the Swarnim Grand Ballroom during an evening wedding celebration.',
         badge: 'MakeMyTrip Verified'
     },
     {
-        id: 17,
-        title: 'Executive Suite Interior (Goibibo Verified)',
+        id: 16,
+        title: 'Executive Suite Interior - Goibibo Verified',
         category: 'google_media',
         categoryLabel: 'Google & Portal Verified',
-        image: '/images/hotel/gmb_assets/ibibo_room_interior.jpg',
+        image: '/images/hotel/gmb_assets/gmb_deluxe_room_hd.jpg',
         caption: 'Verified Goibibo room photo showing pristine bedding, plush sofa seating, and ambient lighting.',
         badge: 'Goibibo Verified'
     },
     {
-        id: 18,
-        title: 'Hotel Courtyard & Entrance (Trip.com Verified)',
+        id: 17,
+        title: 'Hotel Entrance & Porte-Cochère - Trip.com Verified',
         category: 'google_media',
         categoryLabel: 'Google & Portal Verified',
-        image: '/images/hotel/gmb_assets/trip_hotel_view.jpg',
-        caption: 'Verified Trip.com photo of the hotel entrance portico and visitor lobby chauraha.',
+        image: '/images/hotel/gmb_assets/gmb_hotel_reception_hd.jpg',
+        caption: 'Verified Trip.com photo of the hotel entrance portico and reception lobby.',
         badge: 'Trip.com Verified'
     },
     {
-        id: 19,
+        id: 18,
         title: 'Fairytale Wedding Gala (Divya & Amrit)',
         category: 'videos',
         categoryLabel: 'YouTube Event Video',
@@ -618,7 +621,7 @@ const galleryItems: GalleryItem[] = [
         youtubeId: 'qHiHWSd8UVI'
     },
     {
-        id: 20,
+        id: 19,
         title: 'Wedding Trailer (Rakshanda & Rishabh)',
         category: 'videos',
         categoryLabel: 'YouTube Event Video',
@@ -628,7 +631,7 @@ const galleryItems: GalleryItem[] = [
         youtubeId: 'JetqQrMoYbU'
     },
     {
-        id: 21,
+        id: 20,
         title: 'Swarnim Ballroom Engagement Promo (Aditya & Shraddha)',
         category: 'videos',
         categoryLabel: 'YouTube Event Video',
@@ -638,7 +641,7 @@ const galleryItems: GalleryItem[] = [
         youtubeId: 't7H2Xot3X-g'
     },
     {
-        id: 22,
+        id: 21,
         title: 'Nikaah Ceremony Teaser (Shanya & Saheer)',
         category: 'videos',
         categoryLabel: 'YouTube Event Video',
@@ -648,7 +651,7 @@ const galleryItems: GalleryItem[] = [
         youtubeId: 'zUIirDnnRd0'
     },
     {
-        id: 23,
+        id: 22,
         title: 'Traditional Indian Wedding Teaser (Amit & Lovely)',
         category: 'videos',
         categoryLabel: 'YouTube Event Video',
@@ -658,7 +661,7 @@ const galleryItems: GalleryItem[] = [
         youtubeId: 'pDNQz_5GKcA'
     },
     {
-        id: 24,
+        id: 23,
         title: 'Engagement Story (Swapnil & Harshita)',
         category: 'videos',
         categoryLabel: 'YouTube Event Video',
@@ -668,7 +671,7 @@ const galleryItems: GalleryItem[] = [
         youtubeId: 'kB_Yd-AsGYI'
     },
     {
-        id: 25,
+        id: 24,
         title: 'Hotel Pleasant View Complete Video Tour',
         category: 'videos',
         categoryLabel: 'YouTube Property Tour',
@@ -678,7 +681,7 @@ const galleryItems: GalleryItem[] = [
         youtubeId: '-zFPI1g6s78'
     },
     {
-        id: 26,
+        id: 25,
         title: 'Guest Stay & Room Review Tour',
         category: 'videos',
         categoryLabel: 'YouTube Stay Review',
@@ -762,8 +765,8 @@ const testimonials: Testimonial[] = [
         rating: 5,
         review: "We celebrated my daughter's wedding reception at the Swarnim Grand Ballroom. The management and staff went above and beyond. The food was sensational — guests are still talking about the Paneer Lababdar and Dal Makhani. The rooms were spotless for outstation guests.",
         date: '3 months ago',
-        photo: '/images/hotel/gmb_assets/mmt_banquet_hall.jpg',
-        photoCaption: 'Swarnim Grand Ballroom wedding gala'
+        photo: '/images/hotel/gmb_assets/gmb_swarnim_banquet_stage_hd.jpg',
+        photoCaption: 'Swarnim Grand Ballroom wedding stage'
     },
     {
         name: 'Dr. Amitav Shukla',
@@ -772,8 +775,8 @@ const testimonials: Testimonial[] = [
         rating: 5,
         review: "Hotel Pleasant View is hands-down the premier venue in Raebareli. We hosted 120 doctors for an all-day symposium. Projector, audio, high-tea, and dinner were executed with 5-star precision. Ample valet parking made it effortless for attendees.",
         date: '1 month ago',
-        photo: '/images/hotel/gmb_assets/mmt_hotel_facade.jpg',
-        photoCaption: 'Hotel facade & valet entrance'
+        photo: '/images/hotel/gmb_assets/gmb_conference_hall.jpg',
+        photoCaption: 'Conference & seminar suite'
     },
     {
         name: 'Sunita & Deepak Verma',
@@ -782,8 +785,8 @@ const testimonials: Testimonial[] = [
         rating: 5,
         review: "Stayed in the Executive Suite during a family visit. Room was pristine, AC was ice-cold, and room service responded in 10 minutes. Located right in Civil Lines near Gol Chauraha, making shopping and traveling to the station extremely convenient.",
         date: '2 weeks ago',
-        photo: '/images/hotel/gmb_assets/ibibo_room_interior.jpg',
-        photoCaption: 'Verified Executive Suite bedroom'
+        photo: '/images/hotel/gmb_assets/gmb_suite_interior_hd.jpg',
+        photoCaption: 'Executive Suite master bedroom'
     },
     {
         name: 'Anurag & Megha Mishra',
@@ -792,8 +795,8 @@ const testimonials: Testimonial[] = [
         rating: 5,
         review: "Cleanest hotel in Raebareli! The suite was spotless with 24/7 hot water, fresh towels, and lovely fragrant toiletries. Breakfast was freshly prepared with hot dosas and parathas. Will definitely stay here whenever in Raebareli.",
         date: '3 weeks ago',
-        photo: '/images/hotel/gmb_assets/budget_couple_hotel_thumb.jpg',
-        photoCaption: 'Deluxe guest suite sanctuary'
+        photo: '/images/hotel/gmb_assets/gmb_clean_room_bedding_hd.jpg',
+        photoCaption: 'Sparkling clean guest bedding'
     }
 ];
 
