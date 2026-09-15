@@ -49,91 +49,26 @@ interface VerifyInquiry {
 }
 
 const defaultInquiry: VerifyInquiry = {
-    voucherNo: '250',
-    inquiryDate: '15/Nov/2026',
-    guestName: 'Mr. Tushar Gupta Jee',
-    phonePrimary: '8115711507',
-    address: 'Civil Lines, Raebareli, UP',
-    functionDateFrom: '2026-11-15',
-    timeFrom: '19:00',
-    timeTo: '23:30',
-    eventType: 'Grand Wedding Reception',
-    paxGuaranteed: 350,
-    selectedVenues: ['swarnim', 'swadhistam'],
+    voucherNo: '',
+    inquiryDate: '',
+    guestName: '',
+    phonePrimary: '',
+    address: '',
+    functionDateFrom: '',
+    timeFrom: '',
+    timeTo: '',
+    eventType: '',
+    paxGuaranteed: 0,
+    selectedVenues: [],
     menuRateTier: 799,
     effectiveMenuRate: 799,
-    menuTitle: 'Royal Deluxe Buffet',
-    selectedMenuCatalogItems: [
-        'Sprite', 'Virgin Mojito', 'Fresh Lime Soda',
-        'Tea (Regular, Ginger, Green, Masala, Lemon)', 'Filter Coffee',
-        'Tomato Soup', 'Veg Sweet Corn Soup',
-        'Paneer Shashlik', 'Spring Roll', 'Fried Masala Idly', 'Veg Manchurian Dry', 'Cutlets',
-        'Dal Tadka',
-        'Paneer Butter Masala',
-        'Mix Veg',
-        'Malai Kofta',
-        'Jeera Rice',
-        'Boondi Raita',
-        'Butter Naan', 'Garlic Naan', 'Tandoori Butter Roti',
-        'Hot Gulab Jamun', 'Rasgulla',
-        'Sirka Pyaaz', 'Green Salad', 'Achaar', 'Chutney',
-        'Veg Fried Rice (Manchurian/Chilli Paneer)', 'Pav Bhaji Live', 'Masala Dosa Live'
-    ],
-    isLocked: true,
-    lockedAt: '12/Nov/2026, 08:30 PM',
-    lockedBy: 'Banquet Operations Manager',
-    digitalSignature: 'SN-SIG-250-9F83A12E-V2',
-    barcodeValue: 'SN-SIG-250-9F83A12E',
-    auditLog: [
-        {
-            id: 'aud-1',
-            timestamp: '10/Nov/2026, 11:30 AM',
-            action: 'created',
-            actor: 'Reception Desk (Mr. Amit Verma)',
-            details: 'Initial inquiry registered at Front Desk.',
-            changes: ['Client registered: Mr. Tushar Gupta Jee', 'Event: Wedding Reception on 15-Nov-2026', 'Initial PAX estimate: 300 Pax']
-        },
-        {
-            id: 'aud-2',
-            timestamp: '11/Nov/2026, 04:15 PM',
-            action: 'locked',
-            actor: 'Banquet Operations Manager',
-            details: 'Initial catering proposal & venue allotment sealed.',
-            digitalSignature: 'SN-SIG-250-7A1B39D1',
-            changes: ['Halls Allotted: Swarnim (G) + Swadhistam (1)', 'Menu Tier: ₹799 Royal Deluxe', 'Deal Frozen']
-        },
-        {
-            id: 'aud-3',
-            timestamp: '12/Nov/2026, 02:00 PM',
-            action: 'unlocked',
-            actor: 'Banquet Operations Manager',
-            details: 'Deal unlocked for menu revision and pax increase upon client request.',
-            previousSignature: 'SN-SIG-250-7A1B39D1'
-        },
-        {
-            id: 'aud-4',
-            timestamp: '12/Nov/2026, 02:45 PM',
-            action: 'updated',
-            actor: 'Banquet Operations Manager',
-            details: 'Revision details captured and verified with client.',
-            changes: [
-                'Guaranteed Pax updated: 300 ➔ 350 Persons (+50 Pax)',
-                'Catering Dishes revised: Added Live Counters (Pav Bhaji Live, Masala Dosa Live)',
-                'Special Arrangement note added: VIP Sofa setup for groom party'
-            ]
-        },
-        {
-            id: 'aud-5',
-            timestamp: '12/Nov/2026, 08:30 PM',
-            action: 'locked',
-            actor: 'Banquet Operations Manager',
-            details: 'Deal re-locked & cryptographically re-signed after revision approval.',
-            digitalSignature: 'SN-SIG-250-9F83A12E-V2'
-        }
-    ]
+    menuTitle: '',
+    selectedMenuCatalogItems: [],
+    isLocked: false,
+    auditLog: []
 };
 
-const currentInquiry = ref<VerifyInquiry>(defaultInquiry);
+const currentInquiry = ref<VerifyInquiry>({ ...defaultInquiry });
 const qrCodeUrl = ref('');
 const barcodeSvg = ref<SVGSVGElement | null>(null);
 

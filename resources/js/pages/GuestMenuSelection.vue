@@ -37,74 +37,60 @@ defineOptions({
 });
 
 // -------------------------------------------------------------
-// Sample Fallback Inquiry
+// Default Blank Inquiry Structure
 // -------------------------------------------------------------
 const defaultInquiry: BanquetInquiry = {
-    voucherNo: '250',
-    inquiryDate: '15/Nov/2026',
-    guestName: 'Mr. Tushar Gupta Jee',
-    phonePrimary: '8115711507',
-    phoneSecondary: '7081219880',
-    address: 'Civil Lines, Raebareli',
-    email: 'tushar.gupta@gmail.com',
-    functionDateFrom: '2026-11-15',
-    functionDateTo: '2026-11-15',
+    voucherNo: '',
+    inquiryDate: '',
+    guestName: '',
+    phonePrimary: '',
+    phoneSecondary: '',
+    address: '',
+    email: '',
+    functionDateFrom: '',
+    functionDateTo: '',
     timeFrom: '19:00',
     timeTo: '23:30',
-    eventType: 'Wedding Reception',
-    paxGuaranteed: 350,
-    selectedVenues: ['swarnim', 'swadhistam'],
+    eventType: 'Banquet Event',
+    paxGuaranteed: 100,
+    selectedVenues: ['swarnim'],
     isEngagementPackage: false,
     engagementPackageType: 'none',
     isMeetingSetup: false,
     menuRateTier: 799,
     effectiveMenuRate: 799,
     menuTitle: 'Royal Deluxe Buffet',
-    selectedMenuCatalogItems: [
-        'Sprite', 'Fanta', 'Watermelon Mojito',
-        'Tea (Regular, Ginger, Green, Masala, Lemon)', 'Filter Coffee',
-        'Tomato Soup', 'Veg Sweet Corn Soup',
-        'Veg Manchurian Dry', 'Chilli Potato', 'Cocktail Samosa', 'Cheese Nuggets', 'Paneer Shashlik',
-        'Dal Tadka',
-        'Paneer Butter Masala',
-        'Aloo Gobhi Masala',
-        'Kashmiri Dum Aloo',
-        'Jeera Rice',
-        'Boondi Raita',
-        'Tandoori Butter Roti', 'Butter Naan', 'Garlic Naan',
-        'Hot Gulab Jamun', 'Rasgulla',
-        'Veg Hakka Noodles', 'Masala Dosa Live', 'Pav Bhaji Live',
-    ],
+    selectedMenuCatalogItems: [],
     engagementBreakfastPax: 0,
     regularBreakfastPax: 0,
     bainaBoxes: 0,
     mandapServingsPax: 0,
-    roomsNeeded: 5,
+    roomsNeeded: 0,
     roomArrival: '16:00',
     roomDeparture: '09:00',
     roomRate: 2500,
     decorPackageType: 'standard',
-    soundMicSetup: true,
+    soundMicSetup: false,
     projectorSetup: false,
     ledWallSetup: false,
-    packageIncludes: ['Hall Rental', 'Grand Stage Setup', 'Theme Floral Decor', 'DJ & Acoustic Sound', 'Genset & 100% Power Backup'],
-    selfArrangements: ['Photographer / Cinematography', 'Phool / Varmala', 'Cake / Gift Counter'],
-    additionalHallCharges: 30000,
-    additionalDecorCharges: 68000,
-    specialArrangements: 'VIP Sofa seating setup for groom party. Stage entry cold pyros arranged by guest.',
-    discountPercent: 5,
-    discountRupees: 18883,
+    packageIncludes: [],
+    selfArrangements: [],
+    additionalHallCharges: 0,
+    additionalDecorCharges: 0,
+    specialArrangements: '',
+    discountPercent: 0,
+    discountRupees: 0,
     discountInputMode: 'amount',
     approverRole: 'manager',
-    amountPaid: 20000,
+    amountPaid: 0,
     paymentMode: 'Cash',
-    paymentDate: '09/09/2026',
-    status: 'pending_md',
+    paymentDate: '',
+    status: 'draft_reception',
     isLocked: false,
-    lockedBy: 'Banquet Operations Manager',
-    lockedAt: '12/Nov/2026, 08:30 PM',
-    digitalSignature: 'SN-SIG-250-9F83A12E-V2',
-    barcodeValue: 'SN-SIG-250-9F83A12E-V2',
+    lockedBy: undefined,
+    lockedAt: undefined,
+    digitalSignature: '',
+    barcodeValue: '',
 };
 
 // -------------------------------------------------------------
@@ -339,7 +325,7 @@ const toggleItem = (item: string, catItems?: string[], maxCount?: number) => {
 onMounted(async () => {
     if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
-        const voucher = params.get('v') || params.get('voucher') || '250';
+        const voucher = params.get('v') || params.get('voucher') || '';
         const dataPayload = params.get('d');
 
         // 1. Try decoding embedded inquiry data from shareable URL parameter 'd' (cross-device/WhatsApp support)
@@ -385,7 +371,7 @@ onMounted(async () => {
                     console.warn('Could not cache inquiry to localStorage', e);
                 }
             }
-        } else {
+        } else if (voucher) {
             // 2. Fallback to localStorage by voucher number
             try {
                 const raw = localStorage.getItem('senani_banquet_inquiries');
@@ -400,11 +386,6 @@ onMounted(async () => {
                 console.error('Error loading inquiry from localStorage', e);
             }
         }
-    }
-
-    // Clear stale demo lock if voucher 250 was only locked by dummy manager data
-    if (currentInquiry.value.voucherNo === '250' && currentInquiry.value.lockedBy === 'Banquet Operations Manager' && !currentInquiry.value.lockedBy.includes('Guest')) {
-        currentInquiry.value.isLocked = false;
     }
 
     // Sync editing state with current lock status

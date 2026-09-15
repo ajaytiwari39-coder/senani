@@ -95,22 +95,22 @@ interface RoomItem {
 }
 
 const rooms = ref<RoomItem[]>([
-    { id: 101, number: '101', floor: 1, category: 'Deluxe', status: 'occupied', pricePerNight: 2800, guestName: 'Rajesh Malhotra', checkIn: '11 Sep', checkOut: '13 Sep' },
+    { id: 101, number: '101', floor: 1, category: 'Deluxe', status: 'available', pricePerNight: 2800 },
     { id: 102, number: '102', floor: 1, category: 'Deluxe', status: 'available', pricePerNight: 2800 },
-    { id: 103, number: '103', floor: 1, category: 'Deluxe', status: 'occupied', guestName: 'Vikram Singhania', pricePerNight: 2800, checkIn: '10 Sep', checkOut: '14 Sep' },
-    { id: 104, number: '104', floor: 1, category: 'Deluxe', status: 'cleaning', pricePerNight: 2800 },
-    { id: 105, number: '105', floor: 1, category: 'Deluxe', status: 'occupied', guestName: 'Pooja Agarwal', pricePerNight: 2800, checkIn: '12 Sep', checkOut: '15 Sep' },
+    { id: 103, number: '103', floor: 1, category: 'Deluxe', status: 'available', pricePerNight: 2800 },
+    { id: 104, number: '104', floor: 1, category: 'Deluxe', status: 'available', pricePerNight: 2800 },
+    { id: 105, number: '105', floor: 1, category: 'Deluxe', status: 'available', pricePerNight: 2800 },
     { id: 106, number: '106', floor: 1, category: 'Deluxe', status: 'available', pricePerNight: 2800 },
-    { id: 201, number: '201', floor: 2, category: 'Super Deluxe', status: 'occupied', guestName: 'Dr. Sameer Joshi', pricePerNight: 4200, checkIn: '11 Sep', checkOut: '13 Sep' },
-    { id: 202, number: '202', floor: 2, category: 'Super Deluxe', status: 'occupied', guestName: 'Alok Nath Pandey', pricePerNight: 4200, checkIn: '12 Sep', checkOut: '14 Sep' },
+    { id: 201, number: '201', floor: 2, category: 'Super Deluxe', status: 'available', pricePerNight: 4200 },
+    { id: 202, number: '202', floor: 2, category: 'Super Deluxe', status: 'available', pricePerNight: 4200 },
     { id: 203, number: '203', floor: 2, category: 'Super Deluxe', status: 'available', pricePerNight: 4200 },
-    { id: 204, number: '204', floor: 2, category: 'Super Deluxe', status: 'reserved', guestName: 'Kavita Chawla', pricePerNight: 4200, checkIn: '13 Sep', checkOut: '16 Sep' },
-    { id: 205, number: '205', floor: 2, category: 'Super Deluxe', status: 'occupied', guestName: 'Sanjay Kapoor', pricePerNight: 4200, checkIn: '10 Sep', checkOut: '13 Sep' },
-    { id: 206, number: '206', floor: 2, category: 'Super Deluxe', status: 'cleaning', pricePerNight: 4200 },
-    { id: 301, number: '301', floor: 3, category: 'Executive Suite', status: 'occupied', guestName: 'Anand Mahindra (VIP)', pricePerNight: 7500, checkIn: '11 Sep', checkOut: '14 Sep' },
-    { id: 302, number: '302', floor: 3, category: 'Executive Suite', status: 'occupied', guestName: 'Amitabh Raizada', pricePerNight: 7500, checkIn: '12 Sep', checkOut: '15 Sep' },
+    { id: 204, number: '204', floor: 2, category: 'Super Deluxe', status: 'available', pricePerNight: 4200 },
+    { id: 205, number: '205', floor: 2, category: 'Super Deluxe', status: 'available', pricePerNight: 4200 },
+    { id: 206, number: '206', floor: 2, category: 'Super Deluxe', status: 'available', pricePerNight: 4200 },
+    { id: 301, number: '301', floor: 3, category: 'Executive Suite', status: 'available', pricePerNight: 7500 },
+    { id: 302, number: '302', floor: 3, category: 'Executive Suite', status: 'available', pricePerNight: 7500 },
     { id: 303, number: '303', floor: 3, category: 'Presidential Suite', status: 'available', pricePerNight: 12500 },
-    { id: 304, number: '304', floor: 3, category: 'Presidential Suite', status: 'reserved', guestName: 'Sharma Wedding Delegation', pricePerNight: 12500, checkIn: '13 Sep', checkOut: '15 Sep' },
+    { id: 304, number: '304', floor: 3, category: 'Presidential Suite', status: 'available', pricePerNight: 12500 },
 ]);
 
 const roomFloorFilter = ref<number | 'all'>('all');
@@ -169,56 +169,10 @@ interface BanquetBooking {
     status: 'confirmed' | 'draft' | 'settled';
 }
 
-const banquetBookings = ref<BanquetBooking[]>([
-    {
-        id: 'BQ-2026-081',
-        hallName: 'Grand Ballroom',
-        eventName: 'Verma-Sharma Wedding Reception',
-        clientName: 'Suresh Chandra Verma',
-        phone: '+91 98391 22441',
-        date: 'Today, 12 Sep 2026',
-        slot: 'Evening (7 PM - 1 AM)',
-        paxCount: 450,
-        plateRate: 950,
-        totalAmount: 485000,
-        advancePaid: 350000,
-        balanceDue: 135000,
-        status: 'confirmed',
-    },
-    {
-        id: 'BQ-2026-082',
-        hallName: 'Sapphire Hall',
-        eventName: 'TechCorp Annual Leadership Seminar',
-        clientName: 'Deepak Saxena (HR Head)',
-        phone: '+91 94150 88722',
-        date: 'Today, 12 Sep 2026',
-        slot: 'Morning (10 AM - 4 PM)',
-        paxCount: 140,
-        plateRate: 750,
-        totalAmount: 145000,
-        advancePaid: 145000,
-        balanceDue: 0,
-        status: 'settled',
-    },
-    {
-        id: 'BQ-2026-083',
-        hallName: 'Royal Lawn & Terrace',
-        eventName: 'Gupta Family Silver Jubilee Gala',
-        clientName: 'Rameshwar Gupta',
-        phone: '+91 99351 10984',
-        date: 'Tomorrow, 13 Sep 2026',
-        slot: 'Evening (7 PM - 1 AM)',
-        paxCount: 300,
-        plateRate: 850,
-        totalAmount: 310000,
-        advancePaid: 150000,
-        balanceDue: 160000,
-        status: 'confirmed',
-    },
-]);
+const banquetBookings = ref<BanquetBooking[]>([]);
 
 // -------------------------------------------------------------
-// 3-Stage Event Inquiry Pipeline (Physical Voucher #250 Replica)
+// 3-Stage Event Inquiry Pipeline (Physical Voucher Slip Replica)
 // -------------------------------------------------------------
 const queryInquiry = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('inquiry') === 'true';
 const queryStep = typeof window !== 'undefined' ? Number(new URLSearchParams(window.location.search).get('step')) || 1 : 1;
@@ -227,283 +181,7 @@ const showInquiryModal = ref(queryInquiry);
 const selectedInquiry = ref<BanquetInquiry | null>(null);
 const inquiryDefaultStep = ref(queryStep);
 
-const banquetInquiries = ref<BanquetInquiry[]>([
-    {
-        id: 'inq-250',
-        voucherNo: '250',
-        inquiryDate: '15/Nov/2026',
-        guestName: 'Mr. Tushar Gupta Jee',
-        phonePrimary: '8115711507',
-        phoneSecondary: '7081219880',
-        address: 'Civil Lines, Raebareli, UP',
-        email: 'tushar.gupta@gmail.com',
-        functionDateFrom: '2026-11-15',
-        functionDateTo: '2026-11-15',
-        timeFrom: '19:00',
-        timeTo: '23:30',
-        eventType: 'Wedding Reception',
-        paxGuaranteed: 350,
-        selectedVenues: ['swarnim', 'swadhistam'],
-        isEngagementPackage: false,
-        engagementPackageType: 'none',
-        isMeetingSetup: false,
-        menuRateTier: 799,
-        effectiveMenuRate: 799,
-        menuTitle: 'Royal Deluxe Buffet',
-        selectedMenuCatalogItems: [
-            'Sprite', 'Virgin Mojito', 'Fresh Lime Soda',
-            'Tea (Regular, Ginger, Green, Masala, Lemon)', 'Filter Coffee',
-            'Tomato Soup', 'Veg Sweet Corn Soup',
-            'Paneer Shashlik', 'Spring Roll', 'Fried Masala Idly', 'Veg Manchurian Dry', 'Cutlets',
-            'Dal Tadka',
-            'Paneer Butter Masala',
-            'Mix Veg',
-            'Malai Kofta',
-            'Jeera Rice',
-            'Boondi Raita',
-            'Butter Naan', 'Garlic Naan', 'Tandoori Butter Roti',
-            'Hot Gulab Jamun', 'Rasgulla',
-            'Veg Fried Rice (Manchurian/Chilli Paneer)', 'Pav Bhaji Live', 'Masala Dosa Live'
-        ],
-        engagementBreakfastPax: 0,
-        regularBreakfastPax: 0,
-        bainaBoxes: 0,
-        mandapServingsPax: 0,
-        roomsNeeded: 5,
-        roomArrival: '16:00',
-        roomDeparture: '09:00',
-        roomRate: 2500,
-        decorPackageType: 'standard',
-        soundMicSetup: true,
-        projectorSetup: false,
-        ledWallSetup: false,
-        packageIncludes: ['Swarnim (G) + Swadhistam (1)', 'Grand Stage Setup', 'Theme Floral Decor', 'DJ & Acoustic Sound', '100% Genset Power Backup'],
-        selfArrangements: ['Photographer / Cinematography', 'Phool / Varmala', 'Cake / Gift Counter'],
-        additionalHallCharges: 70000,
-        additionalDecorCharges: 30000,
-        specialArrangements: 'VIP Sofa seating setup for groom party. Stage entry cold pyros arranged by guest.',
-        discountPercent: 3.9,
-        discountRupees: 18883,
-        discountInputMode: 'amount',
-        approverRole: 'manager',
-        amountPaid: 20000,
-        paymentMode: 'Cash',
-        paymentDate: '09/09/2026',
-        status: 'pending_md',
-        mdApprovedAt: undefined,
-        mdRemarks: 'VIP client discount (₹18,883) authorized by Banquet Manager',
-        isLocked: false,
-        lockedAt: undefined,
-        lockedBy: undefined,
-        digitalSignature: 'SN-SIG-250-9F83A12E',
-        barcodeValue: 'SN-SIG-250-9F83A12E',
-        auditLog: [
-            {
-                id: 'aud-1',
-                timestamp: '10/Nov/2026, 11:30 AM',
-                action: 'created',
-                actor: 'Reception Desk (Mr. Amit Verma)',
-                details: 'Initial inquiry registered at Front Desk.',
-                changes: ['Client registered: Mr. Tushar Gupta Jee', 'Event: Wedding Reception on 15-Nov-2026', 'Initial PAX estimate: 300 Pax']
-            },
-            {
-                id: 'aud-2',
-                timestamp: '11/Nov/2026, 04:15 PM',
-                action: 'locked',
-                actor: 'Banquet Operations Manager',
-                details: 'Initial catering proposal & venue allotment sealed.',
-                digitalSignature: 'SN-SIG-250-7A1B39D1',
-                changes: ['Halls Allotted: Swarnim (G) + Swadhistam (1)', 'Menu Tier: ₹799 Royal Deluxe', 'Deal Frozen']
-            },
-            {
-                id: 'aud-3',
-                timestamp: '12/Nov/2026, 02:00 PM',
-                action: 'unlocked',
-                actor: 'Banquet Operations Manager',
-                details: 'Deal unlocked for menu revision and pax increase upon client request.',
-                previousSignature: 'SN-SIG-250-7A1B39D1'
-            },
-            {
-                id: 'aud-4',
-                timestamp: '12/Nov/2026, 02:45 PM',
-                action: 'updated',
-                actor: 'Banquet Operations Manager',
-                details: 'Revision details captured and verified with client.',
-                changes: [
-                    'Guaranteed Pax updated: 300 ➔ 350 Persons (+50 Pax)',
-                    'Catering Dishes revised: Added Live Counters (Pav Bhaji Live, Masala Dosa Live)',
-                    'Special Arrangement note added: VIP Sofa setup for groom party'
-                ]
-            },
-            {
-                id: 'aud-5',
-                timestamp: '12/Nov/2026, 08:30 PM',
-                action: 'locked',
-                actor: 'Banquet Operations Manager',
-                details: 'Deal re-locked & cryptographically re-signed after revision approval.',
-                digitalSignature: 'SN-SIG-250-9F83A12E-V2'
-            }
-        ]
-    },
-    {
-        id: 'inq-251',
-        voucherNo: '251',
-        inquiryDate: '16/Nov/2026',
-        guestName: 'Dr. Vivek Sharma',
-        phonePrimary: '9839012345',
-        phoneSecondary: '9450123456',
-        address: 'Indira Nagar, Raebareli',
-        email: 'dr.vivek@gmail.com',
-        functionDateFrom: '2026-11-20',
-        functionDateTo: '2026-11-20',
-        timeFrom: '18:30',
-        timeTo: '23:30',
-        eventType: 'Daughter Engagement & Tilak',
-        paxGuaranteed: 150,
-        selectedVenues: ['swarnim'],
-        isEngagementPackage: true,
-        engagementPackageType: 'swarnim',
-        isMeetingSetup: false,
-        menuRateTier: 499,
-        effectiveMenuRate: 499,
-        menuTitle: 'Executive Vegetarian Buffet',
-        selectedMenuCatalogItems: [
-            'Sprite', 'Limca',
-            'Tea (Regular, Ginger, Green, Masala, Lemon)',
-            'Tomato Soup',
-            'Fried Masala Idly', 'Veg Manchurian Dry', 'Cutlets',
-            'Dal Fry',
-            'Paneer Butter Masala',
-            'Aloo Gobhi Masala',
-            'Jeera Rice',
-            'Boondi Raita',
-            'Tandoori Roti', 'Butter Naan',
-            'Hot Gulab Jamun'
-        ],
-        engagementBreakfastPax: 80,
-        regularBreakfastPax: 0,
-        bainaBoxes: 50,
-        mandapServingsPax: 0,
-        roomsNeeded: 2,
-        roomArrival: '14:00',
-        roomDeparture: '10:00',
-        roomRate: 2500,
-        decorPackageType: 'none',
-        soundMicSetup: false,
-        projectorSetup: false,
-        ledWallSetup: false,
-        packageIncludes: ['Swarnim Hall (G) with Decor & DJ (@₹45,000 Package)', 'Engagement Breakfast (80 Pax)', '50 Baina Boxes'],
-        selfArrangements: ['Photographer / Cinematography', 'Cake / Gift Counter'],
-        additionalHallCharges: 0,
-        additionalDecorCharges: 0,
-        specialArrangements: 'Baina box handover at registration counter',
-        discountPercent: 0,
-        discountRupees: 0,
-        discountInputMode: 'amount',
-        approverRole: 'manager',
-        amountPaid: 15000,
-        paymentMode: 'UPI / QR',
-        paymentDate: '11/09/2026',
-        status: 'draft_reception',
-        isLocked: false,
-        auditLog: [
-            {
-                id: 'aud-251-1',
-                timestamp: '11/Nov/2026, 10:00 AM',
-                action: 'created',
-                actor: 'Reception Desk',
-                details: 'Inquiry registered for Engagement Package.',
-                changes: ['Guest: Dr. Vivek Sharma', 'Package: Swarnim Engagement Package (@₹45,000)', '150 Pax']
-            }
-        ]
-    },
-    {
-        id: 'inq-249',
-        voucherNo: '249',
-        inquiryDate: '10/Nov/2026',
-        guestName: 'Adv. Rameshwar Singh',
-        phonePrimary: '9918099881',
-        phoneSecondary: '',
-        address: 'Kacheri Road, Raebareli',
-        email: 'rameshwar.singh@law.in',
-        functionDateFrom: '2026-11-12',
-        functionDateTo: '2026-11-12',
-        timeFrom: '11:00',
-        timeTo: '17:00',
-        eventType: 'Corporate Leadership Conference',
-        paxGuaranteed: 120,
-        selectedVenues: ['swadhistam'],
-        isEngagementPackage: false,
-        engagementPackageType: 'none',
-        isMeetingSetup: true,
-        menuRateTier: 499,
-        effectiveMenuRate: 799,
-        menuTitle: 'Corporate Executive Banquet',
-        selectedMenuCatalogItems: [
-            'Virgin Mojito', 'Special Sarbat',
-            'Filter Coffee',
-            'Clear Soup',
-            'Cocktail Samosa', 'Cutlets', 'Cheese Nuggets',
-            'Dal Tadka',
-            'Kadhai Paneer',
-            'Mix Veg',
-            'Jeera Rice',
-            'Mix Veg Raita',
-            'Butter Naan', 'Missi Roti',
-            'Rasgulla'
-        ],
-        engagementBreakfastPax: 0,
-        regularBreakfastPax: 120,
-        bainaBoxes: 0,
-        mandapServingsPax: 0,
-        roomsNeeded: 1,
-        roomArrival: '09:00',
-        roomDeparture: '18:00',
-        roomRate: 2500,
-        decorPackageType: 'none',
-        soundMicSetup: true,
-        projectorSetup: true,
-        ledWallSetup: false,
-        packageIncludes: ['Swadhistam (1)', 'Sound & Mic Setup', 'Projector & Screen', 'Executive Buffet'],
-        selfArrangements: ['Photographer / Cinematography'],
-        additionalHallCharges: 0,
-        additionalDecorCharges: 0,
-        specialArrangements: 'Meeting setup converted to ₹799/pax + Executive Breakfast @ ₹300',
-        discountPercent: 7,
-        discountRupees: 12383,
-        discountInputMode: 'amount',
-        approverRole: 'gm',
-        amountPaid: 50000,
-        paymentMode: 'Bank Transfer',
-        paymentDate: '08/09/2026',
-        status: 'approved_md',
-        mdApprovedAt: '09 Sep 2026, 04:30 PM',
-        mdRemarks: 'Approved by GM within 7% corporate discount limit (₹12,383)',
-        isLocked: true,
-        lockedAt: '10/Nov/2026, 06:15 PM',
-        lockedBy: 'Banquet Operations Manager',
-        digitalSignature: 'SN-SIG-249-3D84B91F',
-        barcodeValue: 'SN-SIG-249-3D84B91F',
-        auditLog: [
-            {
-                id: 'aud-249-1',
-                timestamp: '08/Nov/2026, 09:30 AM',
-                action: 'created',
-                actor: 'Reception Desk',
-                details: 'Corporate conference inquiry registered.',
-                changes: ['Client: Adv. Rameshwar Singh', 'Meeting setup rules applied']
-            },
-            {
-                id: 'aud-249-2',
-                timestamp: '10/Nov/2026, 06:15 PM',
-                action: 'locked',
-                actor: 'Banquet Operations Manager',
-                details: 'Meeting setup locked with Sound & Projector inclusions.',
-                digitalSignature: 'SN-SIG-249-3D84B91F'
-            }
-        ]
-    },
-]);
+const banquetInquiries = ref<BanquetInquiry[]>([]);
 
 const inquiryOpenPrintPreview = ref(queryPrint);
 
@@ -579,11 +257,19 @@ onMounted(() => {
             const raw = localStorage.getItem('senani_banquet_inquiries');
             if (raw) {
                 const list = JSON.parse(raw);
-                if (Array.isArray(list) && list.length > 0) {
-                    banquetInquiries.value = list;
+                if (Array.isArray(list)) {
+                    // Purge stale mock dummy inquiries
+                    const cleanList = list.filter(i => {
+                        const name = (i.guestName || '').toLowerCase();
+                        const vNo = String(i.voucherNo || '');
+                        if (name.includes('tushar') || name.includes('vivek') || name.includes('rameshwar') || vNo === '250' || vNo === '251' || vNo === '249') {
+                            return false;
+                        }
+                        return true;
+                    });
+                    banquetInquiries.value = cleanList;
+                    localStorage.setItem('senani_banquet_inquiries', JSON.stringify(cleanList));
                 }
-            } else {
-                localStorage.setItem('senani_banquet_inquiries', JSON.stringify(banquetInquiries.value));
             }
         } catch (e) {
             console.error('Error loading banquet inquiries from localStorage', e);
@@ -591,10 +277,12 @@ onMounted(() => {
 
         if (queryInquiry) {
             const params = new URLSearchParams(window.location.search);
-            const vNo = params.get('voucher') || '250';
-            const found = banquetInquiries.value.find(i => String(i.voucherNo) === String(vNo));
-            if (found) {
-                selectedInquiry.value = { ...found };
+            const vNo = params.get('voucher');
+            if (vNo) {
+                const found = banquetInquiries.value.find(i => String(i.voucherNo) === String(vNo));
+                if (found) {
+                    selectedInquiry.value = { ...found };
+                }
             }
         }
     }
@@ -616,89 +304,94 @@ interface GstInvoice {
     status: 'Paid' | 'Partial' | 'Pending';
 }
 
-const recentInvoices = ref<GstInvoice[]>([
-    {
-        invoiceNo: 'SN-INV-2026-0412',
-        date: '12 Sep, 02:15 PM',
-        customerName: 'TechCorp India Pvt Ltd',
-        serviceType: 'Sapphire Hall Seminar & Buffet',
-        taxableAmount: 138095,
-        gstRate: 5,
-        gstAmount: 6905,
-        totalAmount: 145000,
-        paymentMode: 'Bank NEFT',
-        status: 'Paid',
-    },
-    {
-        invoiceNo: 'SN-INV-2026-0411',
-        date: '12 Sep, 11:40 AM',
-        customerName: 'Rajesh Malhotra',
-        serviceType: 'Room 101 Deluxe Stay (2 Nights)',
-        taxableAmount: 5000,
-        gstRate: 12,
-        gstAmount: 600,
-        totalAmount: 5600,
-        paymentMode: 'UPI / QR',
-        status: 'Paid',
-    },
-    {
-        invoiceNo: 'SN-INV-2026-0410',
-        date: '11 Sep, 08:30 PM',
-        customerName: 'Vikram Singhania',
-        serviceType: 'Room 103 Folio + Dine-in Room Service',
-        taxableAmount: 8200,
-        gstRate: 12,
-        gstAmount: 984,
-        totalAmount: 9184,
-        paymentMode: 'Credit Card',
-        status: 'Paid',
-    },
-    {
-        invoiceNo: 'SN-INV-2026-0409',
-        date: '11 Sep, 04:10 PM',
-        customerName: 'Suresh Chandra Verma',
-        serviceType: 'Grand Ballroom Wedding Advance Token',
-        taxableAmount: 333333,
-        gstRate: 5,
-        gstAmount: 16667,
-        totalAmount: 350000,
-        paymentMode: 'Bank NEFT',
-        status: 'Partial',
-    },
-    {
-        invoiceNo: 'SN-INV-2026-0408',
-        date: '10 Sep, 10:20 AM',
-        customerName: 'Dr. Sameer Joshi',
-        serviceType: 'Super Deluxe Room 201 Advance',
-        taxableAmount: 7500,
-        gstRate: 12,
-        gstAmount: 900,
-        totalAmount: 8400,
-        paymentMode: 'UPI / QR',
-        status: 'Paid',
-    },
-]);
+const recentInvoices = ref<GstInvoice[]>([]);
+
+// Dynamic Financial & Operational Metrics
+const totalSalesToday = computed(() => recentInvoices.value.reduce((sum, inv) => sum + (Number(inv.totalAmount) || 0), 0));
+const totalGstToday = computed(() => recentInvoices.value.reduce((sum, inv) => sum + (Number(inv.gstAmount) || 0), 0));
+const todayFunctionsCount = computed(() => banquetBookings.value.filter(b => (b.date || '').toLowerCase().includes('today')).length);
+const todayFunctionsPax = computed(() => banquetBookings.value.filter(b => (b.date || '').toLowerCase().includes('today')).reduce((sum, b) => sum + (Number(b.paxCount) || 0), 0));
+const pendingFolioDues = computed(() => banquetBookings.value.reduce((sum, b) => sum + (Number(b.balanceDue) || 0), 0));
+const pendingFolioCount = computed(() => banquetBookings.value.filter(b => (Number(b.balanceDue) || 0) > 0).length);
+
+// Banquet Slot Availability Checker
+const getSlotStatus = (hallName: string, slotType: 'Morning' | 'Evening') => {
+    const booking = banquetBookings.value.find(b => 
+        b.hallName.toLowerCase().includes(hallName.toLowerCase()) && 
+        b.slot.toLowerCase().includes(slotType.toLowerCase())
+    );
+    if (booking) {
+        return { isBooked: true, label: `Booked (${booking.clientName})`, booking };
+    }
+    return { isBooked: false, label: 'Available', booking: null };
+};
+
+// CRM Guest Profiles Dynamic Aggregator
+const guestProfiles = computed(() => {
+    const list: Array<{
+        name: string;
+        phone: string;
+        city: string;
+        initials: string;
+        eventType: string;
+        venue: string;
+        spend: number;
+        status: string;
+    }> = [];
+
+    banquetInquiries.value.forEach(inq => {
+        if (!inq.guestName) return;
+        const cleanName = inq.guestName.replace(/^(Mr\.|Mrs\.|Dr\.|Adv\.|Ms\.)\s+/i, '').replace(/\s+Jee$/i, '').trim();
+        const initials = cleanName.split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase() || 'GP';
+        list.push({
+            name: inq.guestName,
+            phone: inq.phonePrimary || 'N/A',
+            city: inq.address || 'Raebareli',
+            initials,
+            eventType: inq.eventType || 'Banquet Event',
+            venue: inq.selectedVenues?.join(', ') || 'Banquet Hall',
+            spend: inq.amountPaid || 0,
+            status: inq.status === 'approved_md' ? 'Confirmed Client' : 'Inquiry Stage'
+        });
+    });
+
+    rooms.value.filter(r => r.guestName).forEach(r => {
+        const initials = (r.guestName || '').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase() || 'RG';
+        list.push({
+            name: r.guestName || 'Guest',
+            phone: 'N/A',
+            city: 'Raebareli',
+            initials,
+            eventType: `Room ${r.number} Stay`,
+            venue: r.category,
+            spend: r.pricePerNight || 0,
+            status: 'Checked-In'
+        });
+    });
+
+    return list;
+});
 
 // -------------------------------------------------------------
 // Interactive Fast GST POS Billing Engine State
 // -------------------------------------------------------------
 const posBillType = ref<'banquet' | 'room' | 'restaurant'>('banquet');
-const posCustomerName = ref('Mr. Kailash Nath Aggarwal');
-const posPhone = ref('+91 98390 12345');
+const posCustomerName = ref('');
+const posPhone = ref('');
 const posGstin = ref('');
-const posPax = ref(250);
-const posPlateRate = ref(850);
-const posHallRent = ref(40000);
-const posDj = ref(true);
+const posPax = ref(100);
+const posPlateRate = ref(799);
+const posHallRent = ref(35000);
+const posDj = ref(false);
 const posDjRate = ref(15000);
-const posDecor = ref(true);
+const posDecor = ref(false);
 const posDecorRate = ref(20000);
 const posGenset = ref(true);
 const posGensetRate = ref(5000);
-const posRoomTariff = ref(5600);
-const posRoomNights = ref(2);
+const posRoomTariff = ref(2500);
+const posRoomNights = ref(1);
 const posGstRate = ref(5);
-const posAdvance = ref(50000);
+const posAdvance = ref(0);
 
 const posTaxableSubtotal = computed(() => {
     if (posBillType.value === 'banquet') {
@@ -1200,14 +893,14 @@ const submitCheckIn = () => {
                                 </div>
                             </div>
                             <div class="mt-2 flex items-baseline justify-between gap-1">
-                                <span class="text-xl sm:text-2xl font-black font-mono tracking-tight text-slate-900">₹1,84,500</span>
-                                <span class="inline-flex items-center text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/70 px-1.5 py-0.5 rounded-full">
-                                    <TrendingUp class="h-3 w-3 mr-0.5 text-emerald-600" /> +14.8%
+                                <span class="text-xl sm:text-2xl font-black font-mono tracking-tight text-slate-900">₹{{ totalSalesToday.toLocaleString('en-IN') }}</span>
+                                <span class="inline-flex items-center text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200/70 px-1.5 py-0.5 rounded-full">
+                                    {{ recentInvoices.length }} Invoices
                                 </span>
                             </div>
                             <div class="mt-2 pt-1.5 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between">
                                 <span>GST (CGST+SGST):</span>
-                                <span class="font-semibold text-slate-700 font-mono">₹18,450 (10%)</span>
+                                <span class="font-semibold text-slate-700 font-mono">₹{{ totalGstToday.toLocaleString('en-IN') }}</span>
                             </div>
                         </div>
 
@@ -1251,14 +944,14 @@ const submitCheckIn = () => {
                                 </div>
                             </div>
                             <div class="mt-2 flex items-baseline justify-between gap-1">
-                                <span class="text-xl sm:text-2xl font-black font-mono tracking-tight text-slate-900">2 Events</span>
+                                <span class="text-xl sm:text-2xl font-black font-mono tracking-tight text-slate-900">{{ todayFunctionsCount }} Events</span>
                                 <span class="inline-flex items-center rounded-full bg-amber-50 border border-amber-200/70 px-1.5 py-0.5 text-[10px] font-bold text-amber-800">
-                                    590 Pax Total
+                                    {{ todayFunctionsPax }} Pax Total
                                 </span>
                             </div>
                             <div class="mt-2 pt-1.5 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between truncate">
-                                <span>Grand Ballroom:</span>
-                                <span class="font-semibold text-purple-700 truncate">Evening Reception</span>
+                                <span>Status:</span>
+                                <span class="font-semibold text-purple-700 truncate">{{ todayFunctionsCount > 0 ? 'Active Functions Scheduled' : 'No Events Scheduled' }}</span>
                             </div>
                         </div>
 
@@ -1272,14 +965,14 @@ const submitCheckIn = () => {
                                 </div>
                             </div>
                             <div class="mt-2 flex items-baseline justify-between gap-1">
-                                <span class="text-xl sm:text-2xl font-black font-mono tracking-tight text-slate-900">₹42,800</span>
+                                <span class="text-xl sm:text-2xl font-black font-mono tracking-tight text-slate-900">₹{{ pendingFolioDues.toLocaleString('en-IN') }}</span>
                                 <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200/70 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700">
-                                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Healthy
+                                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span> {{ pendingFolioDues === 0 ? 'All Settled' : 'Pending' }}
                                 </span>
                             </div>
                             <div class="mt-2 pt-1.5 border-t border-slate-100 text-[11px] text-slate-500 flex items-center justify-between">
                                 <span>Check-out settlements:</span>
-                                <span class="font-semibold text-slate-700">4 today</span>
+                                <span class="font-semibold text-slate-700">{{ pendingFolioCount }} pending</span>
                             </div>
                         </div>
                     </div>
@@ -1371,7 +1064,7 @@ const submitCheckIn = () => {
                                     </button>
                                 </div>
 
-                                <div class="space-y-2">
+                                <div v-if="banquetBookings.length > 0" class="space-y-2">
                                     <div
                                         v-for="bk in banquetBookings.slice(0, 2)"
                                         :key="bk.id"
@@ -1401,13 +1094,18 @@ const submitCheckIn = () => {
                                         </div>
                                     </div>
                                 </div>
+                                <div v-else class="py-6 text-center text-slate-400 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                                    <Calendar class="h-6 w-6 mx-auto text-slate-300 mb-1" />
+                                    <p class="text-xs font-semibold text-slate-600">No banquet functions scheduled today</p>
+                                    <p class="text-[10px] text-slate-400 mt-0.5">All banquet halls are available for booking</p>
+                                </div>
                             </div>
 
                             <button
-                                @click="currentTab = 'banquet'"
+                                @click="openNewInquiry(1)"
                                 class="mt-4 w-full py-2.5 rounded-xl border border-dashed border-purple-300 bg-purple-50/50 text-xs font-bold text-[#673DE6] hover:bg-purple-50 transition flex items-center justify-center gap-1.5"
                             >
-                                <Plus class="h-4 w-4" /> Book New Banquet Function
+                                <Plus class="h-4 w-4" /> Register New Banquet Inquiry
                             </button>
                         </div>
                     </div>
@@ -1480,6 +1178,15 @@ const submitCheckIn = () => {
                                             >
                                                 <Eye class="h-3 w-3" /> View Bill
                                             </button>
+                                        </td>
+                                    </tr>
+                                    <tr v-if="recentInvoices.length === 0">
+                                        <td colspan="10" class="py-8 text-center text-slate-400">
+                                            <div class="flex flex-col items-center justify-center gap-1.5">
+                                                <Receipt class="h-7 w-7 text-slate-300" />
+                                                <span class="text-xs font-semibold text-slate-600">No GST Invoices Recorded Today</span>
+                                                <span class="text-[10px] text-slate-400">Bills generated in the Fast POS Billing engine will appear here automatically</span>
+                                            </div>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -1936,6 +1643,15 @@ const submitCheckIn = () => {
                                             </div>
                                         </td>
                                     </tr>
+                                    <tr v-if="banquetInquiries.length === 0">
+                                        <td colspan="10" class="py-8 text-center text-slate-400">
+                                            <div class="flex flex-col items-center justify-center gap-1.5">
+                                                <Calendar class="h-7 w-7 text-slate-300" />
+                                                <span class="text-xs font-semibold text-slate-600">No Event Inquiries Registered Yet</span>
+                                                <span class="text-[10px] text-slate-400">Click "+ New Inquiry" to create the first 3-stage banquet slip</span>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1956,11 +1672,15 @@ const submitCheckIn = () => {
                                 <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-600 space-y-1.5">
                                     <div class="flex items-center justify-between">
                                         <span>Morning Slot:</span>
-                                        <span class="font-bold text-emerald-600">Available</span>
+                                        <span :class="getSlotStatus('Grand Ballroom', 'Morning').isBooked ? 'font-bold text-[#673DE6]' : 'font-bold text-emerald-600'">
+                                            {{ getSlotStatus('Grand Ballroom', 'Morning').label }}
+                                        </span>
                                     </div>
                                     <div class="flex items-center justify-between">
                                         <span>Evening Slot:</span>
-                                        <span class="font-bold text-[#673DE6]">Booked (Verma-Sharma)</span>
+                                        <span :class="getSlotStatus('Grand Ballroom', 'Evening').isBooked ? 'font-bold text-[#673DE6]' : 'font-bold text-emerald-600'">
+                                            {{ getSlotStatus('Grand Ballroom', 'Evening').label }}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -1985,11 +1705,15 @@ const submitCheckIn = () => {
                                 <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-600 space-y-1.5">
                                     <div class="flex items-center justify-between">
                                         <span>Morning Slot:</span>
-                                        <span class="font-bold text-[#673DE6]">Booked (TechCorp)</span>
+                                        <span :class="getSlotStatus('Sapphire Hall', 'Morning').isBooked ? 'font-bold text-[#673DE6]' : 'font-bold text-emerald-600'">
+                                            {{ getSlotStatus('Sapphire Hall', 'Morning').label }}
+                                        </span>
                                     </div>
                                     <div class="flex items-center justify-between">
                                         <span>Evening Slot:</span>
-                                        <span class="font-bold text-emerald-600">Available</span>
+                                        <span :class="getSlotStatus('Sapphire Hall', 'Evening').isBooked ? 'font-bold text-[#673DE6]' : 'font-bold text-emerald-600'">
+                                            {{ getSlotStatus('Sapphire Hall', 'Evening').label }}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -2014,11 +1738,15 @@ const submitCheckIn = () => {
                                 <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-600 space-y-1.5">
                                     <div class="flex items-center justify-between">
                                         <span>Morning Slot:</span>
-                                        <span class="font-bold text-emerald-600">Available</span>
+                                        <span :class="getSlotStatus('Royal Lawn & Terrace', 'Morning').isBooked ? 'font-bold text-[#673DE6]' : 'font-bold text-emerald-600'">
+                                            {{ getSlotStatus('Royal Lawn & Terrace', 'Morning').label }}
+                                        </span>
                                     </div>
                                     <div class="flex items-center justify-between">
                                         <span>Evening Slot:</span>
-                                        <span class="font-bold text-emerald-600">Available</span>
+                                        <span :class="getSlotStatus('Royal Lawn & Terrace', 'Evening').isBooked ? 'font-bold text-[#673DE6]' : 'font-bold text-emerald-600'">
+                                            {{ getSlotStatus('Royal Lawn & Terrace', 'Evening').label }}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -2034,7 +1762,7 @@ const submitCheckIn = () => {
                     <!-- Bookings Schedule List -->
                     <div class="rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
                         <h2 class="text-base font-bold text-slate-900 mb-4">Confirmed Upcoming Functions</h2>
-                        <div class="space-y-3">
+                        <div v-if="banquetBookings.length > 0" class="space-y-3">
                             <div
                                 v-for="bk in banquetBookings"
                                 :key="bk.id"
@@ -2053,6 +1781,11 @@ const submitCheckIn = () => {
                                     <span class="text-xs font-semibold text-emerald-600">Paid: ₹{{ bk.advancePaid.toLocaleString('en-IN') }}</span>
                                 </div>
                             </div>
+                        </div>
+                        <div v-else class="py-6 text-center text-slate-400 bg-[#F8F9FD] rounded-xl border border-dashed border-slate-200">
+                            <Calendar class="h-6 w-6 mx-auto text-slate-300 mb-1" />
+                            <p class="text-xs font-semibold text-slate-600">No confirmed upcoming functions</p>
+                            <p class="text-[10px] text-slate-400 mt-0.5">Approved banquet inquiries will automatically populate here</p>
                         </div>
                     </div>
                 </div>
@@ -2267,6 +2000,15 @@ const submitCheckIn = () => {
                                             </button>
                                         </td>
                                     </tr>
+                                    <tr v-if="recentInvoices.length === 0">
+                                        <td colspan="10" class="py-8 text-center text-slate-400">
+                                            <div class="flex flex-col items-center justify-center gap-1.5">
+                                                <Receipt class="h-7 w-7 text-slate-300" />
+                                                <span class="text-xs font-semibold text-slate-600">No GST Invoices Recorded</span>
+                                                <span class="text-[10px] text-slate-400">Bills created at the POS Billing Counter will be registered here</span>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -2286,56 +2028,35 @@ const submitCheckIn = () => {
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-xs">
+                    <div v-if="guestProfiles.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div
+                            v-for="guest in guestProfiles"
+                            :key="guest.name + guest.phone"
+                            class="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-xs"
+                        >
                             <div class="flex items-center gap-3 mb-3">
                                 <div class="h-10 w-10 rounded-xl bg-purple-100 text-[#673DE6] font-bold flex items-center justify-center">
-                                    RM
+                                    {{ guest.initials }}
                                 </div>
                                 <div>
-                                    <h4 class="text-sm font-bold text-slate-900">Rajesh Malhotra</h4>
-                                    <p class="text-xs text-slate-500">+91 98201 44512 • New Delhi</p>
+                                    <h4 class="text-sm font-bold text-slate-900">{{ guest.name }}</h4>
+                                    <p class="text-xs text-slate-500">{{ guest.phone }} • {{ guest.city }}</p>
                                 </div>
                             </div>
                             <div class="text-xs text-slate-600 space-y-1 pt-3 border-t border-slate-100">
-                                <div class="flex justify-between"><span>Total Visits:</span><span class="font-bold text-slate-900">4 Stays</span></div>
-                                <div class="flex justify-between"><span>Total Spend:</span><span class="font-bold text-[#673DE6]">₹48,200</span></div>
-                                <div class="flex justify-between"><span>Current Room:</span><span class="font-semibold text-emerald-600">Room 101 (Deluxe)</span></div>
+                                <div class="flex justify-between"><span>Activity:</span><span class="font-bold text-slate-900">{{ guest.eventType }}</span></div>
+                                <div class="flex justify-between"><span>Venue / Room:</span><span class="font-semibold text-purple-700">{{ guest.venue }}</span></div>
+                                <div class="flex justify-between"><span>Paid / Spend:</span><span class="font-bold text-[#673DE6]">₹{{ guest.spend.toLocaleString('en-IN') }}</span></div>
+                                <div class="flex justify-between"><span>Status:</span><span class="font-semibold text-emerald-600">{{ guest.status }}</span></div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-xs">
-                            <div class="flex items-center gap-3 mb-3">
-                                <div class="h-10 w-10 rounded-xl bg-blue-100 text-blue-700 font-bold flex items-center justify-center">
-                                    SV
-                                </div>
-                                <div>
-                                    <h4 class="text-sm font-bold text-slate-900">Suresh Chandra Verma</h4>
-                                    <p class="text-xs text-slate-500">+91 98391 22441 • Lucknow</p>
-                                </div>
-                            </div>
-                            <div class="text-xs text-slate-600 space-y-1 pt-3 border-t border-slate-100">
-                                <div class="flex justify-between"><span>Function:</span><span class="font-bold text-slate-900">Wedding Reception</span></div>
-                                <div class="flex justify-between"><span>Hall:</span><span class="font-semibold text-purple-700">Grand Ballroom</span></div>
-                                <div class="flex justify-between"><span>Contract Value:</span><span class="font-bold text-[#673DE6]">₹4,85,000</span></div>
-                            </div>
-                        </div>
-
-                        <div class="p-5 rounded-2xl border border-slate-200/80 bg-white shadow-xs">
-                            <div class="flex items-center gap-3 mb-3">
-                                <div class="h-10 w-10 rounded-xl bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center">
-                                    TC
-                                </div>
-                                <div>
-                                    <h4 class="text-sm font-bold text-slate-900">TechCorp India Pvt Ltd</h4>
-                                    <p class="text-xs text-slate-500">Corporate Account • GST: 09AAACT1234F1Z</p>
-                                </div>
-                            </div>
-                            <div class="text-xs text-slate-600 space-y-1 pt-3 border-t border-slate-100">
-                                <div class="flex justify-between"><span>Event:</span><span class="font-bold text-slate-900">Annual Seminar</span></div>
-                                <div class="flex justify-between"><span>Billed:</span><span class="font-bold text-[#673DE6]">₹1,45,000 (Paid)</span></div>
-                                <div class="flex justify-between"><span>Status:</span><span class="font-semibold text-emerald-600">Active Corporate</span></div>
-                            </div>
+                    <div v-else class="py-12 text-center text-slate-400 bg-white rounded-2xl border border-slate-200/80 p-8">
+                        <div class="flex flex-col items-center justify-center gap-2">
+                            <Users class="h-10 w-10 text-slate-300 mx-auto" />
+                            <span class="text-sm font-bold text-slate-700">No Guest Profiles Found</span>
+                            <span class="text-xs text-slate-400 max-w-sm">Guest profiles are automatically registered when you capture new event inquiries or room check-ins.</span>
                         </div>
                     </div>
                 </div>

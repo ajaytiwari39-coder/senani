@@ -204,24 +204,21 @@ const FOODING_RATES = {
 import { menuCatalogs, type MenuCatalogTier } from './menuCatalog';
 export type { MenuCatalogTier };
 
-// -------------------------------------------------------------
-// Reactive Form State
-// -------------------------------------------------------------
-const form = ref<BanquetInquiry>({
-    voucherNo: '250',
-    inquiryDate: '15/Nov/2026',
-    guestName: 'Mr. Tushar Gupta Jee',
-    phonePrimary: '8115711507',
-    phoneSecondary: '7081219880',
-    address: 'Civil Lines, Raebareli',
+const createBlankInquiry = (): BanquetInquiry => ({
+    voucherNo: String(Date.now()).slice(-4),
+    inquiryDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+    guestName: '',
+    phonePrimary: '',
+    phoneSecondary: '',
+    address: '',
     email: '',
-    functionDateFrom: '2026-11-15',
-    functionDateTo: '2026-11-15',
+    functionDateFrom: '',
+    functionDateTo: '',
     timeFrom: '19:00',
     timeTo: '23:30',
     eventType: 'Wedding Reception',
-    paxGuaranteed: 350,
-    selectedVenues: ['swarnim', 'swadhistam'],
+    paxGuaranteed: 100,
+    selectedVenues: ['swarnim'],
     isEngagementPackage: false,
     engagementPackageType: 'none',
     isMeetingSetup: false,
@@ -234,7 +231,7 @@ const form = ref<BanquetInquiry>({
     regularBreakfastPax: 0,
     bainaBoxes: 0,
     mandapServingsPax: 0,
-    roomsNeeded: 5,
+    roomsNeeded: 0,
     roomArrival: '16:00',
     roomDeparture: '09:00',
     roomRate: 2500,
@@ -242,25 +239,28 @@ const form = ref<BanquetInquiry>({
     soundMicSetup: false,
     projectorSetup: false,
     ledWallSetup: false,
-    packageIncludes: ['Hall Rental', 'Grand Stage Setup', 'Theme Floral Decor', 'DJ & Acoustic Sound', 'Genset & 100% Power Backup'],
-    selfArrangements: ['Photographer / Cinematography', 'Phool / Varmala', 'Cake / Gift Counter'],
-    additionalHallCharges: 30000,
-    additionalDecorCharges: 68000,
-    specialArrangements: 'VIP Sofa seating setup for groom party. Stage entry cold pyros arranged by guest.',
-    discountPercent: 5,
-    discountRupees: 18883,
+    packageIncludes: [],
+    selfArrangements: [],
+    additionalHallCharges: 0,
+    additionalDecorCharges: 0,
+    specialArrangements: '',
+    discountPercent: 0,
+    discountRupees: 0,
     discountInputMode: 'amount',
     approverRole: 'manager',
-    amountPaid: 20000,
+    amountPaid: 0,
     paymentMode: 'Cash',
-    paymentDate: '09/09/2026',
-    status: 'pending_md',
+    paymentDate: new Date().toLocaleDateString('en-GB'),
+    status: 'draft_reception',
     mdApprovedAt: undefined,
-    mdRemarks: 'Approved with 5% privilege VIP discount.',
+    mdRemarks: '',
     isLocked: false,
     lockedAt: undefined,
     lockedBy: undefined,
+    auditLog: [],
 });
+
+const form = ref<BanquetInquiry>(createBlankInquiry());
 
 // Watch for incoming edits
 watch(
@@ -274,6 +274,8 @@ watch(
             if (!form.value.auditLog) form.value.auditLog = [];
             sanitizeCatalogSelections();
             updateBarcodeAndQr();
+        } else {
+            form.value = createBlankInquiry();
         }
     },
     { immediate: true }
@@ -1115,7 +1117,7 @@ const shareOnWhatsApp = () => {
                                     v-model="form.guestName"
                                     type="text"
                                     required
-                                    placeholder="e.g. Mr. Tushar Gupta Jee"
+                                    placeholder="e.g. Mr. Rajesh Kumar / Host Name"
                                     class="w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition"
                                 />
                             </div>
