@@ -128,7 +128,7 @@ const startHeroSlideTimer = () => {
     stopHeroSlideTimer();
     heroSlideTimer = setInterval(() => {
         nextHeroSlide();
-    }, 6000);
+    }, 3200);
 };
 
 const stopHeroSlideTimer = () => {
@@ -932,7 +932,7 @@ const hotelContacts = [
                     v-for="(slide, idx) in heroSlides"
                     :key="slide.id"
                     :class="[
-                        'absolute inset-0 z-0 transition-opacity duration-1000 ease-in-out',
+                        'absolute inset-0 z-0 transition-opacity duration-700 ease-in-out',
                         currentHeroSlide === idx ? 'opacity-100' : 'opacity-0 pointer-events-none'
                     ]"
                 >
@@ -941,7 +941,7 @@ const hotelContacts = [
                         :alt="slide.title"
                         :loading="idx === 0 ? 'eager' : 'lazy'"
                         :fetchpriority="idx === 0 ? 'high' : 'auto'"
-                        class="w-full h-full object-cover object-center brightness-[0.36] contrast-[1.05] transition-transform duration-[7000ms] ease-out scale-105"
+                        class="w-full h-full object-cover object-center brightness-[0.36] contrast-[1.05] transition-transform duration-[4000ms] ease-out scale-105"
                     />
                     <!-- Vignette Gradients -->
                     <div class="absolute inset-0 bg-gradient-to-t from-[#FAF8F5] via-black/40 to-[#1C1B1A]/80"></div>
