@@ -44,23 +44,34 @@ def main():
     print('🚀 Step 4: Pulling latest git commits on live server...')
     exec_remote(f'cd {APP_ROOT} && git pull origin main')
 
-    print('🚀 Step 5: Uploading compiled Vite build assets...')
+    print('🚀 Step 5: Uploading compiled Vite build assets & hotel images...')
     sftp = client.open_sftp()
-    local_build = os.path.join(LOCAL_DIR, 'public', 'build')
     
-    for root, dirs, files in os.walk(local_build):
-        rel = os.path.relpath(root, local_build)
-        remote_dest1 = os.path.join(APP_ROOT, 'public', 'build', '' if rel == '.' else rel)
-        remote_dest2 = os.path.join(PUBLIC_HTML, 'build', '' if rel == '.' else rel)
-        for d in [remote_dest1, remote_dest2]:
-            try: sftp.mkdir(d)
-            except: pass
-        for f in files:
-            lp = os.path.join(root, f)
-            p1 = os.path.join(remote_dest1, f)
-            p2 = os.path.join(remote_dest2, f)
-            sftp.put(lp, p1)
-            sftp.put(lp, p2)
+    def sync_folder(local_folder, rel_target):
+        for root, dirs, files in os.walk(local_folder):
+            rel = os.path.relpath(root, local_folder)
+            remote_dest1 = os.path.join(APP_ROOT, 'public', rel_target, '' if rel == '.' else rel)
+            remote_dest2 = os.path.join(PUBLIC_HTML, rel_target, '' if rel == '.' else rel)
+            for d in [remote_dest1, remote_dest2]:
+                parts = d.split('/')
+                cur = ''
+                for part in parts:
+                    if not part: continue
+                    cur += '/' + part
+                    try: sftp.mkdir(cur)
+                    except: pass
+            for f in files:
+                lp = os.path.join(root, f)
+                p1 = os.path.join(remote_dest1, f)
+                p2 = os.path.join(remote_dest2, f)
+                try:
+                    sftp.put(lp, p1)
+                    sftp.put(lp, p2)
+                except Exception as e:
+                    print(f"Notice uploading {f}: {e}")
+
+    sync_folder(os.path.join(LOCAL_DIR, 'public', 'build'), 'build')
+    sync_folder(os.path.join(LOCAL_DIR, 'public', 'images'), 'images')
     sftp.close()
 
     print('🚀 Step 6: Clearing remote Laravel caches with PHP 8.4...')
