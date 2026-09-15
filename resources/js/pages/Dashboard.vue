@@ -1810,7 +1810,7 @@ const submitCheckIn = () => {
                                                         type="button"
                                                         @click="requestDeleteInquiry(inq)"
                                                         class="rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-rose-200 shadow-2xs cursor-pointer"
-                                                        title="Super Admin Only: Permanently Delete Inquiry"
+                                                        title="Permanently Delete Inquiry"
                                                     >
                                                         <Trash2 class="h-3 w-3" />
                                                         <span>Delete</span>
@@ -1833,13 +1833,12 @@ const submitCheckIn = () => {
                                                     >
                                                         Voucher #{{ inq.voucherNo }}
                                                     </button>
-                                                    <!-- Also allow delete if authenticated as superadmin -->
+                                                    <!-- Delete button for MD Sir & Super Admin -->
                                                     <button
-                                                        v-if="authenticatedRole === 'superadmin'"
                                                         type="button"
                                                         @click="requestDeleteInquiry(inq)"
                                                         class="rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-rose-200 shadow-2xs cursor-pointer"
-                                                        title="Super Admin Only: Permanently Delete Inquiry"
+                                                        title="Permanently Delete Inquiry"
                                                     >
                                                         <Trash2 class="h-3 w-3" />
                                                         <span>Delete</span>
