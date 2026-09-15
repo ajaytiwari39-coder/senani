@@ -2289,19 +2289,19 @@ const shareOnWhatsApp = () => {
                         <!-- ========================================================= -->
                         <!-- PAGE 1: COMMERCIAL CONTRACT & INFRASTRUCTURE LOGISTICS   -->
                         <!-- ========================================================= -->
-                        <div class="print-page page-1 bg-white p-3.5 print:p-0 border border-slate-300 print:border-none rounded-xl print:rounded-none space-y-1.5" style="page-break-after: always; break-after: page; page-break-inside: avoid; break-inside: avoid;">
+                        <div class="print-page page-1 bg-white p-4 print:p-0 border border-slate-300 print:border-none rounded-xl print:rounded-none space-y-2.5" style="page-break-after: always; break-after: page; page-break-inside: avoid; break-inside: avoid;">
                             <!-- Top Regal Letterhead -->
-                            <div class="flex items-start justify-between border-b-2 border-slate-900 pb-1.5">
-                                <div class="flex items-center gap-3">
-                                    <img src="/images/logo-dark.png" alt="Senani Hotel Pleasant View" class="h-11 w-auto object-contain" />
-                                    <div class="border-l-2 border-amber-600/40 pl-2.5">
-                                        <div class="text-[13px] font-serif font-black tracking-wider text-slate-950 uppercase">Hotel Pleasant View</div>
-                                        <div class="text-[11.5px] font-bold text-amber-900 tracking-wide">BANQUET & CONVENTION CONTRACT DOSSIER</div>
-                                        <div class="text-[10px] text-slate-600 font-medium">A Premium Hospitality Unit of Senani Group • Civil Lines, Raebareli, UP</div>
+                            <div class="flex items-start justify-between border-b-2 border-slate-900 pb-2">
+                                <div class="flex items-center gap-3.5">
+                                    <img src="/images/logo-dark.png" alt="Senani Hotel Pleasant View" class="h-12 w-auto object-contain" />
+                                    <div class="border-l-2 border-amber-600/40 pl-3">
+                                        <div class="text-sm font-serif font-black tracking-wider text-slate-950 uppercase">Hotel Pleasant View</div>
+                                        <div class="text-xs font-bold text-amber-900 tracking-wide">BANQUET & CONVENTION CONTRACT DOSSIER</div>
+                                        <div class="text-[10.5px] text-slate-600 font-medium">A Premium Hospitality Unit of Senani Group • Civil Lines, Raebareli, UP</div>
                                         <div class="text-[10.5px] text-slate-500 font-mono">GSTIN: 09AAAAA0000A1Z5 • 24x7 Executive Front Desk</div>
                                     </div>
                                 </div>
-                                <div class="text-right text-[10.5px] leading-tight text-slate-700 bg-slate-50 border border-slate-200 rounded p-1.5">
+                                <div class="text-right text-[10.5px] leading-tight text-slate-700 bg-slate-50 border border-slate-200 rounded p-2">
                                     <div class="font-bold text-slate-900 pb-0.5 border-b border-slate-200 mb-0.5">HELPLINE & BOOKING DESK</div>
                                     <div class="font-mono">RECEPTION: <span class="font-bold text-slate-900">+91 9794152222</span></div>
                                     <div class="font-mono">MANAGER: <span class="font-bold text-slate-900">+91 9794152223</span></div>
@@ -2311,7 +2311,7 @@ const shareOnWhatsApp = () => {
                             </div>
 
                             <!-- Booking Reference Strip -->
-                            <div class="flex items-center justify-between py-1.5 px-3 bg-slate-900 text-white rounded font-medium text-xs">
+                            <div class="flex items-center justify-between py-1.5 px-3 bg-slate-900 text-white rounded-lg font-medium text-xs">
                                 <div class="flex items-center gap-1.5">
                                     <span class="text-amber-400 font-bold">VOUCHER NO:</span>
                                     <span class="font-mono font-black text-white text-sm">#{{ form.voucherNo }}</span>
@@ -2326,25 +2326,25 @@ const shareOnWhatsApp = () => {
                             </div>
 
                             <!-- Client & Event Matrix (Clean Grid) -->
-                            <div class="p-2 bg-slate-50/80 border border-slate-200 rounded-lg text-[11px] space-y-1">
-                                <div class="grid grid-cols-2 gap-x-3 gap-y-0.5">
+                            <div class="p-2.5 bg-slate-50/80 border border-slate-200 rounded-lg text-[11.5px] space-y-1.5">
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-1">
                                     <div class="flex">
-                                        <span class="w-24 font-bold text-slate-600">Client / Host:</span>
+                                        <span class="w-28 font-bold text-slate-600">Client / Host:</span>
                                         <span class="font-black text-slate-950">{{ form.guestName }}</span>
                                     </div>
                                     <div class="flex">
-                                        <span class="w-24 font-bold text-slate-600">Contact Number:</span>
+                                        <span class="w-28 font-bold text-slate-600">Contact Number:</span>
                                         <span class="font-mono font-bold text-slate-900">{{ form.phonePrimary }}</span>
                                         <span v-if="form.phoneSecondary" class="font-mono ml-2 text-slate-600">, {{ form.phoneSecondary }}</span>
                                     </div>
                                 </div>
                                 <div class="flex">
-                                    <span class="w-24 font-bold text-slate-600">Address:</span>
+                                    <span class="w-28 font-bold text-slate-600">Address:</span>
                                     <span class="text-slate-800">{{ form.address || 'Civil Lines, Raebareli' }}</span>
                                 </div>
-                                <div class="grid grid-cols-2 gap-x-3 gap-y-0.5 pt-0.5 border-t border-slate-200/70">
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-1 pt-1 border-t border-slate-200/70">
                                     <div>
-                                        <span class="w-24 inline-block font-bold text-slate-600">Function Date:</span>
+                                        <span class="w-28 inline-block font-bold text-slate-600">Function Date:</span>
                                         <span class="font-bold text-slate-900">{{ form.functionDateFrom }}</span>
                                         <span v-if="form.functionDateTo && form.functionDateTo !== form.functionDateFrom"> to <span class="font-bold text-slate-900">{{ form.functionDateTo }}</span></span>
                                     </div>
@@ -2353,9 +2353,9 @@ const shareOnWhatsApp = () => {
                                         <span class="font-semibold text-slate-900 ml-1.5">{{ form.timeFrom }} to {{ form.timeTo }}</span>
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-2 gap-x-3 gap-y-0.5">
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-1">
                                     <div>
-                                        <span class="w-24 inline-block font-bold text-slate-600">Event Type:</span>
+                                        <span class="w-28 inline-block font-bold text-slate-600">Event Type:</span>
                                         <span class="font-bold text-amber-900">{{ form.eventType }}</span>
                                     </div>
                                     <div>
@@ -2363,9 +2363,9 @@ const shareOnWhatsApp = () => {
                                         <span class="font-bold text-slate-900 ml-1.5">₹{{ effectiveMenuRate }}/plate ({{ currentMenuCatalog.title }})</span>
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-2 gap-x-3 gap-y-0.5">
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-1">
                                     <div>
-                                        <span class="w-24 inline-block font-bold text-slate-600">Guaranteed Pax:</span>
+                                        <span class="w-28 inline-block font-bold text-slate-600">Guaranteed Pax:</span>
                                         <span class="font-black text-slate-950">{{ form.paxGuaranteed }} Persons</span>
                                     </div>
                                     <div>
@@ -2374,11 +2374,11 @@ const shareOnWhatsApp = () => {
                                         <span v-else class="font-bold text-slate-900 ml-1.5">{{ form.selectedVenues.map(v => v.toUpperCase()).join(', ') }}</span>
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-2 gap-x-3 gap-y-0.5">
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-1">
                                     <div>
-                                        <span class="w-24 inline-block font-bold text-slate-600">Rooms Allotted:</span>
+                                        <span class="w-28 inline-block font-bold text-slate-600">Rooms Allotted:</span>
                                         <span class="font-bold text-slate-900">{{ form.roomsNeeded }} Executive AC Rooms</span>
-                                        <span class="text-slate-500 text-[10px] ml-1">(@ ₹{{ form.roomRate || 2500 }}/night)</span>
+                                        <span class="text-slate-500 text-[10.5px] ml-1">(@ ₹{{ form.roomRate || 2500 }}/night)</span>
                                     </div>
                                     <div>
                                         <span class="font-bold text-slate-600">Room Stay:</span>
@@ -2389,11 +2389,11 @@ const shareOnWhatsApp = () => {
 
                             <!-- Commercial Billing & Settlement Breakdown -->
                             <div class="border border-slate-300 rounded-lg overflow-hidden bg-white">
-                                <div class="bg-slate-100 px-3 py-1 border-b border-slate-300 flex items-center justify-between font-bold text-[11px] text-slate-900">
+                                <div class="bg-slate-100 px-3 py-1.5 border-b border-slate-300 flex items-center justify-between font-bold text-[11.5px] text-slate-900">
                                     <span>COMMERCIAL INVOICE BREAKDOWN</span>
-                                    <span class="text-[10px] font-mono text-slate-500 font-normal">All amounts in INR</span>
+                                    <span class="text-[10.5px] font-mono text-slate-500 font-normal">All amounts in INR</span>
                                 </div>
-                                <div class="p-2 space-y-1 font-mono text-[11px]">
+                                <div class="p-2.5 space-y-1 font-mono text-[11.5px]">
                                     <div class="flex justify-between text-slate-700">
                                         <span>Catering Buffet ({{ form.paxGuaranteed }} Pax × ₹{{ effectiveMenuRate }}):</span>
                                         <span class="font-bold">₹{{ foodTotal.toLocaleString('en-IN') }}</span>
@@ -2432,16 +2432,16 @@ const shareOnWhatsApp = () => {
                                     </div>
 
                                     <!-- Net Contract Amount (Clean Highlighted Box, No Negative Margins) -->
-                                    <div class="flex justify-between font-black text-xs border border-slate-700 py-1 px-2 rounded bg-amber-50 text-slate-950 mt-1">
+                                    <div class="flex justify-between font-black text-xs border border-slate-700 py-1.5 px-2.5 rounded bg-amber-50 text-slate-950 mt-1">
                                         <span class="uppercase tracking-wide">Net Contract Amount:</span>
-                                        <span class="font-black">₹{{ netPayableAmount.toLocaleString('en-IN') }}</span>
+                                        <span class="font-black text-sm">₹{{ netPayableAmount.toLocaleString('en-IN') }}</span>
                                     </div>
 
                                     <div class="flex justify-between text-slate-800 pt-1">
                                         <span>Advance Token Received:</span>
                                         <span class="font-bold text-slate-950">₹{{ form.amountPaid.toLocaleString('en-IN') }} (Mode: {{ form.paymentMode }})</span>
                                     </div>
-                                    <div class="flex justify-between font-black text-[11px] text-rose-700 border-t border-slate-200 pt-1">
+                                    <div class="flex justify-between font-black text-[11.5px] text-rose-700 border-t border-slate-200 pt-1">
                                         <span>Balance Due on Event Day:</span>
                                         <span>₹{{ balanceDueAmount.toLocaleString('en-IN') }}</span>
                                     </div>
@@ -2449,15 +2449,15 @@ const shareOnWhatsApp = () => {
                             </div>
 
                             <!-- Package Inclusions & Infrastructure Logistics Grid -->
-                            <div class="border border-slate-300 rounded-lg overflow-hidden">
-                                <div class="bg-slate-100 px-2.5 py-1 border-b border-slate-300 flex items-center justify-between font-bold text-[11px] text-slate-900">
+                            <div class="border border-slate-300 rounded-lg overflow-hidden bg-white">
+                                <div class="bg-slate-100 px-3 py-1.5 border-b border-slate-300 flex items-center justify-between font-bold text-[11.5px] text-slate-900">
                                     <span>PACKAGE INCLUSIONS & INFRASTRUCTURE LOGISTICS</span>
                                     <span class="text-[10.5px] font-mono text-slate-500 font-normal">Hotel Venue Specifications</span>
                                 </div>
-                                <div class="p-1.5 grid grid-cols-2 gap-1.5 text-[10.5px]">
+                                <div class="p-2 grid grid-cols-2 gap-2 text-[11px]">
                                     <!-- Box 1 -->
-                                    <div class="p-1.5 rounded bg-slate-50 border border-slate-200">
-                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-0.5 mb-0.5 flex justify-between">
+                                    <div class="p-2 rounded bg-slate-50 border border-slate-200">
+                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1 flex justify-between">
                                             <span>1. Allocated Halls & Spaces</span>
                                             <span class="font-mono font-bold text-slate-900">₹{{ venueTotal.toLocaleString('en-IN') }}</span>
                                         </div>
@@ -2467,8 +2467,8 @@ const shareOnWhatsApp = () => {
                                         </div>
                                     </div>
                                     <!-- Box 2 -->
-                                    <div class="p-1.5 rounded bg-slate-50 border border-slate-200">
-                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-0.5 mb-0.5 flex justify-between">
+                                    <div class="p-2 rounded bg-slate-50 border border-slate-200">
+                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1 flex justify-between">
                                             <span>2. Executive Deluxe Rooms</span>
                                             <span class="font-mono font-bold text-slate-900">₹{{ roomsTotal.toLocaleString('en-IN') }}</span>
                                         </div>
@@ -2478,31 +2478,31 @@ const shareOnWhatsApp = () => {
                                         </div>
                                     </div>
                                     <!-- Box 3 -->
-                                    <div class="p-1.5 rounded bg-slate-50 border border-slate-200">
-                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-0.5 mb-0.5 flex justify-between">
+                                    <div class="p-2 rounded bg-slate-50 border border-slate-200">
+                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1 flex justify-between">
                                             <span>3. Stage & Theme Decor</span>
                                             <span class="font-mono font-bold text-slate-900" v-if="selectedDecorDetails">₹{{ selectedDecorDetails.price.toLocaleString('en-IN') }}</span>
                                             <span class="text-slate-500 font-normal" v-else>Included</span>
                                         </div>
-                                        <div class="text-slate-700 text-[10px]">
+                                        <div class="text-slate-700 text-[10.5px]">
                                             <div v-if="selectedDecorDetails" class="font-semibold text-slate-900">{{ selectedDecorDetails.name }}: {{ selectedDecorDetails.inclusions }}</div>
                                             <div v-else>Stage backdrop, VIP sofa seating, red carpet & lighting.</div>
                                         </div>
                                     </div>
                                     <!-- Box 4 -->
-                                    <div class="p-1.5 rounded bg-slate-50 border border-slate-200">
-                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-0.5 mb-0.5 flex justify-between">
+                                    <div class="p-2 rounded bg-slate-50 border border-slate-200">
+                                        <div class="font-bold text-slate-900 border-b border-slate-200 pb-1 mb-1 flex justify-between">
                                             <span>4. Audio-Visual & Central AC</span>
                                             <span class="font-mono font-bold text-slate-900">₹{{ selectedAvItems.reduce((s, i) => s + i.price, 0).toLocaleString('en-IN') }}</span>
                                         </div>
-                                        <div class="text-slate-700 space-y-0.5 text-[10px]">
+                                        <div class="text-slate-700 space-y-0.5 text-[10.5px]">
                                             <div>• Acoustic PA sound system, wireless mics & central air-conditioning.</div>
-                                            <div class="text-[9.5px] text-slate-500">100% DG Genset silent power backup throughout function.</div>
+                                            <div class="text-[10px] text-slate-500">100% DG Genset silent power backup throughout function.</div>
                                         </div>
                                     </div>
                                 </div>
                                 <!-- Deliverables & Arrangements Footer -->
-                                <div class="bg-slate-50 px-2.5 py-1 border-t border-slate-200 grid grid-cols-2 gap-2 text-[10px] text-slate-600">
+                                <div class="bg-slate-50 px-3 py-1.5 border-t border-slate-200 grid grid-cols-2 gap-2.5 text-[10.5px] text-slate-600">
                                     <div>
                                         <strong class="text-slate-800">Deliverables:</strong> Fine Bone China tableware, cutlery, glassware & uniformed banquet waiters.
                                     </div>
@@ -2513,7 +2513,7 @@ const shareOnWhatsApp = () => {
                             </div>
 
                             <!-- Page 1 Bottom Signature Marker -->
-                            <div class="pt-1 flex items-center justify-between text-[10px] text-slate-500 border-t border-slate-200">
+                            <div class="pt-2 flex items-center justify-between text-[10.5px] text-slate-500 border-t border-slate-200">
                                 <span>Hotel Pleasant View • A Unit of Senani Group • Civil Lines, Raebareli, UP</span>
                                 <span class="font-mono font-bold text-slate-700">PAGE 1 OF 2 (COMMERCIAL & INFRASTRUCTURE SPECIFICATIONS)</span>
                             </div>
@@ -2529,20 +2529,20 @@ const shareOnWhatsApp = () => {
                         <!-- ========================================================= -->
                         <!-- PAGE 2: OFFICIAL CULINARY MENU & CONTRACT AUTHORIZATION  -->
                         <!-- ========================================================= -->
-                        <div class="print-page page-2 bg-white p-3.5 print:p-0 border border-slate-300 print:border-none rounded-xl print:rounded-none space-y-1.5" style="page-break-inside: avoid; break-inside: avoid;">
+                        <div class="print-page page-2 bg-white p-4 print:p-0 border border-slate-300 print:border-none rounded-xl print:rounded-none space-y-2" style="page-break-inside: avoid; break-inside: avoid;">
                             <!-- Page 2 Header Strip -->
                             <div class="flex items-center justify-between border-b-2 border-slate-900 pb-1.5">
                                 <div class="flex items-center gap-3">
-                                    <img src="/images/logo-dark.png" alt="Senani" class="h-9 w-auto object-contain" />
+                                    <img src="/images/logo-dark.png" alt="Senani" class="h-10 w-auto object-contain" />
                                     <div>
-                                        <div class="text-[12px] font-serif font-black tracking-wider text-slate-950 uppercase">Hotel Pleasant View • Catering Services</div>
-                                        <div class="text-[10.5px] font-bold text-amber-900">
+                                        <div class="text-[12.5px] font-serif font-black tracking-wider text-slate-950 uppercase">Hotel Pleasant View • Catering Services</div>
+                                        <div class="text-[11px] font-bold text-amber-900">
                                             {{ form.isQuotationMode ? 'OFFICIAL BANQUET CULINARY QUOTATION & COMPLETE MENU CATALOG' : 'OFFICIAL BANQUET CULINARY TASTING MENU SPECIFICATIONS' }}
                                         </div>
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <div class="text-[10px] font-mono font-black text-slate-900">
+                                    <div class="text-[10.5px] font-mono font-black text-slate-900">
                                         {{ currentMenuCatalog.title }} (@ ₹{{ effectiveMenuRate }}/pax)
                                     </div>
                                     <div class="text-[10px] font-mono text-slate-600">
@@ -2552,43 +2552,42 @@ const shareOnWhatsApp = () => {
                             </div>
 
                             <!-- Executive Culinary Tasting Menu / Quotation Proposal -->
-                            <div class="border border-slate-300 rounded-lg overflow-hidden">
-                                <div class="bg-amber-950 text-amber-200 px-2.5 py-1 flex items-center justify-between text-xs font-bold">
+                            <div class="border border-slate-300 rounded-lg overflow-hidden bg-white">
+                                <div class="bg-amber-950 text-amber-200 px-3 py-1 flex items-center justify-between text-xs font-bold">
                                     <div class="flex items-center gap-2">
                                         <span class="text-[11px]">{{ form.isQuotationMode ? '📋 BANQUET MENU QUOTATION - COMPLETE CULINARY OFFER' : '👑 CONFIRMED ROYAL BANQUET TASTING MENU' }}</span>
                                         <span class="text-[10px] font-normal text-amber-300 font-mono">
                                             ({{ confirmedMenuCategories.length }} Specialized Courses{{ form.isQuotationMode ? ' • All Food Items Offered' : '' }})
                                         </span>
                                     </div>
-                                    <span class="text-[10.5px] font-mono bg-amber-900/80 px-2 py-0.5 rounded text-white border border-amber-700">
+                                    <span class="text-[10px] font-mono bg-amber-900/80 px-2 py-0.5 rounded text-white border border-amber-700">
                                         {{ form.isQuotationMode ? 'OFFICIAL QUOTATION' : `Catering Code: SEC-${form.voucherNo}-${form.menuRateTier}` }}
                                     </span>
                                 </div>
 
-                                <div class="p-1.5 grid grid-cols-2 gap-1.5 text-[10.5px]">
+                                <div class="p-1.5 grid grid-cols-2 gap-1.5 text-[10px]">
                                     <div
                                         v-for="cat in confirmedMenuCategories"
                                         :key="cat.key"
-                                        class="p-1.5 rounded bg-slate-50 border border-slate-200/80 space-y-0.5"
+                                        class="p-1.5 rounded bg-slate-50 border border-slate-200 space-y-0.5"
                                     >
                                         <div class="flex items-center justify-between border-b border-slate-200 pb-0.5">
-                                            <span class="font-black text-slate-900 text-[11px] uppercase tracking-wide">
-                                                {{ cat.icon }} {{ cat.label }}
+                                            <span class="font-black text-slate-900 text-[10.5px] uppercase tracking-wide flex items-center gap-1">
+                                                <span>{{ cat.icon }}</span>
+                                                <span>{{ cat.label }}</span>
                                             </span>
-                                            <span v-if="form.isQuotationMode" class="text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-900 border border-purple-200">
-                                                All {{ cat.items.length }} Offered (Quota: {{ cat.quota }})
+                                            <span v-if="form.isQuotationMode" class="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-900 border border-purple-200">
+                                                All {{ cat.items.length }} (Quota: {{ cat.quota }})
                                             </span>
-                                            <span v-else class="text-[10px] font-mono font-bold px-1 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-200">
-                                                {{ cat.items.length }} Selected
+                                            <span v-else class="text-[9px] font-mono font-bold px-1 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-200">
+                                                {{ cat.items.length }} Items
                                             </span>
                                         </div>
-                                        <div class="flex flex-wrap gap-1 pt-0.5">
-                                            <span
-                                                v-for="dish in cat.items"
-                                                :key="dish"
-                                                class="inline-flex items-center text-[10px] font-bold text-slate-800 bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-2xs"
-                                            >
-                                                <span class="text-amber-600 mr-1">•</span> {{ dish }}
+                                        <div class="text-[9.5px] text-slate-700 leading-snug pt-0.5">
+                                            <span v-for="(dish, dIdx) in cat.items" :key="dish" class="inline">
+                                                <span class="text-amber-700 font-bold mr-0.5">•</span>
+                                                <span class="font-semibold text-slate-900">{{ dish }}</span>
+                                                <span v-if="dIdx < cat.items.length - 1" class="text-slate-400 mr-1.5">,</span>
                                             </span>
                                         </div>
                                     </div>
@@ -2597,9 +2596,9 @@ const shareOnWhatsApp = () => {
 
                             <!-- Official Booking Terms & Conditions -->
                             <div class="border border-slate-300 rounded-lg p-2 bg-slate-50 text-[10px] text-slate-700 space-y-0.5">
-                                <div class="font-bold text-slate-900 text-[11px] border-b border-slate-200 pb-0.5 flex items-center justify-between">
+                                <div class="font-bold text-slate-900 text-[10.5px] border-b border-slate-200 pb-0.5 flex items-center justify-between">
                                     <span>OFFICIAL BOOKING TERMS & CANCELLATION POLICY</span>
-                                    <span class="font-mono text-[9.5px] text-slate-400">Hotel Pleasant View Statutory Contract</span>
+                                    <span class="font-mono text-[9px] text-slate-400">Hotel Pleasant View Statutory Contract</span>
                                 </div>
                                 <ol class="list-decimal list-inside space-y-0.5 leading-snug">
                                     <li><strong>Guaranteed Attendance Billing</strong>: Billed for contracted minimum guarantee ({{ form.paxGuaranteed }} Pax) even if actual attendance is lower. Extra pax billed at contracted per-plate rate.</li>
@@ -2615,17 +2614,17 @@ const shareOnWhatsApp = () => {
                                 <div class="flex items-center gap-2.5">
                                     <!-- Scannable QR Code -->
                                     <div class="flex flex-col items-center bg-white p-1 rounded border border-slate-300 shadow-2xs shrink-0">
-                                        <img v-if="qrCodeDataUrl" :src="qrCodeDataUrl" alt="Verification QR" class="h-12 w-12" />
-                                        <span class="text-[10px] font-mono text-slate-500 font-bold mt-0.5">Scan to Verify</span>
+                                        <img v-if="qrCodeDataUrl" :src="qrCodeDataUrl" alt="Verification QR" class="h-11 w-11" />
+                                        <span class="text-[9.5px] font-mono text-slate-500 font-bold mt-0.5">Scan to Verify</span>
                                     </div>
                                     <div>
                                         <div class="flex items-center gap-1.5">
                                             <ShieldCheck class="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                                             <span class="text-[10px] font-black uppercase tracking-wider text-slate-900">Official Digital Integrity Seal</span>
-                                            <span v-if="form.isLocked" class="text-[9.5px] font-bold font-mono px-1 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                            <span v-if="form.isLocked" class="text-[9px] font-bold font-mono px-1 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
                                                 🔒 SEALED & FROZEN
                                             </span>
-                                            <span v-else class="text-[9.5px] font-bold font-mono px-1 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                                            <span v-else class="text-[9px] font-bold font-mono px-1 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
                                                 🔓 UNLOCKED DRAFT
                                             </span>
                                         </div>
@@ -2635,7 +2634,7 @@ const shareOnWhatsApp = () => {
                                         <div class="text-[9.5px] text-slate-500 mt-0.5">
                                             Sealed by: <strong>{{ form.lockedBy || 'Banquet Operations Manager' }}</strong> • {{ form.lockedAt || form.inquiryDate }}
                                         </div>
-                                        <div class="text-[10.5px] text-purple-700 font-medium">
+                                        <div class="text-[10px] text-purple-700 font-medium">
                                             Scan QR with smartphone to inspect tamper-evident audit log.
                                         </div>
                                     </div>
@@ -2643,9 +2642,9 @@ const shareOnWhatsApp = () => {
 
                                 <!-- High-Resolution Barcode (Base64 PNG Image - Always Visible!) -->
                                 <div class="flex flex-col items-center bg-white px-2.5 py-1 rounded border border-slate-300 shadow-2xs shrink-0">
-                                    <img v-if="barcodeDataUrl" :src="barcodeDataUrl" alt="Digital Signature Barcode" class="h-5 w-40 object-contain" />
-                                    <svg v-else ref="barcodeSvgPrint" class="h-5 w-40"></svg>
-                                    <span class="text-[9.5px] font-mono font-bold text-slate-700 mt-0.5">
+                                    <img v-if="barcodeDataUrl" :src="barcodeDataUrl" alt="Digital Signature Barcode" class="h-5 w-36 object-contain" />
+                                    <svg v-else ref="barcodeSvgPrint" class="h-5 w-36"></svg>
+                                    <span class="text-[9px] font-mono font-bold text-slate-700 mt-0.5">
                                         {{ form.digitalSignature || `SN-SIG-${form.voucherNo}` }}
                                     </span>
                                 </div>
@@ -2660,7 +2659,7 @@ const shareOnWhatsApp = () => {
                                 <div class="flex flex-col items-center">
                                     <div class="flex items-center gap-1.5 mb-0.5">
                                         <img src="/images/emblem-dark.png" alt="Senani" class="h-4.5 w-auto object-contain" />
-                                        <span class="text-[10.5px] font-mono font-bold text-amber-950 uppercase tracking-wider">Hotel Pleasant View Official Seal</span>
+                                        <span class="text-[10px] font-mono font-bold text-amber-950 uppercase tracking-wider">Hotel Pleasant View Official Seal</span>
                                     </div>
                                     <div class="w-full border-t-2 border-slate-800 pt-0.5 font-bold text-slate-900">For Hotel Pleasant View (Authorized Officer)</div>
                                     <div class="text-[10px] text-emerald-800 font-bold font-mono">{{ authorityLevel.signatureLabel }}</div>
