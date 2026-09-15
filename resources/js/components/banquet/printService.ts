@@ -312,80 +312,166 @@ export async function downloadElementAsPdf(
             compress: true,
         });
 
-        // A4 Dimensions: 210mm x 297mm
+        // Standard A4 Dimensions in mm: 210mm x 297mm
         const pdfWidth = 210;
         const pdfHeight = 297;
-        const marginX = 6;
-        const marginY = 6;
-        const printWidth = pdfWidth - marginX * 2; // 198mm
-        const maxPageHeight = pdfHeight - marginY * 2; // 285mm
+        const marginX = 8;
+        const marginY = 8;
+        const printWidth = pdfWidth - marginX * 2; // 194mm printable width
+        const maxPageHeight = pdfHeight - marginY * 2; // 281mm printable height
 
         const page1El = sourceEl.querySelector('.page-1') as HTMLElement;
         const page2El = sourceEl.querySelector('.page-2') as HTMLElement;
 
         const h2cOptions = {
-            scale: 3, // Ultra-HD 300+ DPI print quality
+            scale: 2.5, // 240+ DPI crystal-clear print quality without memory blowout
             useCORS: true,
             allowTaint: false,
             logging: false,
             backgroundColor: '#ffffff',
+            width: 794,
             windowWidth: 1024,
             imageTimeout: 15000,
             ignoreElements: (el: Element) =>
                 el.classList.contains('print-hidden') || el.classList.contains('no-print'),
-            onclone: (_doc: Document, _el: HTMLElement) => {
-                // Sanitize ALL modern color functions to rgb before html2canvas parses them
+            onclone: (_doc: Document, clonedTarget: HTMLElement) => {
+                // 1. Sanitize ALL modern CSS color functions (oklch, oklab, lch, lab, color()) to rgb
                 sanitizeColorsForHtml2Canvas(_doc);
-                // Strip outer modal borders, shadows and apply print-perfect scaling for crisp professional PDF
-                _doc.querySelectorAll('.page-1, .page-2').forEach((p) => {
-                    if (p instanceof HTMLElement) {
-                        p.style.border = 'none';
-                        p.style.boxShadow = 'none';
-                        p.style.borderRadius = '0';
-                        p.style.margin = '0';
-                        p.style.zoom = '1.0';
+
+                // 2. Unconstrain cloned document body and ancestors so modal constraints don't squash layouts
+                if (_doc.body) {
+                    _doc.body.style.width = '1024px';
+                    _doc.body.style.maxWidth = 'none';
+                    _doc.body.style.minWidth = '0';
+                    _doc.body.style.margin = '0';
+                    _doc.body.style.padding = '0';
+                    _doc.body.style.overflow = 'visible';
+                    _doc.body.style.background = '#ffffff';
+                }
+
+                let curr: HTMLElement | null = clonedTarget.parentElement;
+                while (curr && curr !== _doc.body) {
+                    curr.style.maxWidth = 'none';
+                    curr.style.maxHeight = 'none';
+                    curr.style.overflow = 'visible';
+                    curr.style.transform = 'none';
+                    curr.style.position = 'static';
+                    curr.style.padding = '0';
+                    curr.style.margin = '0';
+                    curr = curr.parentElement;
+                }
+
+                // 3. Force exact standard A4 width (794px) and pristine container styling
+                const pages = _doc.querySelectorAll('.page-1, .page-2');
+                if (pages.length > 0) {
+                    pages.forEach((p) => {
+                        if (p instanceof HTMLElement) {
+                            p.style.width = '794px';
+                            p.style.minWidth = '794px';
+                            p.style.maxWidth = '794px';
+                            p.style.boxSizing = 'border-box';
+                            p.style.margin = '0';
+                            p.style.padding = '18px 22px';
+                            p.style.border = '1px solid #cbd5e1';
+                            p.style.borderRadius = '0';
+                            p.style.boxShadow = 'none';
+                            p.style.background = '#ffffff';
+                            p.style.overflow = 'visible';
+                            p.style.zoom = '1.0';
+                        }
+                    });
+                } else {
+                    const root = _doc.getElementById(elementId) || clonedTarget;
+                    if (root instanceof HTMLElement) {
+                        root.style.width = '794px';
+                        root.style.minWidth = '794px';
+                        root.style.maxWidth = '794px';
+                        root.style.boxSizing = 'border-box';
+                        root.style.margin = '0 auto';
+                        root.style.padding = '20px';
+                        root.style.border = 'none';
+                        root.style.boxShadow = 'none';
+                        root.style.background = '#ffffff';
+                        root.style.overflow = 'visible';
                     }
-                });
+                }
             },
         };
 
-        if (page1El) {
-            // Dedicated multi-page dossier export (.page-1 and .page-2) in Ultra-HD lossless PNG
-            const canvas1 = await html2canvas(page1El, h2cOptions);
+        const renderSnapshotToDoc = (canvas: HTMLCanvasElement, isNewPage: boolean) => {
+            if (isNewPage) {
+                doc.addPage('a4', 'portrait');
+            }
+            const imgData = canvas.toDataURL('image/png');
+            const aspect = canvas.height / canvas.width;
+            let renderWidth = printWidth;
+            let renderHeight = printWidth * aspect;
 
-            const imgData1 = canvas1.toDataURL('image/png');
-            const imgHeight1 = (canvas1.height * printWidth) / canvas1.width;
-            doc.addImage(imgData1, 'PNG', marginX, marginY, printWidth, Math.min(imgHeight1, maxPageHeight), undefined, 'FAST');
+            // Preserve strict 1:1 aspect ratio: scale down proportionally if height exceeds page
+            if (renderHeight > maxPageHeight) {
+                const scaleFactor = maxPageHeight / renderHeight;
+                renderHeight = maxPageHeight;
+                renderWidth = printWidth * scaleFactor;
+            }
+
+            // Horizontally center on the A4 page
+            const posX = marginX + (printWidth - renderWidth) / 2;
+            const posY = marginY;
+
+            doc.addImage(imgData, 'PNG', posX, posY, renderWidth, renderHeight, undefined, 'FAST');
+        };
+
+        if (page1El) {
+            // Dedicated multi-page dossier export (.page-1 and .page-2)
+            const canvas1 = await html2canvas(page1El, h2cOptions);
+            renderSnapshotToDoc(canvas1, false);
 
             if (page2El) {
-                doc.addPage('a4', 'portrait');
                 const canvas2 = await html2canvas(page2El, h2cOptions);
-
-                const imgData2 = canvas2.toDataURL('image/png');
-                const imgHeight2 = (canvas2.height * printWidth) / canvas2.width;
-                doc.addImage(imgData2, 'PNG', marginX, marginY, printWidth, Math.min(imgHeight2, maxPageHeight), undefined, 'FAST');
+                renderSnapshotToDoc(canvas2, true);
             }
         } else {
             // Generic single/multi-page element fallback (e.g. GuestMenuSelection)
             const canvas = await html2canvas(sourceEl, h2cOptions);
+            const aspect = canvas.height / canvas.width;
+            const totalMmHeight = printWidth * aspect;
 
-            const imgData = canvas.toDataURL('image/png');
-            const imgHeight = (canvas.height * printWidth) / canvas.width;
-
-            if (imgHeight <= maxPageHeight) {
-                doc.addImage(imgData, 'PNG', marginX, marginY, printWidth, imgHeight, undefined, 'FAST');
+            if (totalMmHeight <= maxPageHeight) {
+                renderSnapshotToDoc(canvas, false);
             } else {
-                // Multi-page slicing
-                let remainingHeight = imgHeight;
-                let positionY = 0;
+                // Multi-page document: slice canvas page-by-page to avoid distortion or overlap
+                const pageCanvasHeightPx = Math.floor((canvas.width * maxPageHeight) / printWidth);
+                const totalPages = Math.ceil(canvas.height / pageCanvasHeightPx);
 
-                while (remainingHeight > 0) {
-                    if (positionY > 0) {
+                for (let i = 0; i < totalPages; i++) {
+                    if (i > 0) {
                         doc.addPage('a4', 'portrait');
                     }
-                    doc.addImage(imgData, 'PNG', marginX, marginY - positionY, printWidth, imgHeight, undefined, 'FAST');
-                    positionY += maxPageHeight;
-                    remainingHeight -= maxPageHeight;
+
+                    const sliceHeightPx = Math.min(pageCanvasHeightPx, canvas.height - i * pageCanvasHeightPx);
+                    const pageCanvas = document.createElement('canvas');
+                    pageCanvas.width = canvas.width;
+                    pageCanvas.height = sliceHeightPx;
+
+                    const ctx = pageCanvas.getContext('2d');
+                    if (ctx) {
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+                        ctx.drawImage(
+                            canvas,
+                            0,
+                            i * pageCanvasHeightPx,
+                            canvas.width,
+                            sliceHeightPx,
+                            0,
+                            0,
+                            canvas.width,
+                            sliceHeightPx
+                        );
+                        const sliceImgData = pageCanvas.toDataURL('image/png');
+                        const sliceMmHeight = (sliceHeightPx * printWidth) / canvas.width;
+                        doc.addImage(sliceImgData, 'PNG', marginX, marginY, printWidth, sliceMmHeight, undefined, 'FAST');
+                    }
                 }
             }
         }
