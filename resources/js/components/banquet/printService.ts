@@ -329,37 +329,57 @@ export async function downloadElementAsPdf(
             allowTaint: false,
             logging: false,
             backgroundColor: '#ffffff',
-            width: 794,
-            windowWidth: 1024,
+            windowWidth: 1200,
+            windowHeight: 3000,
+            scrollY: 0,
+            scrollX: 0,
             imageTimeout: 15000,
             ignoreElements: (el: Element) =>
-                el.classList.contains('print-hidden') || el.classList.contains('no-print'),
+                el.classList.contains('print-hidden') || el.classList.contains('no-print') || el.classList.contains('pdf-page-break'),
             onclone: (_doc: Document, clonedTarget: HTMLElement) => {
                 // 1. Sanitize ALL modern CSS color functions (oklch, oklab, lch, lab, color()) to rgb
                 sanitizeColorsForHtml2Canvas(_doc);
 
-                // 2. Unconstrain cloned document body and ancestors so modal constraints don't squash layouts
+                // 2. Unconstrain cloned document body and root so modal constraints don't squash/clip layouts
+                if (_doc.documentElement) {
+                    _doc.documentElement.style.overflow = 'visible';
+                    _doc.documentElement.style.height = 'auto';
+                    _doc.documentElement.style.maxHeight = 'none';
+                }
+
                 if (_doc.body) {
-                    _doc.body.style.width = '1024px';
+                    _doc.body.style.width = '1200px';
                     _doc.body.style.maxWidth = 'none';
                     _doc.body.style.minWidth = '0';
+                    _doc.body.style.height = 'auto';
+                    _doc.body.style.maxHeight = 'none';
                     _doc.body.style.margin = '0';
                     _doc.body.style.padding = '0';
                     _doc.body.style.overflow = 'visible';
                     _doc.body.style.background = '#ffffff';
                 }
 
-                let curr: HTMLElement | null = clonedTarget.parentElement;
+                // Unconstrain all ancestors and remove fixed / scroll overflow wrappers
+                let curr: HTMLElement | null = clonedTarget;
                 while (curr && curr !== _doc.body) {
+                    curr.style.position = 'static';
                     curr.style.maxWidth = 'none';
                     curr.style.maxHeight = 'none';
+                    curr.style.height = 'auto';
                     curr.style.overflow = 'visible';
                     curr.style.transform = 'none';
-                    curr.style.position = 'static';
-                    curr.style.padding = '0';
-                    curr.style.margin = '0';
                     curr = curr.parentElement;
                 }
+
+                _doc.querySelectorAll('.fixed, .absolute, [class*="max-h-"], [class*="overflow-"]').forEach((el) => {
+                    if (el instanceof HTMLElement) {
+                        el.style.position = 'static';
+                        el.style.maxHeight = 'none';
+                        el.style.height = 'auto';
+                        el.style.overflow = 'visible';
+                        el.style.transform = 'none';
+                    }
+                });
 
                 // 3. Force exact standard A4 width (794px) and pristine container styling
                 const pages = _doc.querySelectorAll('.page-1, .page-2');
@@ -369,9 +389,12 @@ export async function downloadElementAsPdf(
                             p.style.width = '794px';
                             p.style.minWidth = '794px';
                             p.style.maxWidth = '794px';
+                            p.style.height = 'auto';
+                            p.style.maxHeight = 'none';
+                            p.style.minHeight = '0';
                             p.style.boxSizing = 'border-box';
                             p.style.margin = '0';
-                            p.style.padding = '18px 22px';
+                            p.style.padding = '14px 18px';
                             p.style.border = '1px solid #cbd5e1';
                             p.style.borderRadius = '0';
                             p.style.boxShadow = 'none';
@@ -388,7 +411,7 @@ export async function downloadElementAsPdf(
                         root.style.maxWidth = '794px';
                         root.style.boxSizing = 'border-box';
                         root.style.margin = '0 auto';
-                        root.style.padding = '20px';
+                        root.style.padding = '18px';
                         root.style.border = 'none';
                         root.style.boxShadow = 'none';
                         root.style.background = '#ffffff';

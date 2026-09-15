@@ -2311,17 +2311,17 @@ const shareOnWhatsApp = () => {
                             </div>
 
                             <!-- Booking Reference Strip -->
-                            <div class="flex items-center justify-between py-1 px-2.5 bg-slate-900 text-white rounded font-medium text-xs">
-                                <div>
+                            <div class="flex items-center justify-between py-1.5 px-3 bg-slate-900 text-white rounded font-medium text-xs">
+                                <div class="flex items-center gap-1.5">
                                     <span class="text-amber-400 font-bold">VOUCHER NO:</span>
-                                    <span class="font-mono font-black ml-1 text-white text-sm">#{{ form.voucherNo }}</span>
+                                    <span class="font-mono font-black text-white text-sm">#{{ form.voucherNo }}</span>
                                 </div>
-                                <div class="text-[10.5px] font-mono uppercase px-2 py-0.5 rounded bg-white/10 text-amber-300 border border-white/20 font-bold">
+                                <div class="text-[10.5px] font-mono uppercase px-2.5 py-0.5 rounded bg-slate-800 text-amber-300 border border-slate-700 font-bold">
                                     {{ form.isQuotationMode ? 'OFFICIAL BANQUET QUOTATION PROPOSAL' : (form.status === 'approved_md' ? 'OFFICIAL BOOKING CONFIRMATION' : 'PROVISIONAL INQUIRY QUOTATION') }}
                                 </div>
-                                <div>
+                                <div class="flex items-center gap-1.5">
                                     <span class="text-slate-300">DATE:</span>
-                                    <span class="font-mono font-bold ml-1 text-white">{{ form.inquiryDate }}</span>
+                                    <span class="font-mono font-bold text-white">{{ form.inquiryDate }}</span>
                                 </div>
                             </div>
 
@@ -2388,12 +2388,12 @@ const shareOnWhatsApp = () => {
                             </div>
 
                             <!-- Commercial Billing & Settlement Breakdown -->
-                            <div class="border border-slate-300 rounded-lg overflow-hidden">
-                                <div class="bg-slate-100 px-2.5 py-1 border-b border-slate-300 flex items-center justify-between font-bold text-[11px] text-slate-900">
+                            <div class="border border-slate-300 rounded-lg overflow-hidden bg-white">
+                                <div class="bg-slate-100 px-3 py-1 border-b border-slate-300 flex items-center justify-between font-bold text-[11px] text-slate-900">
                                     <span>COMMERCIAL INVOICE BREAKDOWN</span>
-                                    <span class="text-[10.5px] font-mono text-slate-500 font-normal">All amounts in INR</span>
+                                    <span class="text-[10px] font-mono text-slate-500 font-normal">All amounts in INR</span>
                                 </div>
-                                <div class="p-2 space-y-0.5 font-mono text-[11px]">
+                                <div class="p-2 space-y-1 font-mono text-[11px]">
                                     <div class="flex justify-between text-slate-700">
                                         <span>Catering Buffet ({{ form.paxGuaranteed }} Pax × ₹{{ effectiveMenuRate }}):</span>
                                         <span class="font-bold">₹{{ foodTotal.toLocaleString('en-IN') }}</span>
@@ -2418,23 +2418,30 @@ const shareOnWhatsApp = () => {
                                         <span>Meeting Pax Surcharge / Specialized Add-ons:</span>
                                         <span class="font-bold">₹{{ otherAddonsTotal.toLocaleString('en-IN') }}</span>
                                     </div>
-                                    <div class="flex justify-between font-bold border-t border-slate-200 pt-0.5 text-slate-900">
+
+                                    <!-- Total Estimated Baseline -->
+                                    <div class="flex justify-between font-bold border-t border-slate-200 pt-1 text-slate-900">
                                         <span>Total Estimated Baseline:</span>
                                         <span>₹{{ totalGrossAmount.toLocaleString('en-IN') }}</span>
                                     </div>
+
+                                    <!-- Management Concession (if any) -->
                                     <div v-if="calculatedDiscountAmount > 0" class="flex justify-between text-emerald-800 font-bold">
                                         <span>Authorized Management Concession ({{ calculatedDiscountPercent }}%):</span>
                                         <span>- ₹{{ calculatedDiscountAmount.toLocaleString('en-IN') }}</span>
                                     </div>
-                                    <div class="flex justify-between font-black text-xs border-t-2 border-slate-900 pt-1 pb-0.5 text-slate-950 bg-amber-50/60 -mx-2 px-2">
+
+                                    <!-- Net Contract Amount (Clean Highlighted Box, No Negative Margins) -->
+                                    <div class="flex justify-between font-black text-xs border border-slate-700 py-1 px-2 rounded bg-amber-50 text-slate-950 mt-1">
                                         <span class="uppercase tracking-wide">Net Contract Amount:</span>
                                         <span class="font-black">₹{{ netPayableAmount.toLocaleString('en-IN') }}</span>
                                     </div>
-                                    <div class="flex justify-between text-slate-800 pt-0.5">
+
+                                    <div class="flex justify-between text-slate-800 pt-1">
                                         <span>Advance Token Received:</span>
                                         <span class="font-bold text-slate-950">₹{{ form.amountPaid.toLocaleString('en-IN') }} (Mode: {{ form.paymentMode }})</span>
                                     </div>
-                                    <div class="flex justify-between font-black text-[11px] text-rose-700 border-t border-slate-200 pt-0.5">
+                                    <div class="flex justify-between font-black text-[11px] text-rose-700 border-t border-slate-200 pt-1">
                                         <span>Balance Due on Event Day:</span>
                                         <span>₹{{ balanceDueAmount.toLocaleString('en-IN') }}</span>
                                     </div>
