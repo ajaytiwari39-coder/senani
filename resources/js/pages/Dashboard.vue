@@ -59,16 +59,38 @@ const page = usePage();
 const user = page.props.auth?.user || { name: 'Super Admin', email: 'admin@senani.com', role: 'md' };
 
 export type UserRole = 'reception' | 'manager' | 'md';
+
+// Real authenticated role ceiling from database / session
+const authenticatedRole = computed<UserRole>(() => {
+    const raw = (user as any)?.role;
+    if (raw === 'reception' || raw === 'manager' || raw === 'md') return raw;
+    return 'md';
+});
+
+// Enforce that activeRole can never exceed the permissions granted by authenticatedRole
+const sanitizeRole = (roleCandidate?: string | null): UserRole => {
+    const authRole = authenticatedRole.value;
+    if (authRole === 'reception') return 'reception';
+    if (authRole === 'manager') {
+        if (roleCandidate === 'reception') return 'reception';
+        return 'manager'; // Manager can never exceed Step 2
+    }
+    // MD / Admin can view/test all roles
+    if (roleCandidate === 'reception' || roleCandidate === 'manager' || roleCandidate === 'md') {
+        return roleCandidate;
+    }
+    return 'md';
+};
+
 const activeRole = ref<UserRole>(
-    (typeof window !== 'undefined' && (localStorage.getItem('senani_active_role') as UserRole)) ||
-    ((user as any)?.role as UserRole) ||
-    'md'
+    sanitizeRole(typeof window !== 'undefined' ? localStorage.getItem('senani_active_role') : null)
 );
 
 const setRole = (r: UserRole) => {
-    activeRole.value = r;
+    const valid = sanitizeRole(r);
+    activeRole.value = valid;
     if (typeof window !== 'undefined') {
-        localStorage.setItem('senani_active_role', r);
+        localStorage.setItem('senani_active_role', valid);
     }
 };
 
@@ -225,20 +247,23 @@ const inquiryOpenPrintPreview = ref(queryPrint);
 
 const openNewInquiry = (step: number = 1) => {
     selectedInquiry.value = null;
-    inquiryDefaultStep.value = step;
+    const maxAllowed = activeRole.value === 'reception' ? 1 : (activeRole.value === 'manager' ? 2 : 3);
+    inquiryDefaultStep.value = Math.min(step, maxAllowed);
     inquiryOpenPrintPreview.value = false;
     showInquiryModal.value = true;
 };
 
 const openExistingInquiry = (inq: BanquetInquiry, step: number = 1, printPreview: boolean = false) => {
     selectedInquiry.value = inq;
-    inquiryDefaultStep.value = step;
+    const maxAllowed = activeRole.value === 'reception' ? 1 : (activeRole.value === 'manager' ? 2 : 3);
+    inquiryDefaultStep.value = Math.min(step, maxAllowed);
     inquiryOpenPrintPreview.value = printPreview;
     showInquiryModal.value = true;
 };
 
 const openAndPrintInquiry = (inq: BanquetInquiry) => {
-    openExistingInquiry(inq, 3, true);
+    const defaultStepForRole = activeRole.value === 'reception' ? 1 : (activeRole.value === 'manager' ? 2 : 3);
+    openExistingInquiry(inq, defaultStepForRole, true);
 };
 
 const guestLinkCopiedVoucher = ref<string | null>(null);
@@ -865,49 +890,53 @@ const submitCheckIn = () => {
                             </div>
                             <span class="text-slate-300 hidden sm:inline">•</span>
                             
-                            <!-- Interactive 3-Level Role Switcher Widget -->
-                            <div class="flex items-center p-0.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs text-xs">
-                                <span class="text-[10px] font-extrabold text-slate-400 px-2 uppercase tracking-wider hidden md:inline">Tier:</span>
-                                <button
-                                    type="button"
-                                    @click="setRole('reception')"
-                                    :class="[
-                                        'px-2 py-1 rounded-lg font-bold transition-all text-[11px] flex items-center gap-1 cursor-pointer',
-                                        activeRole === 'reception'
-                                            ? 'bg-amber-500 text-white shadow-xs'
-                                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                                    ]"
-                                    title="Reception Desk: Step 1 Intake Only"
-                                >
-                                    <span>🏢 Reception (Step 1)</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    @click="setRole('manager')"
-                                    :class="[
-                                        'px-2 py-1 rounded-lg font-bold transition-all text-[11px] flex items-center gap-1 cursor-pointer',
-                                        activeRole === 'manager'
-                                            ? 'bg-[#673DE6] text-white shadow-xs'
-                                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                                    ]"
-                                    title="Banquet Manager: Steps 1 & 2 Setup & Quotations"
-                                >
-                                    <span>👔 Manager (Step 1 & 2)</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    @click="setRole('md')"
-                                    :class="[
-                                        'px-2 py-1 rounded-lg font-bold transition-all text-[11px] flex items-center gap-1 cursor-pointer',
-                                        activeRole === 'md'
-                                            ? 'bg-emerald-600 text-white shadow-xs'
-                                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                                    ]"
-                                    title="MD Sir: Complete Super Authority & Contract Seal"
-                                >
-                                    <span>👑 MD Sir (Full & Seal)</span>
-                                </button>
-                            </div>
+                                <!-- Interactive 3-Level Role Switcher Widget -->
+                                <div class="flex items-center p-0.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs text-xs">
+                                    <span class="text-[10px] font-extrabold text-slate-400 px-2 uppercase tracking-wider hidden md:inline">Tier:</span>
+                                    <button
+                                        type="button"
+                                        @click="setRole('reception')"
+                                        :class="[
+                                            'px-2 py-1 rounded-lg font-bold transition-all text-[11px] flex items-center gap-1 cursor-pointer',
+                                            activeRole === 'reception'
+                                                ? 'bg-amber-500 text-white shadow-xs'
+                                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                                        ]"
+                                        title="Reception Desk: Step 1 Intake Only"
+                                    >
+                                        <span>🏢 Reception (Step 1)</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        @click="setRole('manager')"
+                                        :disabled="authenticatedRole === 'reception'"
+                                        :class="[
+                                            'px-2 py-1 rounded-lg font-bold transition-all text-[11px] flex items-center gap-1',
+                                            authenticatedRole === 'reception' ? 'opacity-40 cursor-not-allowed text-slate-400' : 'cursor-pointer',
+                                            activeRole === 'manager'
+                                                ? 'bg-[#673DE6] text-white shadow-xs'
+                                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                                        ]"
+                                        :title="authenticatedRole === 'reception' ? 'Requires Manager or MD Account' : 'Banquet Manager: Steps 1 & 2 Setup & Quotations'"
+                                    >
+                                        <span>👔 Manager (Step 1 & 2)</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        @click="setRole('md')"
+                                        :disabled="authenticatedRole !== 'md'"
+                                        :class="[
+                                            'px-2 py-1 rounded-lg font-bold transition-all text-[11px] flex items-center gap-1',
+                                            authenticatedRole !== 'md' ? 'opacity-40 cursor-not-allowed text-slate-400' : 'cursor-pointer',
+                                            activeRole === 'md'
+                                                ? 'bg-emerald-600 text-white shadow-xs'
+                                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                                        ]"
+                                        :title="authenticatedRole !== 'md' ? 'Locked (Requires MD Account Login)' : 'MD Sir: Complete Super Authority & Contract Seal'"
+                                    >
+                                        <span>👑 MD Sir (Full & Seal)</span>
+                                    </button>
+                                </div>
                         </div>
 
                         <!-- Date Filter Pills & Realtime Pulse -->

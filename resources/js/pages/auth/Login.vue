@@ -50,6 +50,9 @@ const submit = () => {
 };
 
 const quickLogin = (role: 'reception' | 'manager' | 'md') => {
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('senani_active_role', role);
+    }
     if (role === 'reception') {
         form.email = 'reception@senani.com';
         form.password = 'Reception@123';

@@ -148,8 +148,34 @@ const emit = defineEmits<{
     (e: 'save', inquiry: BanquetInquiry): void;
 }>();
 
-// Wizard active step: 1 (Reception) | 2 (Manager) | 3 (MD / Authority Approval)
-const currentStep = ref(props.defaultStep || 1);
+// Role-Aware Stepper Permission Bounds
+const maxAllowedStep = computed(() => {
+    if (props.userRole === 'reception') return 1;
+    if (props.userRole === 'manager') return 2;
+    return 3;
+});
+
+const visibleSteps = computed(() => {
+    if (props.userRole === 'reception') {
+        return [
+            { num: 1, title: 'Step 1: Reception Desk Intake', short: 'Reception Intake' }
+        ];
+    }
+    if (props.userRole === 'manager') {
+        return [
+            { num: 1, title: 'Step 1: Reception Intake', short: 'Reception Intake' },
+            { num: 2, title: 'Step 2: Banquet Manager Costing', short: 'Manager Setup' }
+        ];
+    }
+    return [
+        { num: 1, title: 'Step 1: Reception Desk Intake', short: 'Reception' },
+        { num: 2, title: 'Step 2: Banquet Manager Costing', short: 'Manager' },
+        { num: 3, title: 'Step 3: MD Deal Sign-off & Seal', short: 'MD Sign-off' }
+    ];
+});
+
+// Wizard active step: strictly clamped to role authorization ceiling
+const currentStep = ref(Math.min(props.defaultStep || 1, maxAllowedStep.value));
 const showPrintPreview = ref(props.openPrintPreview || false);
 const activeMenuPreviewTier = ref<499 | 799 | 999 | 1199>(799);
 
@@ -295,9 +321,11 @@ watch(
 );
 
 watch(
-    () => props.defaultStep,
-    (step) => {
-        if (step) currentStep.value = step;
+    [() => props.defaultStep, () => props.userRole, () => props.show],
+    ([newStep]) => {
+        const allowed = maxAllowedStep.value;
+        const target = typeof newStep === 'number' && newStep > 0 ? newStep : 1;
+        currentStep.value = Math.min(target, allowed);
     },
     { immediate: true }
 );
@@ -549,7 +577,7 @@ const toggleArrayItem = (arr: string[], item: string) => {
     }
 };
 
-// Stepper Validation, Steps Visibility & Actions
+// Stepper Validation & Actions
 const stepErrors = ref<{ guestName?: string; phonePrimary?: string }>({});
 
 const clearStepError = (field: 'guestName' | 'phonePrimary') => {
@@ -558,33 +586,8 @@ const clearStepError = (field: 'guestName' | 'phonePrimary') => {
     }
 };
 
-const visibleSteps = computed(() => {
-    if (props.userRole === 'reception') {
-        return [
-            { num: 1, title: 'Step 1: Reception Desk Intake', short: 'Reception Intake' }
-        ];
-    }
-    if (props.userRole === 'manager') {
-        return [
-            { num: 1, title: 'Step 1: Reception Intake', short: 'Reception Intake' },
-            { num: 2, title: 'Step 2: Banquet Manager Costing', short: 'Manager Setup' }
-        ];
-    }
-    return [
-        { num: 1, title: 'Step 1: Reception Desk Intake', short: 'Reception' },
-        { num: 2, title: 'Step 2: Banquet Manager Costing', short: 'Manager' },
-        { num: 3, title: 'Step 3: MD Deal Sign-off & Seal', short: 'MD Sign-off' }
-    ];
-});
-
-const maxAllowedStep = computed(() => {
-    if (props.userRole === 'reception') return 1;
-    if (props.userRole === 'manager') return 2;
-    return 3;
-});
-
 const goToStep = (stepNum: number) => {
-    if (stepNum <= maxAllowedStep.value) {
+    if (stepNum >= 1 && stepNum <= maxAllowedStep.value) {
         currentStep.value = stepNum;
     }
 };
@@ -602,12 +605,16 @@ const nextStep = () => {
             return;
         }
     }
-    if (currentStep.value < maxAllowedStep.value) currentStep.value++;
+    if (currentStep.value < maxAllowedStep.value) {
+        currentStep.value++;
+    }
 };
 
 const prevStep = () => {
     stepErrors.value = {};
-    if (currentStep.value > 1) currentStep.value--;
+    if (currentStep.value > 1) {
+        currentStep.value--;
+    }
 };
 
 const submitReceptionStep1 = () => {
@@ -2056,7 +2063,7 @@ const shareOnWhatsApp = () => {
                 <!-- ------------------------------------------------- -->
                 <!-- STEP 3: TIERED APPROVAL & DISCOUNT (₹ FIRST)      -->
                 <!-- ------------------------------------------------- -->
-                <div v-if="currentStep === 3" class="space-y-4 animate-in fade-in duration-150 max-w-6xl mx-auto">
+                <div v-if="currentStep === 3 && userRole === 'md'" class="space-y-4 animate-in fade-in duration-150 max-w-6xl mx-auto">
                     <!-- Executive Dark Card -->
                     <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-5 sm:p-6 rounded-2xl shadow-lg border border-slate-800">
                         <div class="flex items-center justify-between border-b border-slate-700/80 pb-3">
@@ -2241,6 +2248,17 @@ const shareOnWhatsApp = () => {
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Step 3 Restricted Fallback (if non-MD somehow targets Step 3) -->
+                <div v-else-if="currentStep === 3 && userRole !== 'md'" class="p-8 text-center bg-white rounded-2xl border border-amber-200 max-w-lg mx-auto my-8 space-y-3 shadow-xs">
+                    <div class="h-12 w-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto text-xl font-bold">
+                        🔒
+                    </div>
+                    <h3 class="text-sm font-bold text-slate-900">Step 3 Restricted to Managing Director</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Stage 3 (Final MD Approval, Custom Discounts & Contract Seal) requires Managing Director authorization. Please review or save from Step 2.
+                    </p>
                 </div>
 
             </div>
