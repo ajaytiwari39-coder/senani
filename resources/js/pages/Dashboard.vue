@@ -44,7 +44,9 @@ import {
     Copy,
     Share2,
     ExternalLink,
-    Eye
+    Eye,
+    Trash2,
+    AlertTriangle
 } from '@lucide/vue';
 import { home } from '@/routes';
 import InquiryWizardModal, { type BanquetInquiry } from '@/components/banquet/InquiryWizardModal.vue';
@@ -56,15 +58,15 @@ defineOptions({
 });
 
 const page = usePage();
-const user = page.props.auth?.user || { name: 'Super Admin', email: 'admin@senani.com', role: 'md' };
+const user = page.props.auth?.user || { name: 'Super Admin', email: 'admin@senani.com', role: 'superadmin' };
 
-export type UserRole = 'reception' | 'manager' | 'md';
+export type UserRole = 'reception' | 'manager' | 'md' | 'superadmin';
 
 // Real authenticated role ceiling from database / session
 const authenticatedRole = computed<UserRole>(() => {
     const raw = (user as any)?.role;
-    if (raw === 'reception' || raw === 'manager' || raw === 'md') return raw;
-    return 'md';
+    if (raw === 'reception' || raw === 'manager' || raw === 'md' || raw === 'superadmin') return raw;
+    return 'superadmin';
 });
 
 // Enforce that activeRole can never exceed the permissions granted by authenticatedRole
@@ -75,11 +77,15 @@ const sanitizeRole = (roleCandidate?: string | null): UserRole => {
         if (roleCandidate === 'reception') return 'reception';
         return 'manager'; // Manager can never exceed Step 2
     }
-    // MD / Admin can view/test all roles
-    if (roleCandidate === 'reception' || roleCandidate === 'manager' || roleCandidate === 'md') {
+    if (authRole === 'md') {
+        if (roleCandidate === 'reception' || roleCandidate === 'manager' || roleCandidate === 'md') return roleCandidate;
+        return 'md';
+    }
+    // Superadmin can view/simulate all roles
+    if (roleCandidate === 'reception' || roleCandidate === 'manager' || roleCandidate === 'md' || roleCandidate === 'superadmin') {
         return roleCandidate;
     }
-    return 'md';
+    return 'superadmin';
 };
 
 const activeRole = ref<UserRole>(
@@ -115,6 +121,13 @@ const roleLabels: Record<UserRole, { title: string; badge: string; stepAccess: s
         stepAccess: 'Full Access, Approval & Final Seal (Steps 1, 2, 3)',
         colorClass: 'text-purple-800',
         bgClass: 'bg-purple-50 border-purple-200'
+    },
+    superadmin: {
+        title: 'Super Administrator',
+        badge: 'Full Control & Delete Rights',
+        stepAccess: 'Full Access (Steps 1, 2, 3) + Delete/Purge Inquiries',
+        colorClass: 'text-rose-800',
+        bgClass: 'bg-rose-50 border-rose-200'
     }
 };
 
@@ -312,6 +325,32 @@ const handleSaveInquiry = (inq: BanquetInquiry) => {
             console.error('Error saving banquet inquiries to localStorage', e);
         }
     }
+};
+
+// -------------------------------------------------------------
+// Super Admin Dedicated Inquiry Deletion Control
+// -------------------------------------------------------------
+const inquiryToDelete = ref<BanquetInquiry | null>(null);
+const showDeleteConfirmModal = ref(false);
+
+const requestDeleteInquiry = (inq: BanquetInquiry) => {
+    inquiryToDelete.value = inq;
+    showDeleteConfirmModal.value = true;
+};
+
+const confirmDeleteInquiry = () => {
+    if (!inquiryToDelete.value) return;
+    const vNo = String(inquiryToDelete.value.voucherNo);
+    banquetInquiries.value = banquetInquiries.value.filter(i => String(i.voucherNo) !== vNo);
+    if (typeof window !== 'undefined') {
+        try {
+            localStorage.setItem('senani_banquet_inquiries', JSON.stringify(banquetInquiries.value));
+        } catch (e) {
+            console.error('Error saving banquet inquiries after deletion', e);
+        }
+    }
+    showDeleteConfirmModal.value = false;
+    inquiryToDelete.value = null;
 };
 
 onMounted(() => {
@@ -924,17 +963,32 @@ const submitCheckIn = () => {
                                     <button
                                         type="button"
                                         @click="setRole('md')"
-                                        :disabled="authenticatedRole !== 'md'"
+                                        :disabled="authenticatedRole === 'reception' || authenticatedRole === 'manager'"
                                         :class="[
                                             'px-2 py-1 rounded-lg font-bold transition-all text-[11px] flex items-center gap-1',
-                                            authenticatedRole !== 'md' ? 'opacity-40 cursor-not-allowed text-slate-400' : 'cursor-pointer',
+                                            authenticatedRole === 'reception' || authenticatedRole === 'manager' ? 'opacity-40 cursor-not-allowed text-slate-400' : 'cursor-pointer',
                                             activeRole === 'md'
                                                 ? 'bg-emerald-600 text-white shadow-xs'
                                                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                                         ]"
-                                        :title="authenticatedRole !== 'md' ? 'Locked (Requires MD Account Login)' : 'MD Sir: Complete Super Authority & Contract Seal'"
+                                        :title="authenticatedRole === 'reception' || authenticatedRole === 'manager' ? 'Locked (Requires MD/Admin Login)' : 'MD Sir: Complete Super Authority & Contract Seal'"
                                     >
-                                        <span>👑 MD Sir (Full & Seal)</span>
+                                        <span>👑 MD Sir</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        @click="setRole('superadmin')"
+                                        :disabled="authenticatedRole !== 'superadmin'"
+                                        :class="[
+                                            'px-2 py-1 rounded-lg font-bold transition-all text-[11px] flex items-center gap-1',
+                                            authenticatedRole !== 'superadmin' ? 'opacity-40 cursor-not-allowed text-slate-400' : 'cursor-pointer',
+                                            activeRole === 'superadmin'
+                                                ? 'bg-rose-600 text-white shadow-xs'
+                                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                                        ]"
+                                        :title="authenticatedRole !== 'superadmin' ? 'Locked (Requires Super Admin Login)' : 'Super Admin: Full Access + Delete Rights'"
+                                    >
+                                        <span>⚡ Super Admin</span>
                                     </button>
                                 </div>
                         </div>
@@ -1744,6 +1798,24 @@ const submitCheckIn = () => {
                                                         Edit Step 1 & 2
                                                     </button>
                                                 </template>
+                                                <template v-else-if="activeRole === 'superadmin'">
+                                                    <button
+                                                        @click="openExistingInquiry(inq, 3)"
+                                                        class="rounded-lg bg-slate-100 text-slate-800 hover:bg-[#673DE6] hover:text-white px-2.5 py-1 text-[11px] font-bold transition cursor-pointer"
+                                                        title="Super Admin Edit & Review (All Steps)"
+                                                    >
+                                                        Edit #{{ inq.voucherNo }}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        @click="requestDeleteInquiry(inq)"
+                                                        class="rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-rose-200 shadow-2xs cursor-pointer"
+                                                        title="Super Admin Only: Permanently Delete Inquiry"
+                                                    >
+                                                        <Trash2 class="h-3 w-3" />
+                                                        <span>Delete</span>
+                                                    </button>
+                                                </template>
                                                 <template v-else>
                                                     <button
                                                         v-if="inq.status === 'pending_md'"
@@ -1760,6 +1832,17 @@ const submitCheckIn = () => {
                                                         title="Full 3-Step Review & Voucher"
                                                     >
                                                         Voucher #{{ inq.voucherNo }}
+                                                    </button>
+                                                    <!-- Also allow delete if authenticated as superadmin -->
+                                                    <button
+                                                        v-if="authenticatedRole === 'superadmin'"
+                                                        type="button"
+                                                        @click="requestDeleteInquiry(inq)"
+                                                        class="rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-rose-200 shadow-2xs cursor-pointer"
+                                                        title="Super Admin Only: Permanently Delete Inquiry"
+                                                    >
+                                                        <Trash2 class="h-3 w-3" />
+                                                        <span>Delete</span>
                                                     </button>
                                                 </template>
                                             </div>
@@ -2464,7 +2547,51 @@ const submitCheckIn = () => {
             :userRole="activeRole"
             @close="showInquiryModal = false; inquiryOpenPrintPreview = false"
             @save="handleSaveInquiry"
+            @delete="requestDeleteInquiry"
         />
+
+        <!-- ========================================================= -->
+        <!-- MODAL 4: SUPER ADMIN INQUIRY DELETE CONFIRMATION          -->
+        <!-- ========================================================= -->
+        <div
+            v-if="showDeleteConfirmModal && inquiryToDelete"
+            class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+        >
+            <div class="w-full max-w-md bg-white rounded-2xl p-6 shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">
+                <div class="flex items-start gap-3.5">
+                    <div class="h-11 w-11 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                        <AlertTriangle class="h-5 w-5" />
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900">Permanently Delete Inquiry?</h3>
+                        <p class="text-xs text-slate-600 mt-1 leading-relaxed">
+                            You are deleting Banquet Inquiry <strong class="text-slate-900 font-mono">#{{ inquiryToDelete.voucherNo }}</strong> for <strong class="text-slate-900">{{ inquiryToDelete.guestName }}</strong> ({{ inquiryToDelete.eventType }}).
+                        </p>
+                        <p class="text-[11px] text-rose-600 font-medium mt-1.5 flex items-center gap-1">
+                            <span>⚡</span> Super Administrator Authorization Confirmed.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                    <button
+                        type="button"
+                        @click="showDeleteConfirmModal = false; inquiryToDelete = null"
+                        class="px-4 py-2 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="button"
+                        @click="confirmDeleteInquiry"
+                        class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer"
+                    >
+                        <Trash2 class="h-3.5 w-3.5" />
+                        <span>Confirm & Delete</span>
+                    </button>
+                </div>
+            </div>
+        </div>
 
     </div>
 </template>

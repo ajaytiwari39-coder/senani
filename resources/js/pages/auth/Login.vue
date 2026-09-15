@@ -49,7 +49,7 @@ const submit = () => {
     });
 };
 
-const quickLogin = (role: 'reception' | 'manager' | 'md') => {
+const quickLogin = (role: 'reception' | 'manager' | 'md' | 'superadmin') => {
     if (typeof window !== 'undefined') {
         localStorage.setItem('senani_active_role', role);
     }
@@ -62,6 +62,9 @@ const quickLogin = (role: 'reception' | 'manager' | 'md') => {
     } else if (role === 'md') {
         form.email = 'md@senani.com';
         form.password = 'MD@123';
+    } else if (role === 'superadmin') {
+        form.email = 'admin@senani.com';
+        form.password = 'Admin@123';
     }
     submit();
 };
@@ -448,7 +451,7 @@ onUnmounted(() => {
                         </span>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-2">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         <!-- Reception Desk -->
                         <button
                             type="button"
@@ -458,7 +461,7 @@ onUnmounted(() => {
                         >
                             <span class="text-base mb-0.5">🏢</span>
                             <span class="text-[11px] font-bold text-slate-900 group-hover:text-amber-800 leading-tight">Reception</span>
-                            <span class="text-[9.5px] font-medium text-amber-700 mt-0.5">Step 1 Intake</span>
+                            <span class="text-[9px] font-medium text-amber-700 mt-0.5">Step 1 Intake</span>
                         </button>
 
                         <!-- Banquet Manager -->
@@ -470,7 +473,7 @@ onUnmounted(() => {
                         >
                             <span class="text-base mb-0.5">👔</span>
                             <span class="text-[11px] font-bold text-slate-900 group-hover:text-purple-800 leading-tight">Manager</span>
-                            <span class="text-[9.5px] font-medium text-[#673DE6] mt-0.5">Step 1 & 2 Setup</span>
+                            <span class="text-[9px] font-medium text-[#673DE6] mt-0.5">Step 1 & 2 Setup</span>
                         </button>
 
                         <!-- MD Sir -->
@@ -482,7 +485,19 @@ onUnmounted(() => {
                         >
                             <span class="text-base mb-0.5">👑</span>
                             <span class="text-[11px] font-bold text-slate-900 group-hover:text-emerald-800 leading-tight">MD Sir</span>
-                            <span class="text-[9.5px] font-medium text-emerald-700 mt-0.5">Full & Seal</span>
+                            <span class="text-[9px] font-medium text-emerald-700 mt-0.5">Full & Seal</span>
+                        </button>
+
+                        <!-- Super Admin -->
+                        <button
+                            type="button"
+                            @click="quickLogin('superadmin')"
+                            :disabled="form.processing"
+                            class="flex flex-col items-center justify-center p-2.5 rounded-xl bg-white border border-rose-200 hover:border-rose-400 hover:bg-rose-50/70 transition shadow-2xs group cursor-pointer text-center"
+                        >
+                            <span class="text-base mb-0.5">⚡</span>
+                            <span class="text-[11px] font-bold text-slate-900 group-hover:text-rose-800 leading-tight">Super Admin</span>
+                            <span class="text-[9px] font-medium text-rose-700 mt-0.5">Full + Delete</span>
                         </button>
                     </div>
                 </div>

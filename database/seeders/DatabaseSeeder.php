@@ -45,13 +45,13 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 4. Super Admin
+        // 4. Super Administrator
         User::updateOrCreate(
             ['email' => 'admin@senani.com'],
             [
                 'name' => 'Super Administrator',
                 'password' => bcrypt('Admin@123'),
-                'role' => 'md',
+                'role' => 'superadmin',
             ]
         );
     }

@@ -43,7 +43,9 @@ import {
     ExternalLink,
     QrCode,
     FileText,
-    History
+    History,
+    Trash2,
+    ShieldAlert
 } from '@lucide/vue';
 import {
     renderSlimBarcode,
@@ -132,7 +134,7 @@ const props = withDefaults(
         initialInquiry?: BanquetInquiry | null;
         defaultStep?: number;
         openPrintPreview?: boolean;
-        userRole?: 'reception' | 'manager' | 'md';
+        userRole?: 'reception' | 'manager' | 'md' | 'superadmin';
     }>(),
     {
         show: false,
@@ -146,6 +148,7 @@ const props = withDefaults(
 const emit = defineEmits<{
     (e: 'close'): void;
     (e: 'save', inquiry: BanquetInquiry): void;
+    (e: 'delete', inquiry: BanquetInquiry): void;
 }>();
 
 // Role-Aware Stepper Permission Bounds
@@ -2063,7 +2066,7 @@ const shareOnWhatsApp = () => {
                 <!-- ------------------------------------------------- -->
                 <!-- STEP 3: TIERED APPROVAL & DISCOUNT (₹ FIRST)      -->
                 <!-- ------------------------------------------------- -->
-                <div v-if="currentStep === 3 && userRole === 'md'" class="space-y-4 animate-in fade-in duration-150 max-w-6xl mx-auto">
+                <div v-if="currentStep === 3 && (userRole === 'md' || userRole === 'superadmin')" class="space-y-4 animate-in fade-in duration-150 max-w-6xl mx-auto">
                     <!-- Executive Dark Card -->
                     <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-5 sm:p-6 rounded-2xl shadow-lg border border-slate-800">
                         <div class="flex items-center justify-between border-b border-slate-700/80 pb-3">
@@ -2251,13 +2254,13 @@ const shareOnWhatsApp = () => {
                 </div>
 
                 <!-- Step 3 Restricted Fallback (if non-MD somehow targets Step 3) -->
-                <div v-else-if="currentStep === 3 && userRole !== 'md'" class="p-8 text-center bg-white rounded-2xl border border-amber-200 max-w-lg mx-auto my-8 space-y-3 shadow-xs">
+                <div v-else-if="currentStep === 3 && userRole !== 'md' && userRole !== 'superadmin'" class="p-8 text-center bg-white rounded-2xl border border-amber-200 max-w-lg mx-auto my-8 space-y-3 shadow-xs">
                     <div class="h-12 w-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto text-xl font-bold">
                         🔒
                     </div>
-                    <h3 class="text-sm font-bold text-slate-900">Step 3 Restricted to Managing Director</h3>
+                    <h3 class="text-sm font-bold text-slate-900">Step 3 Restricted to Managing Director & Super Admin</h3>
                     <p class="text-xs text-slate-600 leading-relaxed">
-                        Stage 3 (Final MD Approval, Custom Discounts & Contract Seal) requires Managing Director authorization. Please review or save from Step 2.
+                        Stage 3 (Final MD Approval, Custom Discounts & Contract Seal) requires Managing Director or Super Admin authorization. Please review or save from Step 2.
                     </p>
                 </div>
 
@@ -2345,10 +2348,20 @@ const shareOnWhatsApp = () => {
                     <!-- MD / Super Authority Actions -->
                     <template v-else>
                         <button
+                            v-if="userRole === 'superadmin' && initialInquiry"
+                            type="button"
+                            @click="$emit('delete', { ...form }); $emit('close')"
+                            class="h-8 px-3 rounded-lg border border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                            title="Super Admin Only: Permanently Delete Inquiry"
+                        >
+                            <Trash2 class="h-3.5 w-3.5" />
+                            <span>Delete Inquiry</span>
+                        </button>
+                        <button
                             v-if="currentStep < 3"
                             type="button"
                             @click="nextStep"
-                            class="h-8 px-4 rounded-lg bg-[#673DE6] hover:bg-[#5832D0] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                            class="h-8 px-4 rounded-lg bg-[#673DE6] hover:bg-[#5832D0] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
                         >
                             <span>Next Step</span>
                             <ArrowRight class="h-3.5 w-3.5" />
@@ -2357,10 +2370,10 @@ const shareOnWhatsApp = () => {
                             v-else
                             type="button"
                             @click="submitMdFinalize"
-                            class="h-8 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                            class="h-8 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
                         >
                             <CheckCircle2 class="h-3.5 w-3.5" />
-                            <span>👑 MD Final Approve & Freeze Contract</span>
+                            <span>👑 {{ userRole === 'superadmin' ? 'Super Admin Final Approve & Freeze' : 'MD Final Approve & Freeze Contract' }}</span>
                         </button>
                     </template>
                 </div>
