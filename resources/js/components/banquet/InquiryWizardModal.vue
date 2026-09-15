@@ -112,7 +112,7 @@ export interface BanquetInquiry {
     amountPaid: number;
     paymentMode: 'Cash' | 'UPI / QR' | 'Card' | 'Bank Transfer';
     paymentDate: string;
-    status: 'draft_reception' | 'pending_md' | 'approved_md';
+    status: 'draft_reception' | 'pending_manager' | 'pending_md' | 'approved_md';
     mdApprovedAt?: string;
     mdRemarks?: string;
     // Locking, Digital Signature & Audit Trail
@@ -132,12 +132,14 @@ const props = withDefaults(
         initialInquiry?: BanquetInquiry | null;
         defaultStep?: number;
         openPrintPreview?: boolean;
+        userRole?: 'reception' | 'manager' | 'md';
     }>(),
     {
         show: false,
         initialInquiry: null,
         defaultStep: 1,
         openPrintPreview: false,
+        userRole: 'md',
     }
 );
 
@@ -547,12 +549,43 @@ const toggleArrayItem = (arr: string[], item: string) => {
     }
 };
 
-// Stepper Validation & Actions
+// Stepper Validation, Steps Visibility & Actions
 const stepErrors = ref<{ guestName?: string; phonePrimary?: string }>({});
 
 const clearStepError = (field: 'guestName' | 'phonePrimary') => {
     if (stepErrors.value[field]) {
         delete stepErrors.value[field];
+    }
+};
+
+const visibleSteps = computed(() => {
+    if (props.userRole === 'reception') {
+        return [
+            { num: 1, title: 'Step 1: Reception Desk Intake', short: 'Reception Intake' }
+        ];
+    }
+    if (props.userRole === 'manager') {
+        return [
+            { num: 1, title: 'Step 1: Reception Intake', short: 'Reception Intake' },
+            { num: 2, title: 'Step 2: Banquet Manager Costing', short: 'Manager Setup' }
+        ];
+    }
+    return [
+        { num: 1, title: 'Step 1: Reception Desk Intake', short: 'Reception' },
+        { num: 2, title: 'Step 2: Banquet Manager Costing', short: 'Manager' },
+        { num: 3, title: 'Step 3: MD Deal Sign-off & Seal', short: 'MD Sign-off' }
+    ];
+});
+
+const maxAllowedStep = computed(() => {
+    if (props.userRole === 'reception') return 1;
+    if (props.userRole === 'manager') return 2;
+    return 3;
+});
+
+const goToStep = (stepNum: number) => {
+    if (stepNum <= maxAllowedStep.value) {
+        currentStep.value = stepNum;
     }
 };
 
@@ -569,24 +602,55 @@ const nextStep = () => {
             return;
         }
     }
-    if (currentStep.value < 3) currentStep.value++;
+    if (currentStep.value < maxAllowedStep.value) currentStep.value++;
 };
+
 const prevStep = () => {
     stepErrors.value = {};
     if (currentStep.value > 1) currentStep.value--;
 };
 
-const approveByAuthority = () => {
+const submitReceptionStep1 = () => {
+    stepErrors.value = {};
+    if (!form.value.guestName || !form.value.guestName.trim()) {
+        stepErrors.value.guestName = 'Customer / Host Full Name is required.';
+    }
+    if (!form.value.phonePrimary || !form.value.phonePrimary.trim()) {
+        stepErrors.value.phonePrimary = 'Primary Phone Number is required.';
+    }
+    if (Object.keys(stepErrors.value).length > 0) {
+        return;
+    }
+    form.value.status = 'pending_manager';
+    emit('save', { ...form.value });
+    emit('close');
+};
+
+const submitManagerStep2 = () => {
+    form.value.status = 'pending_md';
+    emit('save', { ...form.value });
+    emit('close');
+};
+
+const submitMdFinalize = () => {
     form.value.status = 'approved_md';
+    form.value.isLocked = true;
     form.value.approverRole = authorityLevel.value.tier;
-    form.value.mdApprovedAt = new Date().toLocaleString('en-IN', {
+    form.value.lockedBy = 'Managing Director (MD Sir)';
+    form.value.lockedAt = new Date().toLocaleString('en-IN', {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
     });
+    form.value.mdApprovedAt = form.value.lockedAt;
     emit('save', { ...form.value });
+    emit('close');
+};
+
+const approveByAuthority = () => {
+    submitMdFinalize();
 };
 
 const saveAndClose = () => {
@@ -1060,15 +1124,21 @@ const shareOnWhatsApp = () => {
                                 </span>
                                 <span
                                     v-else-if="form.status === 'pending_md'"
-                                    class="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-[#673DE6] border border-purple-200"
+                                    class="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200 inline-flex items-center gap-1"
                                 >
-                                    Pending Approval
+                                    <Clock class="h-3 w-3" /> Awaiting MD Final Approval
+                                </span>
+                                <span
+                                    v-else-if="form.status === 'pending_manager'"
+                                    class="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700 border border-purple-200 inline-flex items-center gap-1"
+                                >
+                                    <Clock class="h-3 w-3" /> Awaiting Banquet Manager
                                 </span>
                                 <span
                                     v-else
                                     class="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-200"
                                 >
-                                    Reception Draft
+                                    Reception Intake Draft
                                 </span>
                             </div>
                             <p class="text-[11px] text-slate-500">
@@ -1087,54 +1157,30 @@ const shareOnWhatsApp = () => {
                     </button>
                 </div>
 
-                <!-- 3-Stage Interactive Stepper Navigation -->
-                <div class="grid grid-cols-3 gap-2 sm:gap-3 pt-2.5">
+                <!-- Role-Aware Interactive Stepper Navigation -->
+                <div
+                    class="grid gap-2 sm:gap-3 pt-2.5"
+                    :class="visibleSteps.length === 1 ? 'grid-cols-1' : (visibleSteps.length === 2 ? 'grid-cols-2' : 'grid-cols-3')"
+                >
                     <button
+                        v-for="s in visibleSteps"
+                        :key="s.num"
                         type="button"
-                        @click="currentStep = 1"
+                        @click="goToStep(s.num)"
                         :class="[
                             'flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-xs font-bold transition text-left',
-                            currentStep === 1
+                            currentStep === s.num
                                 ? 'bg-[#673DE6] text-white shadow-xs'
                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
                         ]"
                     >
-                        <span class="h-4.5 w-4.5 rounded-full flex items-center justify-center text-[10px] font-black" :class="currentStep === 1 ? 'bg-white text-[#673DE6]' : 'bg-slate-300 text-slate-700'">
-                            1
+                        <span
+                            class="h-4.5 w-4.5 rounded-full flex items-center justify-center text-[10px] font-black"
+                            :class="currentStep === s.num ? 'bg-white text-[#673DE6]' : 'bg-slate-300 text-slate-700'"
+                        >
+                            {{ s.num }}
                         </span>
-                        <span class="truncate">Reception Desk Intake</span>
-                    </button>
-
-                    <button
-                        type="button"
-                        @click="currentStep = 2"
-                        :class="[
-                            'flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-xs font-bold transition text-left',
-                            currentStep === 2
-                                ? 'bg-[#673DE6] text-white shadow-xs'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
-                        ]"
-                    >
-                        <span class="h-4.5 w-4.5 rounded-full flex items-center justify-center text-[10px] font-black" :class="currentStep === 2 ? 'bg-white text-[#673DE6]' : 'bg-slate-300 text-slate-700'">
-                            2
-                        </span>
-                        <span class="truncate">Banquet Manager Costing</span>
-                    </button>
-
-                    <button
-                        type="button"
-                        @click="currentStep = 3"
-                        :class="[
-                            'flex items-center justify-center gap-2 py-1.5 px-3 rounded-lg text-xs font-bold transition text-left',
-                            currentStep === 3
-                                ? 'bg-[#673DE6] text-white shadow-xs'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
-                        ]"
-                    >
-                        <span class="h-4.5 w-4.5 rounded-full flex items-center justify-center text-[10px] font-black" :class="currentStep === 3 ? 'bg-white text-[#673DE6]' : 'bg-slate-300 text-slate-700'">
-                            3
-                        </span>
-                        <span class="truncate">Tiered Approval & Discount (₹)</span>
+                        <span class="truncate">{{ s.title }}</span>
                     </button>
                 </div>
             </div>
@@ -2241,28 +2287,64 @@ const shareOnWhatsApp = () => {
                         @click="saveAndClose"
                         class="h-8 px-3 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition"
                     >
-                        Save & Exit
+                        Save & Exit Draft
                     </button>
 
-                    <button
-                        v-if="currentStep < 3"
-                        type="button"
-                        @click="nextStep"
-                        class="h-8 px-4 rounded-lg bg-[#673DE6] hover:bg-[#5832D0] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
-                    >
-                        <span>Next Step</span>
-                        <ArrowRight class="h-3.5 w-3.5" />
-                    </button>
+                    <!-- Reception Action -->
+                    <template v-if="userRole === 'reception'">
+                        <button
+                            type="button"
+                            @click="submitReceptionStep1"
+                            class="h-8 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                        >
+                            <CheckCircle2 class="h-3.5 w-3.5" />
+                            <span>Save & Forward to Banquet Manager</span>
+                        </button>
+                    </template>
 
-                    <button
-                        v-else
-                        type="button"
-                        @click="approveByAuthority"
-                        class="h-8 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
-                    >
-                        <CheckCircle2 class="h-3.5 w-3.5" />
-                        <span>Confirm & Lock Voucher</span>
-                    </button>
+                    <!-- Manager Actions -->
+                    <template v-else-if="userRole === 'manager'">
+                        <button
+                            v-if="currentStep === 1"
+                            type="button"
+                            @click="nextStep"
+                            class="h-8 px-4 rounded-lg bg-[#673DE6] hover:bg-[#5832D0] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                        >
+                            <span>Next: Configure Setup</span>
+                            <ArrowRight class="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                            v-else
+                            type="button"
+                            @click="submitManagerStep2"
+                            class="h-8 px-4 rounded-lg bg-[#673DE6] hover:bg-[#5832D0] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                        >
+                            <CheckCircle2 class="h-3.5 w-3.5" />
+                            <span>Save & Forward to MD for Final Approval</span>
+                        </button>
+                    </template>
+
+                    <!-- MD / Super Authority Actions -->
+                    <template v-else>
+                        <button
+                            v-if="currentStep < 3"
+                            type="button"
+                            @click="nextStep"
+                            class="h-8 px-4 rounded-lg bg-[#673DE6] hover:bg-[#5832D0] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                        >
+                            <span>Next Step</span>
+                            <ArrowRight class="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                            v-else
+                            type="button"
+                            @click="submitMdFinalize"
+                            class="h-8 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                        >
+                            <CheckCircle2 class="h-3.5 w-3.5" />
+                            <span>👑 MD Final Approve & Freeze Contract</span>
+                        </button>
+                    </template>
                 </div>
             </div>
 

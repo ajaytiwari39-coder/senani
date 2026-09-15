@@ -15,11 +15,44 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // 1. Reception Front Desk
+        User::updateOrCreate(
+            ['email' => 'reception@senani.com'],
+            [
+                'name' => 'Reception Front Desk',
+                'password' => bcrypt('Reception@123'),
+                'role' => 'reception',
+            ]
+        );
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // 2. Banquet Operations Manager
+        User::updateOrCreate(
+            ['email' => 'manager@senani.com'],
+            [
+                'name' => 'Banquet Operations Manager',
+                'password' => bcrypt('Manager@123'),
+                'role' => 'manager',
+            ]
+        );
+
+        // 3. Managing Director (MD Sir)
+        User::updateOrCreate(
+            ['email' => 'md@senani.com'],
+            [
+                'name' => 'Managing Director (MD Sir)',
+                'password' => bcrypt('MD@123'),
+                'role' => 'md',
+            ]
+        );
+
+        // 4. Super Admin
+        User::updateOrCreate(
+            ['email' => 'admin@senani.com'],
+            [
+                'name' => 'Super Administrator',
+                'password' => bcrypt('Admin@123'),
+                'role' => 'md',
+            ]
+        );
     }
 }

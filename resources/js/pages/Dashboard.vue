@@ -56,7 +56,45 @@ defineOptions({
 });
 
 const page = usePage();
-const user = page.props.auth?.user || { name: 'Super Admin', email: 'admin@senani.com' };
+const user = page.props.auth?.user || { name: 'Super Admin', email: 'admin@senani.com', role: 'md' };
+
+export type UserRole = 'reception' | 'manager' | 'md';
+const activeRole = ref<UserRole>(
+    (typeof window !== 'undefined' && (localStorage.getItem('senani_active_role') as UserRole)) ||
+    ((user as any)?.role as UserRole) ||
+    'md'
+);
+
+const setRole = (r: UserRole) => {
+    activeRole.value = r;
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('senani_active_role', r);
+    }
+};
+
+const roleLabels: Record<UserRole, { title: string; badge: string; stepAccess: string; colorClass: string; bgClass: string }> = {
+    reception: {
+        title: 'Reception Front Desk',
+        badge: 'Step 1 Access',
+        stepAccess: 'Reception Intake Only (Step 1)',
+        colorClass: 'text-amber-800',
+        bgClass: 'bg-amber-50 border-amber-200'
+    },
+    manager: {
+        title: 'Banquet Operations Manager',
+        badge: 'Step 1 & 2 Access',
+        stepAccess: 'Intake + Costing & Catalog (Step 1 & 2)',
+        colorClass: 'text-blue-800',
+        bgClass: 'bg-blue-50 border-blue-200'
+    },
+    md: {
+        title: 'Managing Director (MD Sir)',
+        badge: 'Full Access & Finalize',
+        stepAccess: 'Full Access, Approval & Final Seal (Steps 1, 2, 3)',
+        colorClass: 'text-purple-800',
+        bgClass: 'bg-purple-50 border-purple-200'
+    }
+};
 
 const logout = () => {
     router.post('/logout');
@@ -815,7 +853,7 @@ const submitCheckIn = () => {
                     <!-- ================================================= -->
                     <div v-if="currentTab === 'dashboard'" class="space-y-3 sm:space-y-3.5 animate-in fade-in duration-200">
 
-                    <!-- Sleek Minimal Operational Context Bar (Space-saving replacement for large H1) -->
+                    <!-- Sleek Minimal Operational Context Bar with 3-Level Role Switcher -->
                     <div class="flex flex-wrap items-center justify-between gap-2.5 py-0.5">
                         <div class="flex items-center gap-2 sm:gap-2.5">
                             <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white border border-slate-200/90 shadow-2xs">
@@ -826,15 +864,50 @@ const submitCheckIn = () => {
                                 <span class="text-[11px] font-extrabold tracking-wider uppercase text-slate-700">Live Hotel Ops</span>
                             </div>
                             <span class="text-slate-300 hidden sm:inline">•</span>
-                            <div class="hidden sm:flex items-center gap-1.5 text-xs text-slate-500">
-                                <Building2 class="h-3.5 w-3.5 text-[#673DE6]" />
-                                <span class="font-medium text-slate-700">Senani Hotel Pleasant View</span>
+                            
+                            <!-- Interactive 3-Level Role Switcher Widget -->
+                            <div class="flex items-center p-0.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs text-xs">
+                                <span class="text-[10px] font-extrabold text-slate-400 px-2 uppercase tracking-wider hidden md:inline">Tier:</span>
+                                <button
+                                    type="button"
+                                    @click="setRole('reception')"
+                                    :class="[
+                                        'px-2 py-1 rounded-lg font-bold transition-all text-[11px] flex items-center gap-1 cursor-pointer',
+                                        activeRole === 'reception'
+                                            ? 'bg-amber-500 text-white shadow-xs'
+                                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                                    ]"
+                                    title="Reception Desk: Step 1 Intake Only"
+                                >
+                                    <span>🏢 Reception (Step 1)</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    @click="setRole('manager')"
+                                    :class="[
+                                        'px-2 py-1 rounded-lg font-bold transition-all text-[11px] flex items-center gap-1 cursor-pointer',
+                                        activeRole === 'manager'
+                                            ? 'bg-[#673DE6] text-white shadow-xs'
+                                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                                    ]"
+                                    title="Banquet Manager: Steps 1 & 2 Setup & Quotations"
+                                >
+                                    <span>👔 Manager (Step 1 & 2)</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    @click="setRole('md')"
+                                    :class="[
+                                        'px-2 py-1 rounded-lg font-bold transition-all text-[11px] flex items-center gap-1 cursor-pointer',
+                                        activeRole === 'md'
+                                            ? 'bg-emerald-600 text-white shadow-xs'
+                                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                                    ]"
+                                    title="MD Sir: Complete Super Authority & Contract Seal"
+                                >
+                                    <span>👑 MD Sir (Full & Seal)</span>
+                                </button>
                             </div>
-                            <span class="text-slate-300 hidden md:inline">•</span>
-                            <span class="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-[11px] font-semibold text-[#673DE6] border border-purple-100">
-                                <Sparkles class="h-3 w-3" />
-                                {{ user.name }}
-                            </span>
                         </div>
 
                         <!-- Date Filter Pills & Realtime Pulse -->
@@ -1426,16 +1499,28 @@ const submitCheckIn = () => {
                 <div v-else-if="currentTab === 'banquet'" class="space-y-6 animate-in fade-in duration-200">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
-                            <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">Banquet Halls & Slot Manager</h1>
+                            <div class="flex items-center gap-2">
+                                <h1 class="text-2xl font-extrabold tracking-tight text-slate-900">Banquet Halls & Event Pipeline</h1>
+                                <span
+                                    class="px-2.5 py-0.5 rounded-full text-xs font-bold border"
+                                    :class="roleLabels[activeRole].bgClass + ' ' + roleLabels[activeRole].colorClass"
+                                >
+                                    {{ roleLabels[activeRole].title }} ({{ roleLabels[activeRole].badge }})
+                                </span>
+                            </div>
                             <p class="text-xs sm:text-sm text-slate-500 mt-1">
-                                Morning & Evening slot allocation with automated double-booking lock
+                                Current Role Access: <strong class="text-slate-700">{{ roleLabels[activeRole].stepAccess }}</strong>
                             </p>
                         </div>
                         <button
                             @click="openNewInquiry(1)"
-                            class="inline-flex items-center gap-1.5 rounded-xl bg-[#673DE6] px-3.5 py-2 text-xs font-bold text-white hover:bg-[#5832D0] transition shadow-xs"
+                            class="inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold text-white transition shadow-xs cursor-pointer"
+                            :class="activeRole === 'reception' ? 'bg-amber-600 hover:bg-amber-700' : (activeRole === 'manager' ? 'bg-[#673DE6] hover:bg-[#5832D0]' : 'bg-emerald-600 hover:bg-emerald-700')"
                         >
-                            <Plus class="h-4 w-4" /> New 3-Step Inquiry (Slip #250)
+                            <Plus class="h-4 w-4" />
+                            <span v-if="activeRole === 'reception'">+ New Reception Intake (Step 1)</span>
+                            <span v-else-if="activeRole === 'manager'">+ New Banquet Costing (Step 1 & 2)</span>
+                            <span v-else>+ New Banquet Voucher (Full Access)</span>
                         </button>
                     </div>
 
@@ -1541,19 +1626,25 @@ const submitCheckIn = () => {
                                                 v-if="inq.status === 'approved_md'"
                                                 class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1"
                                             >
-                                                <CheckCircle2 class="h-3 w-3" /> MD Approved
+                                                <CheckCircle2 class="h-3 w-3" /> MD Approved & Sealed
                                             </span>
                                             <span
                                                 v-else-if="inq.status === 'pending_md'"
-                                                class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-purple-50 text-[#673DE6] border border-purple-200"
+                                                class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-blue-50 text-blue-700 border border-blue-200 inline-flex items-center gap-1"
                                             >
-                                                Pending MD
+                                                <Clock class="h-3 w-3" /> Awaiting MD Approval
+                                            </span>
+                                            <span
+                                                v-else-if="inq.status === 'pending_manager'"
+                                                class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-purple-50 text-[#673DE6] border border-purple-200 inline-flex items-center gap-1"
+                                            >
+                                                <Clock class="h-3 w-3" /> Awaiting Manager Setup
                                             </span>
                                             <span
                                                 v-else
-                                                class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-amber-50 text-amber-700 border border-amber-200"
+                                                class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-1"
                                             >
-                                                Reception Draft
+                                                Reception Intake Draft
                                             </span>
                                         </td>
                                         <td class="py-3 text-right">
@@ -1595,30 +1686,53 @@ const submitCheckIn = () => {
                                                     <ShieldCheck class="h-3 w-3" />
                                                     <span>Verify</span>
                                                 </a>
-                                                <button
-                                                    v-if="inq.status === 'draft_reception'"
-                                                    @click="openExistingInquiry(inq, 2)"
-                                                    class="rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-600 hover:text-white px-2.5 py-1 text-[11px] font-bold transition"
-                                                    title="Fill Manager Costing"
-                                                >
-                                                    Step 2: Manager
-                                                </button>
-                                                <button
-                                                    v-else-if="inq.status === 'pending_md'"
-                                                    @click="openExistingInquiry(inq, 3)"
-                                                    class="rounded-lg bg-[#F0EBFF] text-[#673DE6] hover:bg-[#673DE6] hover:text-white px-2.5 py-1 text-[11px] font-bold transition"
-                                                    title="MD Discount Slider & Approval"
-                                                >
-                                                    Step 3: MD Slider
-                                                </button>
-                                                <button
-                                                    v-else
-                                                    @click="openExistingInquiry(inq, 3)"
-                                                    class="rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white px-2.5 py-1 text-[11px] font-bold transition"
-                                                    title="View Approved Voucher"
-                                                >
-                                                    Voucher #{{ inq.voucherNo }}
-                                                </button>
+
+                                                <!-- Role-Specific Action Buttons -->
+                                                <template v-if="activeRole === 'reception'">
+                                                    <button
+                                                        @click="openExistingInquiry(inq, 1)"
+                                                        class="rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-600 hover:text-white px-2.5 py-1 text-[11px] font-bold transition cursor-pointer"
+                                                        title="Edit Reception Intake (Step 1)"
+                                                    >
+                                                        Edit Step 1
+                                                    </button>
+                                                </template>
+                                                <template v-else-if="activeRole === 'manager'">
+                                                    <button
+                                                        v-if="inq.status === 'pending_manager' || inq.status === 'draft_reception'"
+                                                        @click="openExistingInquiry(inq, 2)"
+                                                        class="rounded-lg bg-purple-50 text-[#673DE6] hover:bg-[#673DE6] hover:text-white px-2.5 py-1 text-[11px] font-bold transition cursor-pointer"
+                                                        title="Configure Halls, Pax & Catering (Step 2)"
+                                                    >
+                                                        Configure Step 2
+                                                    </button>
+                                                    <button
+                                                        v-else
+                                                        @click="openExistingInquiry(inq, 2)"
+                                                        class="rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-700 hover:text-white px-2.5 py-1 text-[11px] font-bold transition cursor-pointer"
+                                                        title="Review Step 1 & 2 Setup"
+                                                    >
+                                                        Edit Step 1 & 2
+                                                    </button>
+                                                </template>
+                                                <template v-else>
+                                                    <button
+                                                        v-if="inq.status === 'pending_md'"
+                                                        @click="openExistingInquiry(inq, 3)"
+                                                        class="rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white px-2.5 py-1 text-[11px] font-bold transition cursor-pointer"
+                                                        title="MD Approval, Discount & Contract Seal"
+                                                    >
+                                                        👑 MD Sign-off
+                                                    </button>
+                                                    <button
+                                                        v-else
+                                                        @click="openExistingInquiry(inq, 3)"
+                                                        class="rounded-lg bg-[#F0EBFF] text-[#673DE6] hover:bg-[#673DE6] hover:text-white px-2.5 py-1 text-[11px] font-bold transition cursor-pointer"
+                                                        title="Full 3-Step Review & Voucher"
+                                                    >
+                                                        Voucher #{{ inq.voucherNo }}
+                                                    </button>
+                                                </template>
                                             </div>
                                         </td>
                                     </tr>
@@ -2318,6 +2432,7 @@ const submitCheckIn = () => {
             :initialInquiry="selectedInquiry"
             :defaultStep="inquiryDefaultStep"
             :openPrintPreview="inquiryOpenPrintPreview"
+            :userRole="activeRole"
             @close="showInquiryModal = false; inquiryOpenPrintPreview = false"
             @save="handleSaveInquiry"
         />
