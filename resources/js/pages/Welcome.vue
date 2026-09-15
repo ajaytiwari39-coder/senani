@@ -36,7 +36,7 @@ import {
 } from '@lucide/vue';
 
 // -------------------------------------------------------------
-// Active Navigation & Mobile Menu State
+// Navigation & Mobile Menu State
 // -------------------------------------------------------------
 const mobileMenuOpen = ref(false);
 const activeNav = ref('home');
@@ -256,13 +256,13 @@ const banquetHalls: BanquetHall[] = [
         capacity: '500 – 1,000+ Guests',
         area: '8,500 sq. ft. (Pillarless Grand Hall)',
         features: [
-            'Magnificent Crystal Chandeliers & Programmable Dynamic Illumination',
+            'Magnificent Crystal Chandeliers & Programmable Warm Illumination',
             'Pillar-free unobstructed sightlines for grand bridal entry and stage',
             'Full acoustic insulation with JBL professional sound system',
             'Dedicated Royal Varmala stage with customizable floral installations',
             'Dedicated live catering buffets with Awadhi & Continental counters'
         ],
-        idealFor: ['Grand Royal Weddings', 'Varmala & Sangeet Nights', 'High-Profile Political & Corporate Galas'],
+        idealFor: ['Grand Royal Weddings', 'Varmala & Sangeet Nights', 'High-Profile Corporate Galas'],
         image: '/images/hotel/banquet_swarnim.jpg'
     },
     {
@@ -272,13 +272,13 @@ const banquetHalls: BanquetHall[] = [
         capacity: '150 – 350 Guests',
         area: '4,200 sq. ft. Air-Conditioned Hall',
         features: [
-            'Warm champagne gold aesthetic with plush banquet carpeting',
+            'Warm champagne and brushed bronze aesthetic with plush banquet carpeting',
             'Customizable Mandap setup for Tilak, Sagai, and Ring Ceremonies',
             'Integrated high-definition multimedia presentation setup',
             'Attached pre-function reception foyer and VIP dressing suite',
             'Flawless pure vegetarian gourmet catering with live counters'
         ],
-        idealFor: ['Engagement & Ring Ceremony', 'Tilak & Roka Celebrations', 'Silver Jubilee & Milestone Anniversaries'],
+        idealFor: ['Engagement & Ring Ceremony', 'Tilak & Roka Celebrations', 'Silver Jubilee & Anniversaries'],
         image: '/images/hotel/banquet_swarnmahal.jpg'
     },
     {
@@ -317,7 +317,7 @@ const calcIncludeGenset = ref(true);
 const menuPricing = {
     royal: { name: 'Royal Awadhi Feast', rate: 750, items: 'Welcome Drinks, 4 Starters, 2 Paneer, Dal Makhani, 2 Seasonal Veg, Biryani, Naan/Roti, 2 Desserts' },
     imperial: { name: 'Imperial Grand Buffet', rate: 950, items: 'Live Chaat Counter, 6 Starters, Shahi Paneer, Dal Bukhara, 3 Mains, Pulao, Bread Basket, 3 Desserts, Ice Cream' },
-    maharaja: { name: 'Maharaja Gold Sovereign', rate: 1250, items: 'Mocktail Bar, 8 Starters, Paneer Lababdar, Dal Maharani, Kofta, Live Pasta/Dosa, Dry Fruit Pulao, 5 Desserts, Paan Stalls' }
+    maharaja: { name: 'Maharaja Sovereign Feast', rate: 1250, items: 'Mocktail Bar, 8 Starters, Paneer Lababdar, Dal Maharani, Kofta, Live Pasta/Dosa, Dry Fruit Pulao, 5 Desserts, Paan Stalls' }
 };
 
 const calcDecorCost = computed(() => calcIncludeDecor.value ? (calcGuestCount.value > 300 ? 35000 : 22000) : 0);
@@ -329,7 +329,7 @@ const calcHallRent = computed(() => calcGuestCount.value > 300 ? 50000 : 35000);
 const calcSubtotal = computed(() => {
     return calcFoodCost.value + calcHallRent.value + calcDecorCost.value + calcDjCost.value + calcGensetCost.value;
 });
-const calcGst = computed(() => Math.round(calcSubtotal.value * 0.05)); // 5% composite catering
+const calcGst = computed(() => Math.round(calcSubtotal.value * 0.05));
 const calcGrandTotal = computed(() => calcSubtotal.value + calcGst.value);
 
 const generateBanquetProposalWhatsApp = () => {
@@ -367,16 +367,16 @@ const galleryItems: GalleryItem[] = [
         categoryLabel: 'Property & Facade',
         image: '/images/hotel/facade.jpg',
         caption: 'The majestic exterior of Hotel Pleasant View on Manika Cinema Road, Civil Lines, illuminated at dusk.',
-        badge: 'Authentic On-Site'
+        badge: 'Authentic Property'
     },
     {
         id: 2,
-        title: 'Royal Glass Porte-Cochère & Main Entrance',
+        title: 'Glass Double-Door Portico Entrance',
         category: 'property',
         categoryLabel: 'Property & Facade',
         image: '/images/hotel/entrance.jpg',
-        caption: 'Welcoming royal portico with grand glass double doors and 24/7 valet concierge desk.',
-        badge: 'Authentic On-Site'
+        caption: 'Welcoming porte-cochère portico with grand glass double doors and 24/7 valet concierge desk.',
+        badge: 'Authentic Entrance'
     },
     {
         id: 3,
@@ -385,7 +385,7 @@ const galleryItems: GalleryItem[] = [
         categoryLabel: 'Property & Facade',
         image: '/images/hotel/signboard.png',
         caption: 'Prominent luxury landmark situated 200m from Gol Chauraha, Civil Lines, Raebareli.',
-        badge: 'Official Identity'
+        badge: 'Official Sign'
     },
     {
         id: 4,
@@ -524,7 +524,7 @@ const testimonials = [
         role: 'Medical Conference Organizer',
         source: 'Google Review',
         rating: 5,
-        review: 'Hotel Pleasant View is hands-down the premier venue in Raebareli. We hosted 120 doctors for an all-day symposium. Projector, audio, high-tea, and dinner were executed with 5-star precision. Ample valet parking made it effortless for attendees.',
+        review: "Hotel Pleasant View is hands-down the premier venue in Raebareli. We hosted 120 doctors for an all-day symposium. Projector, audio, high-tea, and dinner were executed with 5-star precision. Ample valet parking made it effortless for attendees.",
         date: '1 month ago'
     },
     {
@@ -532,7 +532,7 @@ const testimonials = [
         role: 'Family Vacation Stay',
         source: 'Goibibo Verified',
         rating: 4,
-        review: 'Stayed in the Executive Suite during a family visit. Room was pristine, AC was ice-cold, and room service responded in 10 minutes. Located right in Civil Lines near Gol Chauraha, making shopping and traveling to the station extremely convenient.',
+        review: "Stayed in the Executive Suite during a family visit. Room was pristine, AC was ice-cold, and room service responded in 10 minutes. Located right in Civil Lines near Gol Chauraha, making shopping and traveling to the station extremely convenient.",
         date: '2 weeks ago'
     }
 ];
@@ -548,31 +548,32 @@ const hotelContacts = [
 
 <template>
     <Head>
-        <title>Hotel Pleasant View | Ultra-Luxury 5-Star Hotel & Grand Banquets | Raebareli</title>
-        <meta name="description" content="Welcome to Hotel Pleasant View, Raebareli's premier luxury destination. Experience royal rooms, monumental 1000-guest wedding banquets, exquisite multi-cuisine dining, and unmatched Awadhi hospitality in Civil Lines." />
+        <title>Hotel Pleasant View | Luxury Hotel & Grand Banquets | Raebareli</title>
+        <meta name="description" content="Experience refined Indian hospitality at Hotel Pleasant View, Raebareli. Luxury suites, 1000-guest wedding banquets, pure multi-cuisine dining, and central Civil Lines location." />
     </Head>
 
-    <div class="min-h-screen bg-[#07090e] text-slate-100 font-sans selection:bg-amber-500 selection:text-black">
+    <!-- World Luxury Warm Linen & Caviar Canvas -->
+    <div class="min-h-screen bg-[#FAF8F5] text-[#1A1816] font-sans selection:bg-[#8E744B] selection:text-white">
         <!-- ========================================================= -->
         <!-- TOP LUXURY PRIVILEGE ANNOUNCEMENT BAR                    -->
         <!-- ========================================================= -->
-        <div class="bg-gradient-to-r from-[#171309] via-[#2d2208] to-[#171309] border-b border-amber-500/20 py-2 px-4 text-xs font-medium text-amber-200/90 tracking-wide">
+        <div class="bg-[#1C1B1A] border-b border-[#2D2A27] py-2.5 px-4 text-xs font-normal text-[#C9B28F] tracking-wide">
             <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2 text-center md:text-left">
-                <div class="flex items-center gap-2 flex-wrap justify-center">
-                    <span class="inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2.5 py-0.5 rounded-full font-semibold uppercase tracking-wider text-[10px]">
-                        <Crown class="w-3 h-3 text-amber-400" /> Direct Privilege
+                <div class="flex items-center gap-2.5 flex-wrap justify-center text-xs">
+                    <span class="inline-flex items-center gap-1.5 bg-[#2B2723] text-[#DFCEB7] border border-[#453E37] px-2.5 py-0.5 rounded text-[10px] font-medium uppercase tracking-widest">
+                        Direct Privilege
                     </span>
-                    <span>Book Direct for Complimentary Royal Breakfast & Guaranteed Best Tariff</span>
+                    <span class="text-[#E2D8CC] font-light">Book directly with us for Complimentary Breakfast & Guaranteed Best Tariff</span>
                 </div>
 
-                <div class="flex items-center gap-4 text-slate-300 text-xs">
-                    <a href="tel:+919794152222" class="flex items-center gap-1.5 text-amber-300 hover:text-amber-200 transition-colors font-medium">
-                        <Phone class="w-3.5 h-3.5 text-amber-400" />
-                        <span>24x7 Concierge: +91 9794152222</span>
+                <div class="flex items-center gap-5 text-[#B8AEA2] text-xs">
+                    <a href="tel:+919794152222" class="flex items-center gap-1.5 text-[#E2D8CC] hover:text-[#C9B28F] transition-colors font-medium">
+                        <Phone class="w-3.5 h-3.5 text-[#C9B28F]" />
+                        <span>Concierge: +91 9794152222</span>
                     </a>
-                    <span class="hidden md:inline text-slate-600">|</span>
-                    <Link href="/login" class="hidden md:inline-flex items-center gap-1 text-slate-400 hover:text-amber-300 transition-colors">
-                        <span>Staff / ERP Portal</span>
+                    <span class="hidden md:inline text-[#4A453E]">|</span>
+                    <Link href="/login" class="hidden md:inline-flex items-center gap-1 text-[#9C9388] hover:text-[#DFCEB7] transition-colors">
+                        <span>Staff & Management Portal</span>
                         <ChevronRight class="w-3 h-3" />
                     </Link>
                 </div>
@@ -580,85 +581,83 @@ const hotelContacts = [
         </div>
 
         <!-- ========================================================= -->
-        <!-- PRIMARY REGAL NAVIGATION BAR                             -->
+        <!-- PRIMARY REGAL NAVIGATION BAR (Aman & Four Seasons Style)   -->
         <!-- ========================================================= -->
-        <header class="sticky top-0 z-40 bg-[#07090e]/95 backdrop-blur-md border-b border-amber-500/15 transition-all">
+        <header class="sticky top-0 z-40 bg-[#FAF8F5]/95 backdrop-blur-md border-b border-[#E8E2D8] transition-all">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-                <!-- Brand Logo & Royal Crest -->
+                <!-- Brand Logo & Clean Crest -->
                 <a href="#" @click.prevent="scrollToSection('home')" class="flex items-center gap-3.5 group">
-                    <div class="w-11 h-11 rounded-lg bg-gradient-to-br from-amber-400 via-amber-600 to-yellow-700 p-[1px] shadow-lg shadow-amber-500/10">
-                        <div class="w-full h-full bg-[#0d121c] rounded-[7px] flex items-center justify-center text-amber-400 group-hover:scale-105 transition-transform">
-                            <Crown class="w-6 h-6 text-amber-400" />
-                        </div>
+                    <div class="w-10 h-10 rounded border border-[#C5A880]/60 bg-[#F4EFEA] flex items-center justify-center text-[#8E744B] shadow-sm group-hover:border-[#8E744B] transition-colors">
+                        <Crown class="w-5 h-5 text-[#8E744B]" />
                     </div>
                     <div class="text-left">
-                        <div class="text-lg md:text-xl font-serif font-bold tracking-[0.18em] text-white group-hover:text-amber-300 transition-colors leading-tight">
-                            HOTEL PLEASANT VIEW
+                        <div class="text-base sm:text-lg font-serif tracking-[0.2em] font-semibold text-[#1A1816] group-hover:text-[#8E744B] transition-colors uppercase">
+                            Hotel Pleasant View
                         </div>
-                        <div class="text-[10px] tracking-[0.25em] font-semibold text-amber-400/80 uppercase">
-                            Raebareli • Est. Excellence
+                        <div class="text-[9px] tracking-[0.28em] font-medium text-[#8E744B] uppercase">
+                            Raebareli • Civil Lines
                         </div>
                     </div>
                 </a>
 
-                <!-- Desktop Links -->
-                <nav class="hidden lg:flex items-center gap-7 text-xs font-semibold uppercase tracking-wider text-slate-300">
-                    <button @click="scrollToSection('rooms')" class="hover:text-amber-400 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-400">
-                        Rooms & Suites
+                <!-- Desktop Links (Understated Editorial) -->
+                <nav class="hidden lg:flex items-center gap-8 text-[11px] font-medium uppercase tracking-[0.16em] text-[#5A544C]">
+                    <button @click="scrollToSection('rooms')" class="hover:text-[#8E744B] transition-colors pb-1 border-b-2 border-transparent hover:border-[#8E744B]">
+                        Accommodations
                     </button>
-                    <button @click="scrollToSection('banquets')" class="hover:text-amber-400 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-400">
-                        Banquets & Weddings
+                    <button @click="scrollToSection('banquets')" class="hover:text-[#8E744B] transition-colors pb-1 border-b-2 border-transparent hover:border-[#8E744B]">
+                        Grand Banquets
                     </button>
-                    <button @click="scrollToSection('gatherings')" class="hover:text-amber-400 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-400">
-                        Gatherings
+                    <button @click="scrollToSection('gatherings')" class="hover:text-[#8E744B] transition-colors pb-1 border-b-2 border-transparent hover:border-[#8E744B]">
+                        Celebrations
                     </button>
-                    <button @click="scrollToSection('dining')" class="hover:text-amber-400 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-400">
-                        Catering & Dining
+                    <button @click="scrollToSection('dining')" class="hover:text-[#8E744B] transition-colors pb-1 border-b-2 border-transparent hover:border-[#8E744B]">
+                        Culinary
                     </button>
-                    <button @click="scrollToSection('gallery')" class="hover:text-amber-400 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-400">
+                    <button @click="scrollToSection('gallery')" class="hover:text-[#8E744B] transition-colors pb-1 border-b-2 border-transparent hover:border-[#8E744B]">
                         Gallery
                     </button>
-                    <button @click="scrollToSection('location')" class="hover:text-amber-400 transition-colors pb-1 border-b-2 border-transparent hover:border-amber-400">
+                    <button @click="scrollToSection('location')" class="hover:text-[#8E744B] transition-colors pb-1 border-b-2 border-transparent hover:border-[#8E744B]">
                         Location
                     </button>
                 </nav>
 
-                <!-- Action CTA Buttons -->
+                <!-- Action CTA Buttons (Sophisticated Charcoal & Brushed Bronze) -->
                 <div class="hidden sm:flex items-center gap-3">
-                    <button @click="scrollToSection('banquets')" class="px-4 py-2.5 rounded-md border border-amber-500/40 text-amber-300 hover:bg-amber-500/10 transition-colors text-xs font-bold uppercase tracking-wider">
-                        Plan An Event
+                    <button @click="scrollToSection('banquets')" class="px-4 py-2 rounded border border-[#C5A880] text-[#7A6038] hover:bg-[#F3EDE3] transition-colors text-[11px] font-semibold uppercase tracking-wider">
+                        Plan Event
                     </button>
-                    <button @click="initiateBooking()" class="px-5 py-2.5 rounded-md bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 hover:brightness-110 font-bold text-xs uppercase tracking-wider shadow-lg shadow-amber-500/20 transition-all">
-                        Book Stay
+                    <button @click="initiateBooking()" class="px-5 py-2 rounded bg-[#1C1B1A] text-[#FAF8F5] hover:bg-[#312E2B] font-medium text-[11px] uppercase tracking-wider shadow-sm transition-all border border-[#1C1B1A]">
+                        Reserve Room
                     </button>
                 </div>
 
                 <!-- Mobile Menu Button -->
-                <button @click="mobileMenuOpen = !mobileMenuOpen" class="lg:hidden p-2 rounded-md border border-slate-700 text-slate-300 hover:text-white" aria-label="Toggle menu">
+                <button @click="mobileMenuOpen = !mobileMenuOpen" class="lg:hidden p-2 rounded border border-[#DCD5C9] text-[#1A1816]" aria-label="Toggle menu">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path v-if="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <path v-if="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6h16M4 12h16M4 18h16" />
+                        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
 
             <!-- Mobile Drawer -->
-            <div v-if="mobileMenuOpen" class="lg:hidden bg-[#0a0e17] border-b border-amber-500/20 px-6 py-6 space-y-4">
-                <div class="flex flex-col space-y-3 text-sm font-semibold uppercase tracking-wider text-slate-200">
-                    <button @click="scrollToSection('rooms')" class="text-left py-2 hover:text-amber-400 border-b border-slate-800">Rooms & Suites</button>
-                    <button @click="scrollToSection('banquets')" class="text-left py-2 hover:text-amber-400 border-b border-slate-800">Banquets & Weddings</button>
-                    <button @click="scrollToSection('gatherings')" class="text-left py-2 hover:text-amber-400 border-b border-slate-800">Gatherings & Events</button>
-                    <button @click="scrollToSection('dining')" class="text-left py-2 hover:text-amber-400 border-b border-slate-800">Catering & Dining</button>
-                    <button @click="scrollToSection('gallery')" class="text-left py-2 hover:text-amber-400 border-b border-slate-800">Photo Gallery</button>
-                    <button @click="scrollToSection('location')" class="text-left py-2 hover:text-amber-400 border-b border-slate-800">Location & Contact</button>
-                    <Link href="/login" class="text-left py-2 text-amber-400 hover:text-amber-300">Staff ERP Login &rarr;</Link>
+            <div v-if="mobileMenuOpen" class="lg:hidden bg-[#FAF8F5] border-b border-[#E8E2D8] px-6 py-6 space-y-4">
+                <div class="flex flex-col space-y-3 text-xs font-semibold uppercase tracking-wider text-[#4A453E]">
+                    <button @click="scrollToSection('rooms')" class="text-left py-2 hover:text-[#8E744B] border-b border-[#EAE4DA]">Accommodations</button>
+                    <button @click="scrollToSection('banquets')" class="text-left py-2 hover:text-[#8E744B] border-b border-[#EAE4DA]">Grand Banquets</button>
+                    <button @click="scrollToSection('gatherings')" class="text-left py-2 hover:text-[#8E744B] border-b border-[#EAE4DA]">Celebrations & Gatherings</button>
+                    <button @click="scrollToSection('dining')" class="text-left py-2 hover:text-[#8E744B] border-b border-[#EAE4DA]">Culinary Feasts</button>
+                    <button @click="scrollToSection('gallery')" class="text-left py-2 hover:text-[#8E744B] border-b border-[#EAE4DA]">Photo Gallery</button>
+                    <button @click="scrollToSection('location')" class="text-left py-2 hover:text-[#8E744B] border-b border-[#EAE4DA]">Location & Contact</button>
+                    <Link href="/login" class="text-left py-2 text-[#8E744B]">Staff ERP Portal &rarr;</Link>
                 </div>
-                <div class="pt-2 flex flex-col gap-3">
-                    <button @click="initiateBooking()" class="w-full py-3 text-center bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold uppercase tracking-wider rounded-md text-xs">
-                        Reserve A Room
+                <div class="pt-2 flex flex-col gap-2.5">
+                    <button @click="initiateBooking()" class="w-full py-2.5 text-center bg-[#1C1B1A] text-[#FAF8F5] font-medium uppercase tracking-wider rounded text-xs">
+                        Reserve A Stay
                     </button>
-                    <a href="tel:+919794152222" class="w-full py-3 text-center border border-amber-500/40 text-amber-300 font-bold uppercase tracking-wider rounded-md text-xs flex items-center justify-center gap-2">
-                        <Phone class="w-4 h-4" /> Call Front Desk
+                    <a href="tel:+919794152222" class="w-full py-2.5 text-center border border-[#C5A880] text-[#7A6038] font-medium uppercase tracking-wider rounded text-xs flex items-center justify-center gap-2">
+                        <Phone class="w-3.5 h-3.5" /> Call Concierge
                     </a>
                 </div>
             </div>
@@ -666,104 +665,96 @@ const hotelContacts = [
 
         <main>
             <!-- ========================================================= -->
-            <!-- HERO SECTION: THE PINNACLE OF ROYAL HOSPITALITY           -->
+            <!-- HERO SECTION: REFINED EDITORIAL HOSPITALITY               -->
             <!-- ========================================================= -->
-            <section id="home" class="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
-                <!-- Hero High-Res Background with Subtle Pan & Zoom -->
+            <section id="home" class="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
+                <!-- Background with Cinematic Subtle Tone -->
                 <div class="absolute inset-0 z-0">
                     <img
                         src="/images/hotel/facade.jpg"
                         alt="Hotel Pleasant View Luxury Facade Raebareli"
-                        class="w-full h-full object-cover object-center brightness-[0.40] scale-105 transform animate-subtle-zoom"
+                        class="w-full h-full object-cover object-center brightness-[0.38] contrast-[1.05] scale-100"
                     />
                     <!-- Vignette Gradients -->
-                    <div class="absolute inset-0 bg-gradient-to-t from-[#07090e] via-transparent to-[#07090e]/80"></div>
-                    <div class="absolute inset-0 bg-gradient-to-r from-[#07090e]/80 via-transparent to-[#07090e]/80"></div>
-                    <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.06)_0%,transparent_70%)]"></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-[#FAF8F5] via-transparent to-[#1C1B1A]/70"></div>
+                    <div class="absolute inset-0 bg-[#161412]/40"></div>
                 </div>
 
                 <!-- Hero Content Container -->
-                <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-24 text-center">
-                    <!-- Rating / Heritage Crest -->
-                    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#111723]/90 border border-amber-500/40 text-amber-300 text-xs font-semibold tracking-wider uppercase mb-6 shadow-xl backdrop-blur-md">
-                        <Crown class="w-3.5 h-3.5 text-amber-400" />
-                        <span>The Premier 5-Star Hospitality Experience in Raebareli</span>
-                        <div class="flex items-center gap-0.5 text-amber-400 ml-1">
-                            <Star v-for="n in 5" :key="n" class="w-3 h-3 fill-amber-400 text-amber-400" />
-                        </div>
+                <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-28 text-center">
+                    <!-- Brand Subtitle / Crest -->
+                    <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#1C1B1A]/80 border border-[#C5A880]/40 text-[#DFCEB7] text-[11px] font-normal tracking-[0.2em] uppercase mb-6 backdrop-blur-md">
+                        <Crown class="w-3 h-3 text-[#C5A880]" />
+                        <span>Civil Lines, Raebareli • Uttar Pradesh</span>
                     </div>
 
-                    <!-- Main Headline -->
-                    <h1 class="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-serif font-bold text-white tracking-tight leading-[1.1] mb-6">
-                        Where Timeless Grandeur Meets
-                        <span class="block mt-2 bg-gradient-to-r from-amber-200 via-amber-400 to-yellow-200 bg-clip-text text-transparent italic font-serif">
-                            Regal Indian Hospitality
+                    <!-- Main Headline (Editorial Classical Serif) -->
+                    <h1 class="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-serif font-normal text-[#FAF8F5] tracking-tight leading-[1.12] mb-6">
+                        An Address of Distinction &
+                        <span class="block mt-2 italic font-serif text-[#DFCEB7]">
+                            Timeless Indian Hospitality
                         </span>
                     </h1>
 
                     <!-- Subtitle -->
-                    <p class="max-w-3xl mx-auto text-base sm:text-lg md:text-xl text-slate-300 font-light leading-relaxed mb-10">
-                        Nestled in the prime heart of Civil Lines, Hotel Pleasant View delivers supreme luxury accommodations, monumental pillarless wedding ballrooms, and legendary Awadhi gastronomic feasts.
+                    <p class="max-w-2xl mx-auto text-sm sm:text-base md:text-lg text-[#E8E2D8] font-light leading-relaxed mb-10">
+                        Immerse yourself in refined accommodations, monumentally scaled wedding ballrooms, and legendary Awadhi culinary heritage in the heart of Civil Lines.
                     </p>
 
-                    <!-- Trust Strip Highlights -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-4xl mx-auto mb-12 text-left">
-                        <div class="p-3.5 rounded-lg bg-[#0d121c]/80 border border-amber-500/20 backdrop-blur-sm">
-                            <div class="text-amber-400 font-bold text-xl">4.0 ★</div>
-                            <div class="text-xs text-slate-400 mt-0.5">1,000+ Verified Reviews</div>
+                    <!-- Trust Strip Highlights (Aman Restraint) -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl mx-auto mb-10 text-center">
+                        <div class="p-3 rounded bg-[#1C1B1A]/60 border border-[#C5A880]/30 backdrop-blur-sm">
+                            <div class="text-[#FAF8F5] font-serif text-lg">4.0 ★</div>
+                            <div class="text-[11px] text-[#CFC5B8] mt-0.5">1,000+ Verified Reviews</div>
                         </div>
-                        <div class="p-3.5 rounded-lg bg-[#0d121c]/80 border border-amber-500/20 backdrop-blur-sm">
-                            <div class="text-amber-400 font-bold text-xl">1,000+</div>
-                            <div class="text-xs text-slate-400 mt-0.5">Banquet Guest Capacity</div>
+                        <div class="p-3 rounded bg-[#1C1B1A]/60 border border-[#C5A880]/30 backdrop-blur-sm">
+                            <div class="text-[#FAF8F5] font-serif text-lg">1,000+</div>
+                            <div class="text-[11px] text-[#CFC5B8] mt-0.5">Banquet Capacity</div>
                         </div>
-                        <div class="p-3.5 rounded-lg bg-[#0d121c]/80 border border-amber-500/20 backdrop-blur-sm">
-                            <div class="text-amber-400 font-bold text-xl">2.3 KM</div>
-                            <div class="text-xs text-slate-400 mt-0.5">From Raebareli Jn Station</div>
+                        <div class="p-3 rounded bg-[#1C1B1A]/60 border border-[#C5A880]/30 backdrop-blur-sm">
+                            <div class="text-[#FAF8F5] font-serif text-lg">2.3 KM</div>
+                            <div class="text-[11px] text-[#CFC5B8] mt-0.5">From Railway Jn</div>
                         </div>
-                        <div class="p-3.5 rounded-lg bg-[#0d121c]/80 border border-amber-500/20 backdrop-blur-sm">
-                            <div class="text-amber-400 font-bold text-xl">24x7</div>
-                            <div class="text-xs text-slate-400 mt-0.5">Royal Concierge & Valet</div>
+                        <div class="p-3 rounded bg-[#1C1B1A]/60 border border-[#C5A880]/30 backdrop-blur-sm">
+                            <div class="text-[#FAF8F5] font-serif text-lg">24 / 7</div>
+                            <div class="text-[11px] text-[#CFC5B8] mt-0.5">Concierge & Valet</div>
                         </div>
                     </div>
 
-                    <!-- Floating Interactive Booking Widget -->
-                    <div class="bg-[#0f1522]/95 border-2 border-amber-500/30 rounded-2xl p-4 sm:p-6 shadow-2xl backdrop-blur-xl max-w-4xl mx-auto text-left">
-                        <div class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-4 flex items-center gap-2">
-                            <Sparkles class="w-4 h-4 text-amber-400" />
-                            <span>Quick Reservation & Tariff Estimator</span>
+                    <!-- Floating Interactive Booking Widget (Warm White Card) -->
+                    <div class="bg-[#FFFFFF] border border-[#E2DCD2] rounded-xl p-5 sm:p-6 shadow-[0_16px_48px_rgba(26,24,22,0.12)] max-w-4xl mx-auto text-left">
+                        <div class="text-[11px] font-medium uppercase tracking-[0.18em] text-[#8E744B] mb-4 flex items-center gap-2">
+                            <Sparkles class="w-3.5 h-3.5 text-[#8E744B]" />
+                            <span>Reservation & Tariff Concierge</span>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                             <!-- Check In -->
                             <div>
-                                <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Check-in Date</label>
-                                <div class="relative">
-                                    <input
-                                        v-model="bookingCheckIn"
-                                        type="date"
-                                        class="w-full bg-[#161f30] border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:border-amber-400 focus:outline-none"
-                                    />
-                                </div>
+                                <label class="block text-[10px] font-semibold uppercase tracking-wider text-[#6B665F] mb-1.5">Check-in Date</label>
+                                <input
+                                    v-model="bookingCheckIn"
+                                    type="date"
+                                    class="w-full bg-[#FAF8F5] border border-[#DDD6CB] rounded px-3 py-2 text-xs text-[#1A1816] focus:border-[#8E744B] focus:outline-none"
+                                />
                             </div>
 
                             <!-- Check Out -->
                             <div>
-                                <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Check-out Date</label>
-                                <div class="relative">
-                                    <input
-                                        v-model="bookingCheckOut"
-                                        type="date"
-                                        class="w-full bg-[#161f30] border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:border-amber-400 focus:outline-none"
-                                    />
-                                </div>
+                                <label class="block text-[10px] font-semibold uppercase tracking-wider text-[#6B665F] mb-1.5">Check-out Date</label>
+                                <input
+                                    v-model="bookingCheckOut"
+                                    type="date"
+                                    class="w-full bg-[#FAF8F5] border border-[#DDD6CB] rounded px-3 py-2 text-xs text-[#1A1816] focus:border-[#8E744B] focus:outline-none"
+                                />
                             </div>
 
                             <!-- Category Selection -->
                             <div>
-                                <label class="block text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Room / Event Type</label>
+                                <label class="block text-[10px] font-semibold uppercase tracking-wider text-[#6B665F] mb-1.5">Accommodations</label>
                                 <select
                                     v-model="bookingCategory"
-                                    class="w-full bg-[#161f30] border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:border-amber-400 focus:outline-none"
+                                    class="w-full bg-[#FAF8F5] border border-[#DDD6CB] rounded px-3 py-2 text-xs text-[#1A1816] focus:border-[#8E744B] focus:outline-none"
                                 >
                                     <option value="deluxe">Deluxe Heritage (₹1,500/nt)</option>
                                     <option value="executive">Executive Suite (₹1,892/nt)</option>
@@ -771,81 +762,81 @@ const hotelContacts = [
                                 </select>
                             </div>
 
-                            <!-- Guests & CTA -->
+                            <!-- CTA Button -->
                             <div class="flex flex-col justify-end">
                                 <button
                                     @click="initiateBooking()"
-                                    class="w-full py-2.5 px-4 rounded-lg bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 font-bold text-xs uppercase tracking-wider hover:brightness-110 shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2 h-[42px]"
+                                    class="w-full py-2.5 px-4 rounded bg-[#1C1B1A] text-[#FAF8F5] hover:bg-[#312E2B] font-medium text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 h-[38px]"
                                 >
-                                    <span>Check & Book</span>
-                                    <ArrowRight class="w-4 h-4" />
+                                    <span>Check & Reserve</span>
+                                    <ArrowRight class="w-3.5 h-3.5" />
                                 </button>
                             </div>
                         </div>
 
                         <!-- Subtext Guarantee -->
-                        <div class="mt-3 flex items-center justify-between text-[11px] text-slate-400 border-t border-slate-800/80 pt-2.5">
+                        <div class="mt-3.5 flex items-center justify-between text-[11px] text-[#7A746D] border-t border-[#F0EBE1] pt-3">
                             <div class="flex items-center gap-2">
-                                <CheckCircle2 class="w-3.5 h-3.5 text-emerald-400" />
-                                <span>Best Price Guaranteed • Free Cancellation 24h Before • No Hidden Fees</span>
+                                <CheckCircle2 class="w-3.5 h-3.5 text-[#5A7B68]" />
+                                <span>Guaranteed Best Rates • Free Cancellation 24h Prior • Direct Desk Confirmation</span>
                             </div>
-                            <span class="hidden sm:inline text-amber-300 font-medium">Instant WhatsApp Confirmation</span>
+                            <span class="hidden sm:inline text-[#8E744B] font-medium">WhatsApp Assistance Available</span>
                         </div>
                     </div>
                 </div>
             </section>
 
             <!-- ========================================================= -->
-            <!-- THE HERITAGE & PROPERTY (REAL ON-SITE PHOTOS)             -->
+            <!-- THE HERITAGE & PROPERTY (AUTHENTIC ON-SITE VISUALS)       -->
             <!-- ========================================================= -->
-            <section class="py-24 bg-[#0a0d14] relative border-t border-amber-500/10">
+            <section class="py-24 bg-[#FAF8F5] relative border-t border-[#EAE4DA]">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                         <!-- Left Story -->
                         <div class="lg:col-span-6 space-y-6 text-left">
-                            <div class="inline-flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-[0.2em]">
-                                <Sparkles class="w-4 h-4" />
-                                <span>A Sanctuary of Distinction</span>
+                            <div class="inline-flex items-center gap-2 text-[#8E744B] text-[11px] font-semibold uppercase tracking-[0.2em]">
+                                <Sparkles class="w-3.5 h-3.5" />
+                                <span>Sense of Place</span>
                             </div>
 
-                            <h2 class="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-white leading-tight">
-                                Raebareli’s Most Revered Address for
-                                <span class="text-amber-400 italic font-serif">Luxury & Grand Celebrations</span>
+                            <h2 class="text-3xl sm:text-4xl md:text-5xl font-serif font-normal text-[#1A1816] leading-tight">
+                                A Haven of Warmth & Elegance in
+                                <span class="italic font-serif text-[#8E744B]">Civil Lines</span>
                             </h2>
 
-                            <p class="text-slate-300 leading-relaxed text-sm sm:text-base font-light">
-                                Situated on Manika Cinema Road in Gandhi Nagar, Civil Lines, <strong class="text-white font-medium">Hotel Pleasant View</strong> has set the gold standard for hospitality in Raebareli. Designed with royal neoclassical elements and state-of-the-art conveniences, we cater to distinguished business delegates, holidaying families, and prestigious wedding celebrations.
+                            <p class="text-[#5A544C] leading-relaxed text-sm sm:text-base font-light">
+                                Situated on Manika Cinema Road in Gandhi Nagar, Civil Lines, <strong class="text-[#1A1816] font-medium">Hotel Pleasant View</strong> has been thoughtfully crafted to offer an authentic retreat for discerning corporate travelers, vacationing families, and magnificent wedding celebrations.
                             </p>
 
-                            <p class="text-slate-400 leading-relaxed text-sm">
-                                Located just 2.3 km from Raebareli Junction Railway Station and a stone’s throw from Gol Chauraha, our guests enjoy seamless connectivity while residing in an oasis of tranquility, 24/7 security, and peerless service.
+                            <p class="text-[#7A746D] leading-relaxed text-sm">
+                                Perfectly positioned just 2.3 km from Raebareli Junction Railway Station and mere steps from Gol Chauraha, guests experience effortless accessibility paired with genuine warmth, immaculate hygiene, and attentive round-the-clock service.
                             </p>
 
-                            <!-- Feature Badges -->
-                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-2">
-                                <div class="p-3 rounded-lg bg-[#111723] border border-amber-500/20">
-                                    <ShieldCheck class="w-5 h-5 text-amber-400 mb-1" />
-                                    <div class="text-xs font-bold text-white">24/7 Concierge</div>
-                                    <div class="text-[11px] text-slate-400">Round-the-clock room dining</div>
+                            <!-- Three Feature Columns -->
+                            <div class="grid grid-cols-3 gap-3 pt-2">
+                                <div class="p-3.5 rounded bg-[#FFFFFF] border border-[#EAE4DA]">
+                                    <ShieldCheck class="w-4 h-4 text-[#8E744B] mb-1.5" />
+                                    <div class="text-xs font-semibold text-[#1A1816]">24/7 Service</div>
+                                    <div class="text-[11px] text-[#7A746D] mt-0.5">In-room dining & desk</div>
                                 </div>
-                                <div class="p-3 rounded-lg bg-[#111723] border border-amber-500/20">
-                                    <Car class="w-5 h-5 text-amber-400 mb-1" />
-                                    <div class="text-xs font-bold text-white">Valet Parking</div>
-                                    <div class="text-[11px] text-slate-400">Secure on-premises parking</div>
+                                <div class="p-3.5 rounded bg-[#FFFFFF] border border-[#EAE4DA]">
+                                    <Car class="w-4 h-4 text-[#8E744B] mb-1.5" />
+                                    <div class="text-xs font-semibold text-[#1A1816]">Valet Parking</div>
+                                    <div class="text-[11px] text-[#7A746D] mt-0.5">Dedicated secure parking</div>
                                 </div>
-                                <div class="p-3 rounded-lg bg-[#111723] border border-amber-500/20">
-                                    <Utensils class="w-5 h-5 text-amber-400 mb-1" />
-                                    <div class="text-xs font-bold text-white">Pure Delicacies</div>
-                                    <div class="text-[11px] text-slate-400">Authentic Awadhi cooking</div>
+                                <div class="p-3.5 rounded bg-[#FFFFFF] border border-[#EAE4DA]">
+                                    <Utensils class="w-4 h-4 text-[#8E744B] mb-1.5" />
+                                    <div class="text-xs font-semibold text-[#1A1816]">Awadhi Delights</div>
+                                    <div class="text-[11px] text-[#7A746D] mt-0.5">Pure hygienic gourmet</div>
                                 </div>
                             </div>
 
                             <div class="pt-2 flex items-center gap-4">
-                                <button @click="scrollToSection('rooms')" class="px-6 py-3 rounded-md bg-amber-500 text-slate-950 font-bold text-xs uppercase tracking-wider hover:brightness-110 shadow-lg shadow-amber-500/20 transition-all">
-                                    Explore Suites
+                                <button @click="scrollToSection('rooms')" class="px-5 py-2.5 rounded bg-[#1C1B1A] text-[#FAF8F5] text-xs font-medium uppercase tracking-wider hover:bg-[#312E2B] transition-colors">
+                                    Explore Accommodations
                                 </button>
-                                <a href="tel:+919794152222" class="px-6 py-3 rounded-md border border-slate-700 text-slate-300 font-bold text-xs uppercase tracking-wider hover:text-amber-400 hover:border-amber-400 transition-colors">
-                                    Call Reception
+                                <a href="tel:+919794152222" class="px-5 py-2.5 rounded border border-[#C5A880] text-[#7A6038] hover:bg-[#F4EFEA] text-xs font-medium uppercase tracking-wider transition-colors">
+                                    Contact Reception
                                 </a>
                             </div>
                         </div>
@@ -855,77 +846,56 @@ const hotelContacts = [
                             <div class="grid grid-cols-2 gap-4">
                                 <!-- Real Hotel Entrance Photo -->
                                 <div class="space-y-4">
-                                    <div class="relative rounded-xl overflow-hidden border border-amber-500/30 group shadow-2xl">
+                                    <div class="relative rounded-lg overflow-hidden border border-[#E0D9CE] group shadow-sm bg-[#FFFFFF]">
                                         <img
                                             src="/images/hotel/entrance.jpg"
                                             alt="Hotel Pleasant View Real Portico Entrance"
-                                            class="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
+                                            class="w-full h-56 object-cover group-hover:scale-103 transition-transform duration-500"
                                         />
-                                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                                        <div class="absolute bottom-3 left-3 right-3 text-left">
-                                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-black uppercase tracking-wider mb-1">
-                                                Authentic View
-                                            </span>
-                                            <div class="text-xs font-semibold text-white">Grand Entrance Portico</div>
+                                        <div class="p-3 bg-[#FFFFFF] text-left border-t border-[#EAE4DA]">
+                                            <span class="text-[10px] font-medium text-[#8E744B] uppercase tracking-wider block">Porte-Cochère</span>
+                                            <div class="text-xs font-medium text-[#1A1816]">Main Entrance Portico</div>
                                         </div>
                                     </div>
 
-                                    <div class="relative rounded-xl overflow-hidden border border-amber-500/30 group shadow-2xl">
+                                    <div class="relative rounded-lg overflow-hidden border border-[#E0D9CE] group shadow-sm bg-[#FFFFFF]">
                                         <img
                                             src="/images/hotel/room.jpg"
                                             alt="Hotel Pleasant View Real Guest Room"
-                                            class="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-500"
+                                            class="w-full h-44 object-cover group-hover:scale-103 transition-transform duration-500"
                                         />
-                                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                                        <div class="absolute bottom-3 left-3 right-3 text-left">
-                                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-black uppercase tracking-wider mb-1">
-                                                Authentic Room
-                                            </span>
-                                            <div class="text-xs font-semibold text-white">Deluxe King Bedroom</div>
+                                        <div class="p-3 bg-[#FFFFFF] text-left border-t border-[#EAE4DA]">
+                                            <span class="text-[10px] font-medium text-[#8E744B] uppercase tracking-wider block">Authentic Bedroom</span>
+                                            <div class="text-xs font-medium text-[#1A1816]">Deluxe King Room</div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- Real Facade & Signboard Photo -->
                                 <div class="space-y-4 pt-6">
-                                    <div class="relative rounded-xl overflow-hidden border border-amber-500/30 group shadow-2xl">
+                                    <div class="relative rounded-lg overflow-hidden border border-[#E0D9CE] group shadow-sm bg-[#FFFFFF]">
                                         <img
                                             src="/images/hotel/facade.jpg"
                                             alt="Hotel Pleasant View Real Multi-story Facade"
-                                            class="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-500"
+                                            class="w-full h-44 object-cover group-hover:scale-103 transition-transform duration-500"
                                         />
-                                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                                        <div class="absolute bottom-3 left-3 right-3 text-left">
-                                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-black uppercase tracking-wider mb-1">
-                                                Civil Lines
-                                            </span>
-                                            <div class="text-xs font-semibold text-white">Main Building Facade</div>
+                                        <div class="p-3 bg-[#FFFFFF] text-left border-t border-[#EAE4DA]">
+                                            <span class="text-[10px] font-medium text-[#8E744B] uppercase tracking-wider block">Civil Lines</span>
+                                            <div class="text-xs font-medium text-[#1A1816]">Main Hotel Facade</div>
                                         </div>
                                     </div>
 
-                                    <div class="relative rounded-xl overflow-hidden border border-amber-500/30 group shadow-2xl">
+                                    <div class="relative rounded-lg overflow-hidden border border-[#E0D9CE] group shadow-sm bg-[#FFFFFF]">
                                         <img
                                             src="/images/hotel/banquet_swarnim.jpg"
                                             alt="Hotel Pleasant View Grand Banquet Hall"
-                                            class="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-500"
+                                            class="w-full h-56 object-cover group-hover:scale-103 transition-transform duration-500"
                                         />
-                                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                                        <div class="absolute bottom-3 left-3 right-3 text-left">
-                                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500 text-black uppercase tracking-wider mb-1">
-                                                Banquet
-                                            </span>
-                                            <div class="text-xs font-semibold text-white">Swarnim Ballroom</div>
+                                        <div class="p-3 bg-[#FFFFFF] text-left border-t border-[#EAE4DA]">
+                                            <span class="text-[10px] font-medium text-[#8E744B] uppercase tracking-wider block">Celebration Hall</span>
+                                            <div class="text-xs font-medium text-[#1A1816]">Swarnim Grand Ballroom</div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-
-                            <!-- Decorative Stamp -->
-                            <div class="absolute -bottom-6 -right-6 hidden sm:flex items-center gap-3 bg-[#111723] border border-amber-500/40 rounded-full px-5 py-3 shadow-2xl">
-                                <Award class="w-8 h-8 text-amber-400" />
-                                <div class="text-left">
-                                    <div class="text-xs font-bold text-white">Award of Excellence</div>
-                                    <div class="text-[10px] text-slate-400">Best Hospitality in Raebareli</div>
                                 </div>
                             </div>
                         </div>
@@ -934,21 +904,21 @@ const hotelContacts = [
             </section>
 
             <!-- ========================================================= -->
-            <!-- ROOMS & SUITES COLLECTION                                -->
+            <!-- ROOMS & SUITES COLLECTION (FOUR SEASONS WARM WHITE)       -->
             <!-- ========================================================= -->
-            <section id="rooms" class="py-24 bg-[#07090e] relative border-t border-amber-500/10">
+            <section id="rooms" class="py-24 bg-[#F5F2ED] relative border-t border-[#EAE4DA]">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <!-- Section Header -->
-                    <div class="text-center max-w-3xl mx-auto mb-16">
-                        <div class="inline-flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-[0.2em] mb-3">
-                            <BedDouble class="w-4 h-4" />
-                            <span>Accommodations of Pure Serenity</span>
+                    <div class="text-center max-w-2xl mx-auto mb-16">
+                        <div class="inline-flex items-center gap-2 text-[#8E744B] text-[11px] font-semibold uppercase tracking-[0.2em] mb-2">
+                            <BedDouble class="w-3.5 h-3.5" />
+                            <span>Private Sanctuaries</span>
                         </div>
-                        <h2 class="text-3xl sm:text-5xl font-serif font-bold text-white mb-4">
+                        <h2 class="text-3xl sm:text-4xl md:text-5xl font-serif font-normal text-[#1A1816] mb-3">
                             Rooms & Sovereign Suites
                         </h2>
-                        <p class="text-slate-400 text-sm sm:text-base font-light">
-                            Each sanctuary at Hotel Pleasant View is thoughtfully appointed with bespoke wooden furnishings, orthopedic comfort mattresses, high-speed fiber internet, and attentive around-the-clock service.
+                        <p class="text-[#6B665F] text-sm font-light leading-relaxed">
+                            Each accommodation is meticulously designed with soothing natural wood veneers, premium orthopedic comfort mattresses, high-speed fiber Wi-Fi, and personalized room service.
                         </p>
                     </div>
 
@@ -957,66 +927,66 @@ const hotelContacts = [
                         <div
                             v-for="room in rooms"
                             :key="room.id"
-                            class="group rounded-2xl bg-[#0d121c] border border-amber-500/20 hover:border-amber-500/50 overflow-hidden shadow-xl transition-all duration-300 flex flex-col justify-between"
+                            class="group rounded-xl bg-[#FFFFFF] border border-[#E2DCD2] hover:border-[#C5A880] overflow-hidden shadow-[0_4px_20px_rgba(26,24,22,0.05)] transition-all duration-300 flex flex-col justify-between"
                         >
                             <div>
-                                <!-- Room Image Container -->
+                                <!-- Room Image -->
                                 <div class="relative h-64 overflow-hidden">
                                     <img
                                         :src="room.image"
                                         :alt="room.title"
-                                        class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        class="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
                                     />
-                                    <div class="absolute inset-0 bg-gradient-to-t from-[#0d121c] via-transparent to-black/40"></div>
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
 
                                     <!-- Price Badge -->
-                                    <div class="absolute top-4 right-4 bg-[#07090e]/90 border border-amber-500/40 rounded-lg px-3 py-1.5 text-right backdrop-blur-md">
-                                        <div class="text-xs text-slate-400 line-through">₹{{ room.originalPrice }}</div>
-                                        <div class="text-base font-bold text-amber-400">
-                                            ₹{{ room.price }}<span class="text-[10px] text-slate-300 font-normal"> / night</span>
+                                    <div class="absolute top-4 right-4 bg-[#FFFFFF]/95 border border-[#E2DCD2] rounded px-3 py-1 text-right backdrop-blur-sm shadow-sm">
+                                        <div class="text-[10px] text-[#8C857B] line-through">₹{{ room.originalPrice }}</div>
+                                        <div class="text-sm font-semibold text-[#1A1816]">
+                                            ₹{{ room.price }}<span class="text-[10px] text-[#6B665F] font-normal"> / night</span>
                                         </div>
                                     </div>
 
                                     <!-- Rating -->
-                                    <div class="absolute top-4 left-4 bg-amber-500/90 text-black font-bold text-xs px-2.5 py-1 rounded flex items-center gap-1 shadow-md">
-                                        <Star class="w-3.5 h-3.5 fill-black text-black" />
+                                    <div class="absolute top-4 left-4 bg-[#1C1B1A]/85 text-[#FAF8F5] text-xs px-2.5 py-0.5 rounded flex items-center gap-1">
+                                        <Star class="w-3 h-3 fill-[#C5A880] text-[#C5A880]" />
                                         <span>{{ room.rating }}</span>
                                     </div>
 
                                     <div class="absolute bottom-3 left-4 right-4 text-left">
-                                        <h3 class="text-xl font-serif font-bold text-white group-hover:text-amber-300 transition-colors">
+                                        <h3 class="text-xl font-serif text-white group-hover:text-[#DFCEB7] transition-colors">
                                             {{ room.title }}
                                         </h3>
-                                        <p class="text-xs text-amber-200/80">{{ room.subtitle }}</p>
+                                        <p class="text-xs text-[#E8E2D8] font-light">{{ room.subtitle }}</p>
                                     </div>
                                 </div>
 
                                 <!-- Specs Strip -->
-                                <div class="grid grid-cols-3 gap-2 px-6 py-3 bg-[#111723] border-y border-slate-800 text-[11px] text-slate-300 text-center">
+                                <div class="grid grid-cols-3 gap-2 px-5 py-3 bg-[#FAF8F5] border-y border-[#ECE7DE] text-[11px] text-[#6B665F] text-center">
                                     <div>
-                                        <span class="text-slate-400 block text-[10px]">Area</span>
-                                        <span class="font-semibold text-white">{{ room.size }}</span>
+                                        <span class="text-[#8C857B] block text-[10px]">Dimension</span>
+                                        <span class="font-medium text-[#1A1816]">{{ room.size }}</span>
                                     </div>
-                                    <div class="border-x border-slate-800">
-                                        <span class="text-slate-400 block text-[10px]">Occupancy</span>
-                                        <span class="font-semibold text-white">{{ room.occupancy }}</span>
+                                    <div class="border-x border-[#ECE7DE]">
+                                        <span class="text-[#8C857B] block text-[10px]">Capacity</span>
+                                        <span class="font-medium text-[#1A1816]">{{ room.occupancy }}</span>
                                     </div>
                                     <div>
-                                        <span class="text-slate-400 block text-[10px]">Bed Type</span>
-                                        <span class="font-semibold text-white">King Bed</span>
+                                        <span class="text-[#8C857B] block text-[10px]">Bed Arrangement</span>
+                                        <span class="font-medium text-[#1A1816]">King Bed</span>
                                     </div>
                                 </div>
 
                                 <!-- Amenities Summary -->
                                 <div class="p-6 text-left space-y-4">
-                                    <p class="text-xs text-slate-400 leading-relaxed line-clamp-3">
+                                    <p class="text-xs text-[#6B665F] leading-relaxed line-clamp-3 font-light">
                                         {{ room.description }}
                                     </p>
 
                                     <!-- Key Amenities List -->
                                     <div class="space-y-1.5 pt-1">
-                                        <div v-for="(am, idx) in room.amenities.slice(0, 4)" :key="idx" class="flex items-center gap-2 text-xs text-slate-300">
-                                            <Check class="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                        <div v-for="(am, idx) in room.amenities.slice(0, 4)" :key="idx" class="flex items-center gap-2 text-xs text-[#4A453E]">
+                                            <Check class="w-3.5 h-3.5 text-[#8E744B] shrink-0" />
                                             <span>{{ am }}</span>
                                         </div>
                                     </div>
@@ -1027,15 +997,15 @@ const hotelContacts = [
                             <div class="px-6 pb-6 pt-2 flex items-center gap-3">
                                 <button
                                     @click="openRoomDetails(room)"
-                                    class="w-1/2 py-2.5 rounded-lg border border-slate-700 text-slate-300 hover:text-white hover:border-amber-500/50 text-xs font-semibold uppercase tracking-wider transition-colors"
+                                    class="w-1/2 py-2 rounded border border-[#DDD6CB] text-[#4A453E] hover:text-[#1A1816] hover:border-[#8E744B] text-xs font-medium uppercase tracking-wider transition-colors"
                                 >
-                                    View Details
+                                    Details
                                 </button>
                                 <button
                                     @click="initiateBooking(room)"
-                                    class="w-1/2 py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-bold text-xs uppercase tracking-wider hover:brightness-110 transition-all shadow-md"
+                                    class="w-1/2 py-2 rounded bg-[#1C1B1A] text-[#FAF8F5] hover:bg-[#312E2B] font-medium text-xs uppercase tracking-wider transition-all"
                                 >
-                                    Book Now
+                                    Reserve
                                 </button>
                             </div>
                         </div>
@@ -1046,76 +1016,76 @@ const hotelContacts = [
             <!-- ========================================================= -->
             <!-- GRAND BANQUETS, WEDDINGS & CELEBRATIONS                  -->
             <!-- ========================================================= -->
-            <section id="banquets" class="py-24 bg-[#0a0e17] relative border-t border-amber-500/10">
+            <section id="banquets" class="py-24 bg-[#FAF8F5] relative border-t border-[#EAE4DA]">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <!-- Section Header -->
-                    <div class="text-center max-w-3xl mx-auto mb-16">
-                        <div class="inline-flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-[0.2em] mb-3">
-                            <Crown class="w-4 h-4" />
-                            <span>Monumental Wedding & Event Spaces</span>
+                    <div class="text-center max-w-2xl mx-auto mb-16">
+                        <div class="inline-flex items-center gap-2 text-[#8E744B] text-[11px] font-semibold uppercase tracking-[0.2em] mb-2">
+                            <Crown class="w-3.5 h-3.5" />
+                            <span>Monumental Celebrations</span>
                         </div>
-                        <h2 class="text-3xl sm:text-5xl font-serif font-bold text-white mb-4">
-                            Grand Banquets & Royal Celebrations
+                        <h2 class="text-3xl sm:text-4xl md:text-5xl font-serif font-normal text-[#1A1816] mb-3">
+                            Grand Ballrooms & Wedding Banquets
                         </h2>
-                        <p class="text-slate-400 text-sm sm:text-base font-light">
-                            From lavish fairy-tale weddings and monumental receptions of 1,000+ guests to intimate sagai and corporate seminars, Hotel Pleasant View offers Raebareli's finest pillarless banquet venues.
+                        <p class="text-[#6B665F] text-sm font-light leading-relaxed">
+                            Hosting up to 1,000+ guests with pillarless sightlines, royal stage installations, acoustic harmony, and authentic Awadhi feast catering.
                         </p>
                     </div>
 
                     <!-- Banquet Tab Selector -->
-                    <div class="flex flex-wrap items-center justify-center gap-3 mb-12">
+                    <div class="flex flex-wrap items-center justify-center gap-2.5 mb-12">
                         <button
                             v-for="hall in banquetHalls"
                             :key="hall.id"
                             @click="selectedBanquetTab = hall.id"
                             :class="[
-                                'px-6 py-3 rounded-full text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2',
+                                'px-5 py-2.5 rounded text-xs font-medium uppercase tracking-wider transition-all flex items-center gap-2',
                                 selectedBanquetTab === hall.id
-                                    ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
-                                    : 'bg-[#111723] text-slate-300 border border-slate-800 hover:border-amber-500/40'
+                                    ? 'bg-[#1C1B1A] text-[#FAF8F5] shadow-sm'
+                                    : 'bg-[#FFFFFF] text-[#5A544C] border border-[#DDD6CB] hover:border-[#8E744B]'
                             ]"
                         >
-                            <Sparkles class="w-3.5 h-3.5" />
+                            <Sparkles class="w-3.5 h-3.5 text-[#C5A880]" />
                             <span>{{ hall.name }}</span>
                         </button>
                     </div>
 
-                    <!-- Active Banquet Detailed Showcase Card -->
-                    <div class="rounded-3xl bg-[#0d121c] border-2 border-amber-500/30 overflow-hidden shadow-2xl grid grid-cols-1 lg:grid-cols-12 mb-16">
+                    <!-- Active Banquet Card -->
+                    <div class="rounded-xl bg-[#FFFFFF] border border-[#E2DCD2] overflow-hidden shadow-[0_8px_30px_rgba(26,24,22,0.06)] grid grid-cols-1 lg:grid-cols-12 mb-16">
                         <!-- Image Side -->
-                        <div class="lg:col-span-7 relative min-h-[380px] lg:min-h-[500px]">
+                        <div class="lg:col-span-7 relative min-h-[360px] lg:min-h-[480px]">
                             <img
                                 :src="activeBanquet.image"
                                 :alt="activeBanquet.name"
                                 class="w-full h-full object-cover"
                             />
-                            <div class="absolute inset-0 bg-gradient-to-t from-[#0d121c] via-transparent to-black/30"></div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
 
                             <div class="absolute bottom-6 left-6 right-6 text-left">
-                                <span class="inline-block px-3 py-1 rounded bg-amber-500 text-black font-bold text-xs uppercase tracking-wider mb-2">
+                                <span class="inline-block px-3 py-1 rounded bg-[#1C1B1A]/90 text-[#FAF8F5] font-medium text-[11px] uppercase tracking-wider mb-2 border border-[#C5A880]/30">
                                     {{ activeBanquet.capacity }}
                                 </span>
-                                <h3 class="text-2xl sm:text-3xl font-serif font-bold text-white">
+                                <h3 class="text-2xl sm:text-3xl font-serif text-white">
                                     {{ activeBanquet.name }}
                                 </h3>
-                                <p class="text-sm text-amber-200/90 font-light mt-1">{{ activeBanquet.tagline }}</p>
+                                <p class="text-xs sm:text-sm text-[#E8E2D8] font-light mt-1">{{ activeBanquet.tagline }}</p>
                             </div>
                         </div>
 
                         <!-- Info & Specifications Side -->
                         <div class="lg:col-span-5 p-8 sm:p-10 flex flex-col justify-between text-left space-y-6">
-                            <div class="space-y-6">
+                            <div class="space-y-5">
                                 <div>
-                                    <div class="text-xs uppercase tracking-wider text-amber-400 font-bold mb-1">Venue Dimension & Layout</div>
-                                    <div class="text-lg font-bold text-white">{{ activeBanquet.area }}</div>
+                                    <div class="text-[10px] uppercase tracking-wider text-[#8E744B] font-semibold mb-0.5">Venue Scale</div>
+                                    <div class="text-base font-serif font-semibold text-[#1A1816]">{{ activeBanquet.area }}</div>
                                 </div>
 
                                 <!-- Key Features -->
                                 <div>
-                                    <div class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-3">Hall Specifications & Amenities</div>
-                                    <div class="space-y-2.5">
-                                        <div v-for="(feat, idx) in activeBanquet.features" :key="idx" class="flex items-start gap-2.5 text-xs text-slate-300">
-                                            <CheckCircle2 class="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                                    <div class="text-[10px] uppercase tracking-wider text-[#7A746D] font-semibold mb-2.5">Specifications & Inclusions</div>
+                                    <div class="space-y-2">
+                                        <div v-for="(feat, idx) in activeBanquet.features" :key="idx" class="flex items-start gap-2 text-xs text-[#5A544C]">
+                                            <CheckCircle2 class="w-3.5 h-3.5 text-[#8E744B] shrink-0 mt-0.5" />
                                             <span>{{ feat }}</span>
                                         </div>
                                     </div>
@@ -1123,9 +1093,9 @@ const hotelContacts = [
 
                                 <!-- Ideal For Tags -->
                                 <div>
-                                    <div class="text-xs uppercase tracking-wider text-slate-400 font-bold mb-2">Recommended Celebrations</div>
-                                    <div class="flex flex-wrap gap-2">
-                                        <span v-for="(event, idx) in activeBanquet.idealFor" :key="idx" class="px-3 py-1 rounded-full bg-[#161f30] text-amber-300 border border-amber-500/20 text-xs">
+                                    <div class="text-[10px] uppercase tracking-wider text-[#7A746D] font-semibold mb-2">Recommended For</div>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        <span v-for="(event, idx) in activeBanquet.idealFor" :key="idx" class="px-2.5 py-0.5 rounded bg-[#F4EFEA] text-[#5A544C] border border-[#E2DCD2] text-[11px]">
                                             {{ event }}
                                         </span>
                                     </div>
@@ -1133,21 +1103,21 @@ const hotelContacts = [
                             </div>
 
                             <!-- Action CTAs -->
-                            <div class="pt-4 border-t border-slate-800 flex flex-col sm:flex-row gap-3">
+                            <div class="pt-4 border-t border-[#ECE7DE] flex flex-col sm:flex-row gap-3">
                                 <a
                                     :href="generateBanquetProposalWhatsApp()"
                                     target="_blank"
-                                    class="w-full py-3 rounded-lg bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 text-slate-950 font-bold text-xs uppercase tracking-wider text-center hover:brightness-110 shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2"
+                                    class="w-full py-2.5 rounded bg-[#1C1B1A] text-[#FAF8F5] hover:bg-[#312E2B] font-medium text-xs uppercase tracking-wider text-center transition-all flex items-center justify-center gap-2"
                                 >
-                                    <MessageCircle class="w-4 h-4" />
-                                    <span>Inquire Dates via WhatsApp</span>
+                                    <MessageCircle class="w-3.5 h-3.5" />
+                                    <span>Check Dates via WhatsApp</span>
                                 </a>
                                 <a
                                     href="tel:+919794152223"
-                                    class="w-full sm:w-auto px-5 py-3 rounded-lg border border-slate-700 text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wider text-center flex items-center justify-center gap-2"
+                                    class="w-full sm:w-auto px-4 py-2.5 rounded border border-[#C5A880] text-[#7A6038] hover:bg-[#F4EFEA] text-xs font-medium uppercase tracking-wider text-center flex items-center justify-center gap-2"
                                 >
-                                    <Phone class="w-4 h-4 text-amber-400" />
-                                    <span>Call Banquet Desk</span>
+                                    <Phone class="w-3.5 h-3.5" />
+                                    <span>Desk</span>
                                 </a>
                             </div>
                         </div>
@@ -1156,36 +1126,36 @@ const hotelContacts = [
                     <!-- ===================================================== -->
                     <!-- INTERACTIVE BANQUET BUDGET & QUOTATION SIMULATOR     -->
                     <!-- ===================================================== -->
-                    <div class="rounded-2xl bg-[#0f1420] border border-amber-500/30 p-6 sm:p-10 text-left shadow-2xl">
-                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-slate-800 pb-6">
+                    <div class="rounded-xl bg-[#FFFFFF] border border-[#E2DCD2] p-6 sm:p-10 text-left shadow-[0_4px_24px_rgba(26,24,22,0.04)]">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 border-b border-[#ECE7DE] pb-6">
                             <div>
-                                <div class="inline-flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider mb-1">
-                                    <SlidersHorizontal class="w-4 h-4" />
-                                    <span>Instant Event Budget Planner</span>
+                                <div class="inline-flex items-center gap-2 text-[#8E744B] text-[11px] font-semibold uppercase tracking-wider mb-1">
+                                    <SlidersHorizontal class="w-3.5 h-3.5" />
+                                    <span>Event Investment Simulator</span>
                                 </div>
-                                <h3 class="text-2xl font-serif font-bold text-white">
-                                    Simulate Your Banquet Investment
+                                <h3 class="text-2xl font-serif text-[#1A1816]">
+                                    Calculate Your Celebration Budget
                                 </h3>
-                                <p class="text-xs sm:text-sm text-slate-400">
-                                    Adjust guest count, menu tier, and decor selections to receive an instant, transparent price estimate for your upcoming celebration.
+                                <p class="text-xs sm:text-sm text-[#6B665F] font-light">
+                                    Select guest count, catering feast tier, and technical enhancements for an immediate, transparent estimate.
                                 </p>
                             </div>
 
-                            <div class="text-right shrink-0 bg-[#161f30] px-5 py-3 rounded-xl border border-amber-500/20">
-                                <span class="text-[11px] uppercase tracking-wider text-slate-400 block">Estimated Total (Taxes incl.)</span>
-                                <span class="text-2xl sm:text-3xl font-bold text-amber-400 font-mono">₹{{ calcGrandTotal.toLocaleString('en-IN') }}</span>
+                            <div class="text-right shrink-0 bg-[#FAF8F5] px-5 py-3 rounded border border-[#E2DCD2]">
+                                <span class="text-[10px] uppercase tracking-wider text-[#7A746D] block">Estimated Total (Taxes incl.)</span>
+                                <span class="text-2xl sm:text-3xl font-serif text-[#1A1816]">₹{{ calcGrandTotal.toLocaleString('en-IN') }}</span>
                             </div>
                         </div>
 
                         <!-- Simulator Controls Grid -->
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                             <!-- Column 1: Event Type & Guest Slider -->
-                            <div class="space-y-6">
+                            <div class="space-y-5">
                                 <div>
-                                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">Occasion Type</label>
+                                    <label class="block text-xs font-semibold uppercase tracking-wider text-[#5A544C] mb-2">Occasion Type</label>
                                     <select
                                         v-model="calcEventType"
-                                        class="w-full bg-[#161f30] border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:border-amber-400 focus:outline-none"
+                                        class="w-full bg-[#FAF8F5] border border-[#DDD6CB] rounded px-3 py-2 text-xs text-[#1A1816] focus:border-[#8E744B] focus:outline-none"
                                     >
                                         <option>Wedding Reception</option>
                                         <option>Varmala & Sangeet Night</option>
@@ -1198,8 +1168,8 @@ const hotelContacts = [
 
                                 <div>
                                     <div class="flex justify-between items-center mb-2">
-                                        <label class="text-xs font-semibold uppercase tracking-wider text-slate-300">Expected Guests</label>
-                                        <span class="text-sm font-bold text-amber-400 font-mono">{{ calcGuestCount }} Guests</span>
+                                        <label class="text-xs font-semibold uppercase tracking-wider text-[#5A544C]">Expected Attendance</label>
+                                        <span class="text-sm font-semibold text-[#8E744B]">{{ calcGuestCount }} Guests</span>
                                     </div>
                                     <input
                                         type="range"
@@ -1207,111 +1177,111 @@ const hotelContacts = [
                                         max="1000"
                                         step="25"
                                         v-model.number="calcGuestCount"
-                                        class="w-full accent-amber-500 cursor-pointer"
+                                        class="w-full accent-[#1C1B1A] cursor-pointer"
                                     />
-                                    <div class="flex justify-between text-[10px] text-slate-500 mt-1">
-                                        <span>50 Guests</span>
-                                        <span>350 Guests</span>
-                                        <span>700 Guests</span>
-                                        <span>1000+ Guests</span>
+                                    <div class="flex justify-between text-[10px] text-[#8C857B] mt-1 font-light">
+                                        <span>50</span>
+                                        <span>350</span>
+                                        <span>700</span>
+                                        <span>1,000+ Guests</span>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Column 2: Royal Menu Tiers -->
                             <div class="space-y-3">
-                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1">Catering Feast Tier</label>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-[#5A544C] mb-1">Catering Feast Tier</label>
 
                                 <div
                                     @click="calcMenuTier = 'royal'"
                                     :class="[
-                                        'p-3.5 rounded-xl border cursor-pointer transition-all',
+                                        'p-3 rounded border cursor-pointer transition-all',
                                         calcMenuTier === 'royal'
-                                            ? 'bg-amber-500/10 border-amber-400 text-white'
-                                            : 'bg-[#161f30] border-slate-800 text-slate-300 hover:border-slate-700'
+                                            ? 'bg-[#F4EFEA] border-[#8E744B] text-[#1A1816]'
+                                            : 'bg-[#FAF8F5] border-[#E2DCD2] text-[#5A544C] hover:border-[#C5A880]'
                                     ]"
                                 >
                                     <div class="flex justify-between items-center">
-                                        <span class="text-xs font-bold text-amber-300">Royal Awadhi Feast</span>
-                                        <span class="text-xs font-bold font-mono">₹750 / plate</span>
+                                        <span class="text-xs font-semibold text-[#1A1816]">Royal Awadhi Feast</span>
+                                        <span class="text-xs font-semibold">₹750 / plate</span>
                                     </div>
-                                    <p class="text-[11px] text-slate-400 mt-1 line-clamp-1">Welcome Drinks, 4 Starters, 2 Paneer, Dal Makhani, 2 Desserts</p>
+                                    <p class="text-[11px] text-[#7A746D] mt-0.5 line-clamp-1">Welcome Drinks, 4 Starters, 2 Paneer, Dal Makhani, 2 Desserts</p>
                                 </div>
 
                                 <div
                                     @click="calcMenuTier = 'imperial'"
                                     :class="[
-                                        'p-3.5 rounded-xl border cursor-pointer transition-all',
+                                        'p-3 rounded border cursor-pointer transition-all',
                                         calcMenuTier === 'imperial'
-                                            ? 'bg-amber-500/10 border-amber-400 text-white'
-                                            : 'bg-[#161f30] border-slate-800 text-slate-300 hover:border-slate-700'
+                                            ? 'bg-[#F4EFEA] border-[#8E744B] text-[#1A1816]'
+                                            : 'bg-[#FAF8F5] border-[#E2DCD2] text-[#5A544C] hover:border-[#C5A880]'
                                     ]"
                                 >
                                     <div class="flex justify-between items-center">
-                                        <span class="text-xs font-bold text-amber-300">Imperial Grand Buffet</span>
-                                        <span class="text-xs font-bold font-mono">₹950 / plate</span>
+                                        <span class="text-xs font-semibold text-[#1A1816]">Imperial Grand Buffet</span>
+                                        <span class="text-xs font-semibold">₹950 / plate</span>
                                     </div>
-                                    <p class="text-[11px] text-slate-400 mt-1 line-clamp-1">Live Chaat, 6 Starters, Shahi Paneer, Dal Bukhara, 3 Desserts</p>
+                                    <p class="text-[11px] text-[#7A746D] mt-0.5 line-clamp-1">Live Chaat, 6 Starters, Shahi Paneer, Dal Bukhara, 3 Desserts</p>
                                 </div>
 
                                 <div
                                     @click="calcMenuTier = 'maharaja'"
                                     :class="[
-                                        'p-3.5 rounded-xl border cursor-pointer transition-all',
+                                        'p-3 rounded border cursor-pointer transition-all',
                                         calcMenuTier === 'maharaja'
-                                            ? 'bg-amber-500/10 border-amber-400 text-white'
-                                            : 'bg-[#161f30] border-slate-800 text-slate-300 hover:border-slate-700'
+                                            ? 'bg-[#F4EFEA] border-[#8E744B] text-[#1A1816]'
+                                            : 'bg-[#FAF8F5] border-[#E2DCD2] text-[#5A544C] hover:border-[#C5A880]'
                                     ]"
                                 >
                                     <div class="flex justify-between items-center">
-                                        <span class="text-xs font-bold text-amber-300">Maharaja Gold Sovereign</span>
-                                        <span class="text-xs font-bold font-mono">₹1,250 / plate</span>
+                                        <span class="text-xs font-semibold text-[#1A1816]">Maharaja Sovereign Feast</span>
+                                        <span class="text-xs font-semibold">₹1,250 / plate</span>
                                     </div>
-                                    <p class="text-[11px] text-slate-400 mt-1 line-clamp-1">Mocktail Bar, 8 Starters, Live Counters, Dry Fruit Pulao, 5 Desserts</p>
+                                    <p class="text-[11px] text-[#7A746D] mt-0.5 line-clamp-1">Mocktail Bar, 8 Starters, Live Counters, Dry Fruit Pulao, 5 Desserts</p>
                                 </div>
                             </div>
 
                             <!-- Column 3: Event Addons & Summary Breakdown -->
-                            <div class="space-y-4 bg-[#141b2b] p-4 rounded-xl border border-slate-800">
-                                <div class="text-xs font-semibold uppercase tracking-wider text-slate-300">Signature Event Enhancements</div>
+                            <div class="space-y-3.5 bg-[#FAF8F5] p-4 rounded border border-[#E2DCD2]">
+                                <div class="text-xs font-semibold uppercase tracking-wider text-[#5A544C]">Event Inclusions</div>
 
-                                <label class="flex items-center gap-3 cursor-pointer text-xs text-slate-300">
-                                    <input type="checkbox" v-model="calcIncludeDecor" class="w-4 h-4 accent-amber-500 rounded" />
-                                    <span>Theme Stage & Mandap Floral Decor</span>
+                                <label class="flex items-center gap-2.5 cursor-pointer text-xs text-[#5A544C]">
+                                    <input type="checkbox" v-model="calcIncludeDecor" class="w-3.5 h-3.5 accent-[#1C1B1A] rounded" />
+                                    <span>Stage Floral & Mandap Setup</span>
                                 </label>
 
-                                <label class="flex items-center gap-3 cursor-pointer text-xs text-slate-300">
-                                    <input type="checkbox" v-model="calcIncludeDj" class="w-4 h-4 accent-amber-500 rounded" />
-                                    <span>Professional Sound & Moving-Head DJ</span>
+                                <label class="flex items-center gap-2.5 cursor-pointer text-xs text-[#5A544C]">
+                                    <input type="checkbox" v-model="calcIncludeDj" class="w-3.5 h-3.5 accent-[#1C1B1A] rounded" />
+                                    <span>Professional Sound & Ambient Lighting</span>
                                 </label>
 
-                                <label class="flex items-center gap-3 cursor-pointer text-xs text-slate-300">
-                                    <input type="checkbox" v-model="calcIncludeGenset" class="w-4 h-4 accent-amber-500 rounded" />
-                                    <span>100% Uninterrupted Power Backup Genset</span>
+                                <label class="flex items-center gap-2.5 cursor-pointer text-xs text-[#5A544C]">
+                                    <input type="checkbox" v-model="calcIncludeGenset" class="w-3.5 h-3.5 accent-[#1C1B1A] rounded" />
+                                    <span>100% Uninterrupted Power Backup</span>
                                 </label>
 
                                 <!-- Subtotal Breakdown List -->
-                                <div class="border-t border-slate-700/60 pt-3 space-y-1.5 text-xs text-slate-400">
+                                <div class="border-t border-[#ECE7DE] pt-3 space-y-1.5 text-xs text-[#7A746D]">
                                     <div class="flex justify-between">
                                         <span>Hall Venue Rental:</span>
-                                        <span class="text-white font-mono">₹{{ calcHallRent.toLocaleString('en-IN') }}</span>
+                                        <span class="text-[#1A1816] font-medium">₹{{ calcHallRent.toLocaleString('en-IN') }}</span>
                                     </div>
                                     <div class="flex justify-between">
-                                        <span>Gourmet Food ({{ calcGuestCount }} plates):</span>
-                                        <span class="text-white font-mono">₹{{ calcFoodCost.toLocaleString('en-IN') }}</span>
+                                        <span>Gourmet Catering ({{ calcGuestCount }} plates):</span>
+                                        <span class="text-[#1A1816] font-medium">₹{{ calcFoodCost.toLocaleString('en-IN') }}</span>
                                     </div>
                                     <div class="flex justify-between">
-                                        <span>GST (5% composite catering):</span>
-                                        <span class="text-white font-mono">₹{{ calcGst.toLocaleString('en-IN') }}</span>
+                                        <span>GST (5% composite):</span>
+                                        <span class="text-[#1A1816] font-medium">₹{{ calcGst.toLocaleString('en-IN') }}</span>
                                     </div>
                                 </div>
 
                                 <a
                                     :href="generateBanquetProposalWhatsApp()"
                                     target="_blank"
-                                    class="w-full mt-2 py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 text-slate-950 font-bold text-xs uppercase tracking-wider text-center block hover:brightness-110 shadow-md"
+                                    class="w-full mt-2 py-2 rounded bg-[#1C1B1A] text-[#FAF8F5] hover:bg-[#312E2B] font-medium text-xs uppercase tracking-wider text-center block transition-all"
                                 >
-                                    Lock This Quotation via WhatsApp &rarr;
+                                    Confirm Proposal via WhatsApp &rarr;
                                 </a>
                             </div>
                         </div>
@@ -1322,88 +1292,88 @@ const hotelContacts = [
             <!-- ========================================================= -->
             <!-- GATHERINGS & REAL CELEBRATION MOMENTS                     -->
             <!-- ========================================================= -->
-            <section id="gatherings" class="py-24 bg-[#07090e] relative border-t border-amber-500/10">
+            <section id="gatherings" class="py-24 bg-[#F5F2ED] relative border-t border-[#EAE4DA]">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="text-center max-w-3xl mx-auto mb-16">
-                        <div class="inline-flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-[0.2em] mb-3">
-                            <Users class="w-4 h-4" />
-                            <span>Cherished Moments at Pleasant View</span>
+                    <div class="text-center max-w-2xl mx-auto mb-16">
+                        <div class="inline-flex items-center gap-2 text-[#8E744B] text-[11px] font-semibold uppercase tracking-[0.2em] mb-2">
+                            <Users class="w-3.5 h-3.5" />
+                            <span>Authentic Milestones</span>
                         </div>
-                        <h2 class="text-3xl sm:text-5xl font-serif font-bold text-white mb-4">
-                            Joyous Gatherings & Milestones
+                        <h2 class="text-3xl sm:text-4xl md:text-5xl font-serif font-normal text-[#1A1816] mb-3">
+                            Joyous Gatherings & Celebrations
                         </h2>
-                        <p class="text-slate-400 text-sm sm:text-base font-light">
-                            Witness authentic celebrations hosted at Hotel Pleasant View — from glittering wedding receptions with hundreds of joyful guests to corporate conventions and intimate family rituals.
+                        <p class="text-[#6B665F] text-sm font-light leading-relaxed">
+                            A chronicle of authentic celebrations at Hotel Pleasant View — joyous family weddings, auspicious ceremonies, and executive corporate symposiums.
                         </p>
                     </div>
 
                     <!-- Celebrations 3-Column Visual Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
                         <!-- Gathering 1: Wedding Reception -->
-                        <div class="rounded-2xl bg-[#0d121c] border border-amber-500/20 overflow-hidden shadow-xl group">
+                        <div class="rounded-xl bg-[#FFFFFF] border border-[#E2DCD2] overflow-hidden shadow-sm group">
                             <div class="relative h-64 overflow-hidden">
                                 <img
                                     src="/images/hotel/gathering_reception.jpg"
                                     alt="Grand Wedding Gathering Reception at Hotel Pleasant View"
-                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    class="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
                                 />
-                                <div class="absolute inset-0 bg-gradient-to-t from-[#0d121c] via-transparent to-transparent"></div>
-                                <span class="absolute top-4 left-4 px-3 py-1 rounded bg-amber-500 text-black font-bold text-[10px] uppercase tracking-wider">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                                <span class="absolute top-4 left-4 px-2.5 py-1 rounded bg-[#1C1B1A]/85 text-[#FAF8F5] text-[10px] font-medium uppercase tracking-wider">
                                     Wedding Reception
                                 </span>
                             </div>
                             <div class="p-6">
-                                <h3 class="text-lg font-serif font-bold text-white mb-2 group-hover:text-amber-300 transition-colors">
+                                <h3 class="text-lg font-serif text-[#1A1816] mb-1.5 group-hover:text-[#8E744B] transition-colors">
                                     The Grand Wedding Evening
                                 </h3>
-                                <p class="text-xs text-slate-400 leading-relaxed">
-                                    Hundreds of honored family members and distinguished guests enjoying royal hospitality, central air-conditioning, and seamless dinner coordination.
+                                <p class="text-xs text-[#6B665F] leading-relaxed font-light">
+                                    Hundreds of family guests enjoying pristine central air-conditioning, warm hospitality, and seamless evening dinner coordination.
                                 </p>
                             </div>
                         </div>
 
                         <!-- Gathering 2: Sacred Mandap & Ceremony -->
-                        <div class="rounded-2xl bg-[#0d121c] border border-amber-500/20 overflow-hidden shadow-xl group">
+                        <div class="rounded-xl bg-[#FFFFFF] border border-[#E2DCD2] overflow-hidden shadow-sm group">
                             <div class="relative h-64 overflow-hidden">
                                 <img
                                     src="/images/hotel/mandap_ceremony.jpg"
                                     alt="Wedding Mandap and Sacred Rituals at Pleasant View"
-                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    class="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
                                 />
-                                <div class="absolute inset-0 bg-gradient-to-t from-[#0d121c] via-transparent to-transparent"></div>
-                                <span class="absolute top-4 left-4 px-3 py-1 rounded bg-amber-500 text-black font-bold text-[10px] uppercase tracking-wider">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                                <span class="absolute top-4 left-4 px-2.5 py-1 rounded bg-[#1C1B1A]/85 text-[#FAF8F5] text-[10px] font-medium uppercase tracking-wider">
                                     Sacred Mandap
                                 </span>
                             </div>
                             <div class="p-6">
-                                <h3 class="text-lg font-serif font-bold text-white mb-2 group-hover:text-amber-300 transition-colors">
+                                <h3 class="text-lg font-serif text-[#1A1816] mb-1.5 group-hover:text-[#8E744B] transition-colors">
                                     Auspicious Wedding Rituals
                                 </h3>
-                                <p class="text-xs text-slate-400 leading-relaxed">
-                                    Bespoke fresh floral arrangements and traditional mandap architecture designed for sacred vows, varmala exchanges, and timeless photography.
+                                <p class="text-xs text-[#6B665F] leading-relaxed font-light">
+                                    Artisan fresh floral arrangements and traditional mandap architecture designed for sacred wedding vows and lifetime memories.
                                 </p>
                             </div>
                         </div>
 
                         <!-- Gathering 3: Corporate Seminar -->
-                        <div class="rounded-2xl bg-[#0d121c] border border-amber-500/20 overflow-hidden shadow-xl group">
+                        <div class="rounded-xl bg-[#FFFFFF] border border-[#E2DCD2] overflow-hidden shadow-sm group">
                             <div class="relative h-64 overflow-hidden">
                                 <img
                                     src="/images/hotel/conference_meeting.jpg"
                                     alt="Executive Conference and Corporate Summit"
-                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    class="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500"
                                 />
-                                <div class="absolute inset-0 bg-gradient-to-t from-[#0d121c] via-transparent to-transparent"></div>
-                                <span class="absolute top-4 left-4 px-3 py-1 rounded bg-amber-500 text-black font-bold text-[10px] uppercase tracking-wider">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+                                <span class="absolute top-4 left-4 px-2.5 py-1 rounded bg-[#1C1B1A]/85 text-[#FAF8F5] text-[10px] font-medium uppercase tracking-wider">
                                     Corporate Summit
                                 </span>
                             </div>
                             <div class="p-6">
-                                <h3 class="text-lg font-serif font-bold text-white mb-2 group-hover:text-amber-300 transition-colors">
+                                <h3 class="text-lg font-serif text-[#1A1816] mb-1.5 group-hover:text-[#8E744B] transition-colors">
                                     Conferences & Seminars
                                 </h3>
-                                <p class="text-xs text-slate-400 leading-relaxed">
-                                    Equipped with high-definition digital projection, wireless audio systems, and high-tea buffets favored by state-level corporate delegations.
+                                <p class="text-xs text-[#6B665F] leading-relaxed font-light">
+                                    Equipped with high-definition digital projection, boundary microphones, and high-tea buffets favored by executive corporate summits.
                                 </p>
                             </div>
                         </div>
@@ -1412,64 +1382,64 @@ const hotelContacts = [
             </section>
 
             <!-- ========================================================= -->
-            <!-- CULINARY EXCELLENCE & ROYAL AWADHI GASTRONOMY             -->
+            <!-- CULINARY EXCELLENCE & AWADHI GASTRONOMY                   -->
             <!-- ========================================================= -->
-            <section id="dining" class="py-24 bg-[#0a0d14] relative border-t border-amber-500/10">
+            <section id="dining" class="py-24 bg-[#FAF8F5] relative border-t border-[#EAE4DA]">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                         <!-- Left Visual Buffet -->
                         <div class="lg:col-span-6 relative">
-                            <div class="rounded-2xl overflow-hidden border-2 border-amber-500/30 shadow-2xl relative">
+                            <div class="rounded-xl overflow-hidden border border-[#E2DCD2] shadow-sm relative bg-[#FFFFFF]">
                                 <img
                                     src="/images/hotel/dining_buffet_gathering.jpg"
                                     alt="Lavish Royal Buffet Dining at Hotel Pleasant View"
-                                    class="w-full h-[420px] object-cover"
+                                    class="w-full h-[400px] object-cover"
                                 />
-                                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                                 <div class="absolute bottom-6 left-6 right-6 text-left">
-                                    <span class="inline-block px-3 py-1 rounded bg-amber-500 text-black font-bold text-xs uppercase tracking-wider mb-2">
-                                        Pure & Hygienic
+                                    <span class="inline-block px-2.5 py-0.5 rounded bg-[#1C1B1A]/90 text-[#FAF8F5] font-medium text-[10px] uppercase tracking-wider mb-2">
+                                        Hygienic Craftsmanship
                                     </span>
-                                    <div class="text-2xl font-serif font-bold text-white">The Royal Banquet Buffet</div>
-                                    <p class="text-xs text-slate-300 mt-1">Multi-course gourmet feasts prepared by master chefs from Awadh and North India.</p>
+                                    <div class="text-2xl font-serif text-white">The Royal Banquet Buffet</div>
+                                    <p class="text-xs text-[#E8E2D8] font-light mt-1">Multi-course gourmet feasts prepared by experienced master chefs from Awadh.</p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Right Culinary Story -->
                         <div class="lg:col-span-6 space-y-6 text-left">
-                            <div class="inline-flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-[0.2em]">
-                                <Utensils class="w-4 h-4" />
-                                <span>The Culinary Legacy</span>
+                            <div class="inline-flex items-center gap-2 text-[#8E744B] text-[11px] font-semibold uppercase tracking-[0.2em]">
+                                <Utensils class="w-3.5 h-3.5" />
+                                <span>Gastronomic Heritage</span>
                             </div>
 
-                            <h2 class="text-3xl sm:text-5xl font-serif font-bold text-white leading-tight">
+                            <h2 class="text-3xl sm:text-4xl md:text-5xl font-serif font-normal text-[#1A1816] leading-tight">
                                 An Odyssey of
-                                <span class="text-amber-400 italic font-serif">Awadhi & Multi-Cuisine</span>
+                                <span class="italic font-serif text-[#8E744B]">Awadhi & Multi-Cuisine</span>
                                 Flavors
                             </h2>
 
-                            <p class="text-slate-300 leading-relaxed text-sm sm:text-base font-light">
-                                Dining at Hotel Pleasant View is a tribute to the legendary culinary traditions of Awadh combined with contemporary Pan-Asian and Continental favorites. Our culinary brigade prepares every delicacy in state-of-the-art hygienic commercial kitchens with cold-pressed oils, pure desi ghee, and hand-ground spices.
+                            <p class="text-[#5A544C] leading-relaxed text-sm sm:text-base font-light">
+                                Dining at Hotel Pleasant View pays homage to the revered culinary traditions of Awadh along with beloved North Indian and Continental preparations. Our culinary team ensures each delicacy is prepared with cold-pressed oils, pure desi ghee, and freshly roasted spices.
                             </p>
 
                             <!-- Culinary Highlights -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                                <div class="p-4 rounded-xl bg-[#111723] border border-amber-500/20">
-                                    <div class="text-sm font-bold text-amber-300 mb-1">Authentic Awadhi & Mughlai</div>
-                                    <p class="text-xs text-slate-400">Signature Dum Biryani, Paneer Lababdar, Dal Makhani slow-cooked overnight for rich aroma.</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2">
+                                <div class="p-3.5 rounded bg-[#FFFFFF] border border-[#EAE4DA]">
+                                    <div class="text-xs font-semibold text-[#1A1816] mb-1">Awadhi & Mughlai Specialties</div>
+                                    <p class="text-[11px] text-[#7A746D] leading-relaxed">Slow-cooked Dal Makhani, Paneer Lababdar, and fragrant vegetable Dum Biryani.</p>
                                 </div>
-                                <div class="p-4 rounded-xl bg-[#111723] border border-amber-500/20">
-                                    <div class="text-sm font-bold text-amber-300 mb-1">Live Interactive Counters</div>
-                                    <p class="text-xs text-slate-400">Delhi Chaat Street, Charcoal Tandoor breads, Artisan Dosas, and Handcrafted Desserts.</p>
+                                <div class="p-3.5 rounded bg-[#FFFFFF] border border-[#EAE4DA]">
+                                    <div class="text-xs font-semibold text-[#1A1816] mb-1">Live Interactive Counters</div>
+                                    <p class="text-[11px] text-[#7A746D] leading-relaxed">Delhi Chaat Street, Charcoal Tandoor breads, Artisan Dosas, and fresh Desserts.</p>
                                 </div>
-                                <div class="p-4 rounded-xl bg-[#111723] border border-amber-500/20">
-                                    <div class="text-sm font-bold text-amber-300 mb-1">Strict Hygiene Protocols</div>
-                                    <p class="text-xs text-slate-400">100% RO Purified water, stainless steel food-grade prep stations, and pristine dining ware.</p>
+                                <div class="p-3.5 rounded bg-[#FFFFFF] border border-[#EAE4DA]">
+                                    <div class="text-xs font-semibold text-[#1A1816] mb-1">Strict Food Safety Standards</div>
+                                    <p class="text-[11px] text-[#7A746D] leading-relaxed">100% RO Purified water, stainless steel commercial stations, and hygienic service.</p>
                                 </div>
-                                <div class="p-4 rounded-xl bg-[#111723] border border-amber-500/20">
-                                    <div class="text-sm font-bold text-amber-300 mb-1">24/7 In-Room Dining</div>
-                                    <p class="text-xs text-slate-400">Prompt, hot room service delivering piping delicacies to your suite day and night.</p>
+                                <div class="p-3.5 rounded bg-[#FFFFFF] border border-[#EAE4DA]">
+                                    <div class="text-xs font-semibold text-[#1A1816] mb-1">24/7 In-Room Service</div>
+                                    <p class="text-[11px] text-[#7A746D] leading-relaxed">Fresh, piping hot room dining delivered directly to your suite any time of day.</p>
                                 </div>
                             </div>
                         </div>
@@ -1480,30 +1450,30 @@ const hotelContacts = [
             <!-- ========================================================= -->
             <!-- FILTERABLE PHOTO GALLERY WITH FULLSCREEN LIGHTBOX         -->
             <!-- ========================================================= -->
-            <section id="gallery" class="py-24 bg-[#07090e] relative border-t border-amber-500/10">
+            <section id="gallery" class="py-24 bg-[#F5F2ED] relative border-t border-[#EAE4DA]">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="text-center max-w-3xl mx-auto mb-16">
-                        <div class="inline-flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-[0.2em] mb-3">
-                            <Camera class="w-4 h-4" />
-                            <span>Visual Treasury of Grandeur</span>
+                    <div class="text-center max-w-2xl mx-auto mb-16">
+                        <div class="inline-flex items-center gap-2 text-[#8E744B] text-[11px] font-semibold uppercase tracking-[0.2em] mb-2">
+                            <Camera class="w-3.5 h-3.5" />
+                            <span>Visual Portfolio</span>
                         </div>
-                        <h2 class="text-3xl sm:text-5xl font-serif font-bold text-white mb-4">
+                        <h2 class="text-3xl sm:text-4xl md:text-5xl font-serif font-normal text-[#1A1816] mb-3">
                             The Hotel Pleasant View Gallery
                         </h2>
-                        <p class="text-slate-400 text-sm sm:text-base font-light">
-                            Explore authentic on-site photographs of our iconic facade, luxurious guest rooms, grand banquet halls, and vibrant gatherings.
+                        <p class="text-[#6B665F] text-sm font-light leading-relaxed">
+                            Discover authentic on-site imagery of our facade, portico entrance, luxury rooms, wedding ballrooms, and vibrant events.
                         </p>
                     </div>
 
                     <!-- Category Filters -->
-                    <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-12">
+                    <div class="flex flex-wrap items-center justify-center gap-2 mb-12">
                         <button
                             @click="selectedGalleryFilter = 'all'"
                             :class="[
-                                'px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all',
+                                'px-4 py-2 rounded text-xs font-medium uppercase tracking-wider transition-all',
                                 selectedGalleryFilter === 'all'
-                                    ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
-                                    : 'bg-[#111723] text-slate-300 border border-slate-800 hover:border-amber-500/40'
+                                    ? 'bg-[#1C1B1A] text-[#FAF8F5]'
+                                    : 'bg-[#FFFFFF] text-[#5A544C] border border-[#DDD6CB] hover:border-[#8E744B]'
                             ]"
                         >
                             All Photographs ({{ galleryItems.length }})
@@ -1511,10 +1481,10 @@ const hotelContacts = [
                         <button
                             @click="selectedGalleryFilter = 'property'"
                             :class="[
-                                'px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all',
+                                'px-4 py-2 rounded text-xs font-medium uppercase tracking-wider transition-all',
                                 selectedGalleryFilter === 'property'
-                                    ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
-                                    : 'bg-[#111723] text-slate-300 border border-slate-800 hover:border-amber-500/40'
+                                    ? 'bg-[#1C1B1A] text-[#FAF8F5]'
+                                    : 'bg-[#FFFFFF] text-[#5A544C] border border-[#DDD6CB] hover:border-[#8E744B]'
                             ]"
                         >
                             Property & Facade
@@ -1522,10 +1492,10 @@ const hotelContacts = [
                         <button
                             @click="selectedGalleryFilter = 'rooms'"
                             :class="[
-                                'px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all',
+                                'px-4 py-2 rounded text-xs font-medium uppercase tracking-wider transition-all',
                                 selectedGalleryFilter === 'rooms'
-                                    ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
-                                    : 'bg-[#111723] text-slate-300 border border-slate-800 hover:border-amber-500/40'
+                                    ? 'bg-[#1C1B1A] text-[#FAF8F5]'
+                                    : 'bg-[#FFFFFF] text-[#5A544C] border border-[#DDD6CB] hover:border-[#8E744B]'
                             ]"
                         >
                             Rooms & Suites
@@ -1533,10 +1503,10 @@ const hotelContacts = [
                         <button
                             @click="selectedGalleryFilter = 'banquets'"
                             :class="[
-                                'px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all',
+                                'px-4 py-2 rounded text-xs font-medium uppercase tracking-wider transition-all',
                                 selectedGalleryFilter === 'banquets'
-                                    ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
-                                    : 'bg-[#111723] text-slate-300 border border-slate-800 hover:border-amber-500/40'
+                                    ? 'bg-[#1C1B1A] text-[#FAF8F5]'
+                                    : 'bg-[#FFFFFF] text-[#5A544C] border border-[#DDD6CB] hover:border-[#8E744B]'
                             ]"
                         >
                             Banquets & Weddings
@@ -1544,10 +1514,10 @@ const hotelContacts = [
                         <button
                             @click="selectedGalleryFilter = 'gatherings'"
                             :class="[
-                                'px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all',
+                                'px-4 py-2 rounded text-xs font-medium uppercase tracking-wider transition-all',
                                 selectedGalleryFilter === 'gatherings'
-                                    ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
-                                    : 'bg-[#111723] text-slate-300 border border-slate-800 hover:border-amber-500/40'
+                                    ? 'bg-[#1C1B1A] text-[#FAF8F5]'
+                                    : 'bg-[#FFFFFF] text-[#5A544C] border border-[#DDD6CB] hover:border-[#8E744B]'
                             ]"
                         >
                             Gatherings & Dinners
@@ -1560,31 +1530,31 @@ const hotelContacts = [
                             v-for="(item, idx) in filteredGallery"
                             :key="item.id"
                             @click="openLightbox(idx)"
-                            class="group relative rounded-2xl overflow-hidden border border-amber-500/20 hover:border-amber-400 bg-[#0d121c] cursor-pointer shadow-xl transition-all duration-300 h-64"
+                            class="group relative rounded-lg overflow-hidden border border-[#E2DCD2] bg-[#FFFFFF] cursor-pointer shadow-sm transition-all duration-300 h-64"
                         >
                             <img
                                 :src="item.image"
                                 :alt="item.title"
-                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
-                            <div class="absolute inset-0 bg-gradient-to-t from-[#07090e] via-transparent to-black/30 group-hover:via-black/20 transition-all"></div>
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent group-hover:from-black/70 transition-all"></div>
 
-                            <!-- Optional Authentic Badge -->
-                            <div v-if="item.badge" class="absolute top-3 left-3 px-2.5 py-1 rounded bg-amber-500 text-black font-bold text-[10px] uppercase tracking-wider shadow">
+                            <!-- Optional Badge -->
+                            <div v-if="item.badge" class="absolute top-3 left-3 px-2 py-0.5 rounded bg-[#1C1B1A]/85 text-[#FAF8F5] font-medium text-[9px] uppercase tracking-wider">
                                 {{ item.badge }}
                             </div>
 
                             <!-- Expand Icon -->
-                            <div class="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/60 border border-white/20 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Maximize2 class="w-4 h-4" />
+                            <div class="absolute top-3 right-3 w-7 h-7 rounded bg-black/50 border border-white/20 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Maximize2 class="w-3.5 h-3.5" />
                             </div>
 
                             <!-- Title & Caption -->
-                            <div class="absolute bottom-4 left-4 right-4 text-left">
-                                <div class="text-xs uppercase tracking-wider text-amber-400 font-semibold mb-0.5">
+                            <div class="absolute bottom-3 left-4 right-4 text-left">
+                                <div class="text-[10px] uppercase tracking-wider text-[#DFCEB7] font-medium">
                                     {{ item.categoryLabel }}
                                 </div>
-                                <div class="text-base font-serif font-bold text-white group-hover:text-amber-300 transition-colors line-clamp-1">
+                                <div class="text-sm font-serif text-white group-hover:text-[#E8E2D8] transition-colors line-clamp-1">
                                     {{ item.title }}
                                 </div>
                             </div>
@@ -1596,18 +1566,18 @@ const hotelContacts = [
             <!-- ========================================================= -->
             <!-- VERIFIED GUEST REVIEWS & REPUTATION                       -->
             <!-- ========================================================= -->
-            <section class="py-24 bg-[#0a0d14] relative border-t border-amber-500/10">
+            <section class="py-24 bg-[#FAF8F5] relative border-t border-[#EAE4DA]">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div class="text-center max-w-3xl mx-auto mb-16">
-                        <div class="inline-flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-[0.2em] mb-3">
-                            <Star class="w-4 h-4 fill-amber-400" />
-                            <span>Unrivaled Guest Esteem</span>
+                    <div class="text-center max-w-2xl mx-auto mb-16">
+                        <div class="inline-flex items-center gap-2 text-[#8E744B] text-[11px] font-semibold uppercase tracking-[0.2em] mb-2">
+                            <Star class="w-3.5 h-3.5 fill-[#8E744B] text-[#8E744B]" />
+                            <span>Verified Patron Esteem</span>
                         </div>
-                        <h2 class="text-3xl sm:text-5xl font-serif font-bold text-white mb-4">
-                            Verified Guest Experiences
+                        <h2 class="text-3xl sm:text-4xl md:text-5xl font-serif font-normal text-[#1A1816] mb-3">
+                            Guest Experiences & Reflections
                         </h2>
-                        <p class="text-slate-400 text-sm sm:text-base font-light">
-                            Over 1,000 verified patron reviews across Justdial, Google, and major travel portals celebrate our unwavering commitment to genuine hospitality.
+                        <p class="text-[#6B665F] text-sm font-light leading-relaxed">
+                            Over 1,000 verified patron reviews across Justdial, Google, and major travel portals celebrate our warm hospitality and spotless standards.
                         </p>
                     </div>
 
@@ -1615,28 +1585,28 @@ const hotelContacts = [
                         <div
                             v-for="(t, idx) in testimonials"
                             :key="idx"
-                            class="rounded-2xl bg-[#0d121c] border border-amber-500/20 p-8 flex flex-col justify-between text-left shadow-xl hover:border-amber-500/40 transition-colors"
+                            class="rounded-xl bg-[#FFFFFF] border border-[#E2DCD2] p-7 flex flex-col justify-between text-left shadow-sm hover:border-[#C5A880] transition-colors"
                         >
-                            <div class="space-y-4">
+                            <div class="space-y-3.5">
                                 <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-1 text-amber-400">
-                                        <Star v-for="n in t.rating" :key="n" class="w-4 h-4 fill-amber-400 text-amber-400" />
+                                    <div class="flex items-center gap-1">
+                                        <Star v-for="n in t.rating" :key="n" class="w-3.5 h-3.5 fill-[#8E744B] text-[#8E744B]" />
                                     </div>
-                                    <span class="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+                                    <span class="text-[10px] font-medium text-[#5A7B68] bg-[#F2F7F4] px-2.5 py-0.5 rounded border border-[#D5E5DC]">
                                         {{ t.source }}
                                     </span>
                                 </div>
-                                <p class="text-slate-300 text-xs sm:text-sm leading-relaxed italic">
+                                <p class="text-[#4A453E] text-xs sm:text-sm leading-relaxed italic font-light">
                                     “{{ t.review }}”
                                 </p>
                             </div>
 
-                            <div class="pt-6 border-t border-slate-800/80 mt-6 flex items-center justify-between">
+                            <div class="pt-5 border-t border-[#ECE7DE] mt-5 flex items-center justify-between">
                                 <div>
-                                    <div class="text-sm font-bold text-white">{{ t.name }}</div>
-                                    <div class="text-xs text-amber-400/80">{{ t.role }}</div>
+                                    <div class="text-xs font-semibold text-[#1A1816]">{{ t.name }}</div>
+                                    <div class="text-[11px] text-[#8E744B]">{{ t.role }}</div>
                                 </div>
-                                <span class="text-[11px] text-slate-500">{{ t.date }}</span>
+                                <span class="text-[10px] text-[#8C857B]">{{ t.date }}</span>
                             </div>
                         </div>
                     </div>
@@ -1644,90 +1614,90 @@ const hotelContacts = [
             </section>
 
             <!-- ========================================================= -->
-            <!-- LOCATION, LANDMARK & DIRECT DIAL HOTLINE                  -->
+            <!-- LOCATION, LANDMARK & DIRECT DIAL DIRECTORY                -->
             <!-- ========================================================= -->
-            <section id="location" class="py-24 bg-[#07090e] relative border-t border-amber-500/10">
+            <section id="location" class="py-24 bg-[#F5F2ED] relative border-t border-[#EAE4DA]">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
                         <!-- Location Info -->
                         <div class="lg:col-span-6 space-y-6 text-left">
-                            <div class="inline-flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-[0.2em]">
-                                <MapPin class="w-4 h-4" />
-                                <span>Prime Civil Lines District</span>
+                            <div class="inline-flex items-center gap-2 text-[#8E744B] text-[11px] font-semibold uppercase tracking-[0.2em]">
+                                <MapPin class="w-3.5 h-3.5" />
+                                <span>Civil Lines Enclave</span>
                             </div>
 
-                            <h2 class="text-3xl sm:text-5xl font-serif font-bold text-white leading-tight">
-                                Located at the Very Heart of
-                                <span class="text-amber-400 italic font-serif">Raebareli</span>
+                            <h2 class="text-3xl sm:text-4xl md:text-5xl font-serif font-normal text-[#1A1816] leading-tight">
+                                Located in the Prime Heart of
+                                <span class="italic font-serif text-[#8E744B]">Raebareli</span>
                             </h2>
 
-                            <p class="text-slate-300 leading-relaxed text-sm sm:text-base font-light">
-                                Hotel Pleasant View enjoys the most coveted postal address in town — located in Civil Lines, within effortless reach of the railway junction, administrative offices, and shopping hubs.
+                            <p class="text-[#5A544C] leading-relaxed text-sm sm:text-base font-light">
+                                Hotel Pleasant View enjoys the most convenient address in town — located in Civil Lines, within minutes of the railway station, district administration, and retail landmarks.
                             </p>
 
                             <!-- Address Box -->
-                            <div class="p-6 rounded-2xl bg-[#0f1420] border-2 border-amber-500/30 space-y-3">
-                                <div class="text-xs font-bold uppercase tracking-wider text-amber-400">Postal Address</div>
-                                <div class="text-white text-base font-semibold">
+                            <div class="p-6 rounded-xl bg-[#FFFFFF] border border-[#E2DCD2] space-y-2.5">
+                                <div class="text-[10px] font-semibold uppercase tracking-wider text-[#8E744B]">Postal Address</div>
+                                <div class="text-[#1A1816] text-base font-serif font-medium">
                                     Hotel Pleasant View
                                 </div>
-                                <p class="text-slate-300 text-xs leading-relaxed">
+                                <p class="text-[#6B665F] text-xs leading-relaxed font-light">
                                     Manika Cinema Road, Gandhi Nagar, Near Gol Chauraha, Civil Lines, Raebareli, Uttar Pradesh – 229001
                                 </p>
-                                <div class="pt-2 flex flex-wrap gap-2 text-[11px] text-slate-400">
-                                    <span class="px-2.5 py-1 rounded bg-[#161f30] border border-slate-800">GSTIN: 09AAAAA0000A1Z5</span>
-                                    <span class="px-2.5 py-1 rounded bg-[#161f30] border border-slate-800">PIN: 229001</span>
-                                    <span class="px-2.5 py-1 rounded bg-[#161f30] border border-slate-800">Dist: Raebareli, UP</span>
+                                <div class="pt-2 flex flex-wrap gap-2 text-[11px] text-[#7A746D]">
+                                    <span class="px-2.5 py-0.5 rounded bg-[#FAF8F5] border border-[#E2DCD2]">GSTIN: 09AAAAA0000A1Z5</span>
+                                    <span class="px-2.5 py-0.5 rounded bg-[#FAF8F5] border border-[#E2DCD2]">PIN: 229001</span>
+                                    <span class="px-2.5 py-0.5 rounded bg-[#FAF8F5] border border-[#E2DCD2]">Dist: Raebareli, UP</span>
                                 </div>
                             </div>
 
                             <!-- Proximity Badges -->
-                            <div class="grid grid-cols-2 gap-3 pt-2">
-                                <div class="p-3 rounded-lg bg-[#111723] border border-slate-800">
-                                    <div class="text-amber-400 font-bold text-sm">2.3 KM</div>
-                                    <div class="text-xs text-slate-400">Raebareli Jn Railway Station (~6 mins)</div>
+                            <div class="grid grid-cols-2 gap-3 pt-1">
+                                <div class="p-3 rounded bg-[#FFFFFF] border border-[#E2DCD2]">
+                                    <div class="text-[#1A1816] font-semibold text-sm">2.3 KM</div>
+                                    <div class="text-[11px] text-[#7A746D]">Raebareli Jn Railway Station (~6 mins)</div>
                                 </div>
-                                <div class="p-3 rounded-lg bg-[#111723] border border-slate-800">
-                                    <div class="text-amber-400 font-bold text-sm">200 Meters</div>
-                                    <div class="text-xs text-slate-400">Gol Chauraha & Civil Lines Market</div>
+                                <div class="p-3 rounded bg-[#FFFFFF] border border-[#E2DCD2]">
+                                    <div class="text-[#1A1816] font-semibold text-sm">200 Meters</div>
+                                    <div class="text-[11px] text-[#7A746D]">Gol Chauraha & Civil Lines Market</div>
                                 </div>
-                                <div class="p-3 rounded-lg bg-[#111723] border border-slate-800">
-                                    <div class="text-amber-400 font-bold text-sm">1.5 KM</div>
-                                    <div class="text-xs text-slate-400">District Court & Govt Collectorate</div>
+                                <div class="p-3 rounded bg-[#FFFFFF] border border-[#E2DCD2]">
+                                    <div class="text-[#1A1816] font-semibold text-sm">1.5 KM</div>
+                                    <div class="text-[11px] text-[#7A746D]">District Court & Collectorate</div>
                                 </div>
-                                <div class="p-3 rounded-lg bg-[#111723] border border-slate-800">
-                                    <div class="text-amber-400 font-bold text-sm">78 KM</div>
-                                    <div class="text-xs text-slate-400">Lucknow Airport (CCSI Airport)</div>
+                                <div class="p-3 rounded bg-[#FFFFFF] border border-[#E2DCD2]">
+                                    <div class="text-[#1A1816] font-semibold text-sm">78 KM</div>
+                                    <div class="text-[11px] text-[#7A746D]">Lucknow Airport (CCSI Airport)</div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Direct Dial Concierge Desk Grid -->
+                        <!-- Direct Dial Helpdesk Grid -->
                         <div class="lg:col-span-6 space-y-4">
-                            <div class="text-left mb-6">
-                                <div class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-1">Direct Helpdesk & Inquiries</div>
-                                <h3 class="text-2xl font-serif font-bold text-white">24-Hour Telephone Directory</h3>
-                                <p class="text-xs text-slate-400">Touch any number below to connect directly with our front desk managers.</p>
+                            <div class="text-left mb-5">
+                                <div class="text-[10px] font-semibold uppercase tracking-wider text-[#8E744B] mb-0.5">Concierge Assistance</div>
+                                <h3 class="text-2xl font-serif text-[#1A1816]">Telephone Directory</h3>
+                                <p class="text-xs text-[#7A746D]">Connect directly with our 24/7 front desk team.</p>
                             </div>
 
                             <div
                                 v-for="(c, idx) in hotelContacts"
                                 :key="idx"
-                                class="p-5 rounded-xl bg-[#0f1420] border border-amber-500/20 hover:border-amber-400 transition-all flex items-center justify-between text-left group"
+                                class="p-4 rounded-lg bg-[#FFFFFF] border border-[#E2DCD2] hover:border-[#8E744B] transition-all flex items-center justify-between text-left group shadow-sm"
                             >
-                                <div class="space-y-1">
-                                    <div class="text-xs text-slate-400 uppercase tracking-wider">{{ c.label }}</div>
-                                    <div class="text-lg font-bold text-white group-hover:text-amber-300 transition-colors font-mono">
+                                <div class="space-y-0.5">
+                                    <div class="text-[10px] text-[#7A746D] uppercase tracking-wider">{{ c.label }}</div>
+                                    <div class="text-base font-serif font-medium text-[#1A1816] group-hover:text-[#8E744B] transition-colors">
                                         {{ c.number }}
                                     </div>
                                 </div>
 
                                 <a
                                     :href="c.tel"
-                                    class="p-3 rounded-lg bg-amber-500/10 text-amber-400 group-hover:bg-amber-500 group-hover:text-black transition-all"
+                                    class="p-2.5 rounded bg-[#FAF8F5] border border-[#E2DCD2] text-[#8E744B] group-hover:bg-[#1C1B1A] group-hover:text-[#FAF8F5] group-hover:border-[#1C1B1A] transition-all"
                                     aria-label="Call this number"
                                 >
-                                    <Phone class="w-5 h-5" />
+                                    <Phone class="w-4 h-4" />
                                 </a>
                             </div>
 
@@ -1735,10 +1705,10 @@ const hotelContacts = [
                             <a
                                 href="https://wa.me/919794152222?text=Hello%20Hotel%20Pleasant%20View,%20I%20would%20like%20to%20inquire%20about%20a%20booking"
                                 target="_blank"
-                                class="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs uppercase tracking-wider text-center flex items-center justify-center gap-2 hover:brightness-110 shadow-lg shadow-emerald-600/20"
+                                class="w-full py-3.5 rounded bg-[#1C1B1A] text-[#FAF8F5] font-medium text-xs uppercase tracking-wider text-center flex items-center justify-center gap-2 hover:bg-[#312E2B] transition-colors shadow-sm"
                             >
-                                <MessageCircle class="w-5 h-5" />
-                                <span>Chat Instantly on WhatsApp (+91 9794152222)</span>
+                                <MessageCircle class="w-4 h-4" />
+                                <span>Connect via WhatsApp (+91 9794152222)</span>
                             </a>
                         </div>
                     </div>
@@ -1747,78 +1717,76 @@ const hotelContacts = [
         </main>
 
         <!-- ========================================================= -->
-        <!-- REGAL FOOTER WITH HERITAGE LOGO & STATUTORY DETAILS       -->
+        <!-- REGAL FOOTER (Deep Caviar & Warm Taupe)                   -->
         <!-- ========================================================= -->
-        <footer class="bg-[#05070a] border-t border-amber-500/20 pt-16 pb-12 text-left">
+        <footer class="bg-[#141312] border-t border-[#2B2825] pt-16 pb-12 text-left text-[#FAF8F5]">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-slate-800">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-[#282522]">
                     <!-- Col 1: Brand & Bio -->
                     <div class="lg:col-span-2 space-y-4">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-yellow-600 p-[1px]">
-                                <div class="w-full h-full bg-[#0d121c] rounded-[7px] flex items-center justify-center text-amber-400">
-                                    <Crown class="w-5 h-5 text-amber-400" />
-                                </div>
+                            <div class="w-9 h-9 rounded border border-[#C5A880]/50 bg-[#23201D] flex items-center justify-center text-[#C5A880]">
+                                <Crown class="w-4 h-4 text-[#C5A880]" />
                             </div>
                             <div>
-                                <div class="text-lg font-serif font-bold tracking-wider text-white">HOTEL PLEASANT VIEW</div>
-                                <div class="text-[10px] tracking-[0.2em] font-semibold text-amber-400/80 uppercase">Raebareli, Uttar Pradesh</div>
+                                <div class="text-base font-serif tracking-[0.18em] font-medium text-[#FAF8F5] uppercase">HOTEL PLEASANT VIEW</div>
+                                <div class="text-[9px] tracking-[0.25em] font-medium text-[#C5A880] uppercase">Civil Lines • Raebareli</div>
                             </div>
                         </div>
 
-                        <p class="text-xs text-slate-400 leading-relaxed max-w-sm">
-                            Raebareli’s leading 5-star standard hotel offering luxurious suites, grand marriage ballrooms for up to 1,000 guests, and legendary Awadhi hospitality.
+                        <p class="text-xs text-[#A8A196] leading-relaxed max-w-sm font-light">
+                            Raebareli’s leading luxury hotel offering tranquil guest rooms, grand marriage ballrooms for up to 1,000 guests, and legendary Awadhi hospitality.
                         </p>
 
-                        <div class="text-xs text-slate-400 space-y-1">
-                            <div><strong class="text-slate-300">GSTIN:</strong> 09AAAAA0000A1Z5</div>
-                            <div><strong class="text-slate-300">Check-in:</strong> 12:00 PM | <strong class="text-slate-300">Check-out:</strong> 11:00 AM</div>
+                        <div class="text-xs text-[#8C8479] space-y-1 font-light">
+                            <div><strong class="text-[#D8D1C5] font-normal">GSTIN:</strong> 09AAAAA0000A1Z5</div>
+                            <div><strong class="text-[#D8D1C5] font-normal">Check-in:</strong> 12:00 PM | <strong class="text-[#D8D1C5] font-normal">Check-out:</strong> 11:00 AM</div>
                         </div>
                     </div>
 
                     <!-- Col 2: Accommodations -->
                     <div class="space-y-3">
-                        <div class="text-xs font-bold uppercase tracking-wider text-amber-400">Suites & Rooms</div>
-                        <ul class="space-y-2 text-xs text-slate-400">
-                            <li><button @click="initiateBooking(rooms[0])" class="hover:text-amber-300 transition-colors">Deluxe Heritage Room</button></li>
-                            <li><button @click="initiateBooking(rooms[1])" class="hover:text-amber-300 transition-colors">Executive Business Suite</button></li>
-                            <li><button @click="initiateBooking(rooms[2])" class="hover:text-amber-300 transition-colors">Royal Presidential Suite</button></li>
-                            <li><button @click="scrollToSection('rooms')" class="hover:text-amber-300 transition-colors">Room Amenities & Tariffs</button></li>
+                        <div class="text-[11px] font-medium uppercase tracking-[0.18em] text-[#C5A880]">Accommodations</div>
+                        <ul class="space-y-2 text-xs text-[#A8A196] font-light">
+                            <li><button @click="initiateBooking(rooms[0])" class="hover:text-[#FAF8F5] transition-colors">Deluxe Heritage Room</button></li>
+                            <li><button @click="initiateBooking(rooms[1])" class="hover:text-[#FAF8F5] transition-colors">Executive Business Suite</button></li>
+                            <li><button @click="initiateBooking(rooms[2])" class="hover:text-[#FAF8F5] transition-colors">Royal Presidential Suite</button></li>
+                            <li><button @click="scrollToSection('rooms')" class="hover:text-[#FAF8F5] transition-colors">Room Amenities</button></li>
                         </ul>
                     </div>
 
                     <!-- Col 3: Grand Events -->
                     <div class="space-y-3">
-                        <div class="text-xs font-bold uppercase tracking-wider text-amber-400">Banquets & Venues</div>
-                        <ul class="space-y-2 text-xs text-slate-400">
-                            <li><button @click="scrollToSection('banquets')" class="hover:text-amber-300 transition-colors">Swarnim Grand Ballroom (1000+)</button></li>
-                            <li><button @click="scrollToSection('banquets')" class="hover:text-amber-300 transition-colors">Swarn Mahal Banquet (350)</button></li>
-                            <li><button @click="scrollToSection('banquets')" class="hover:text-amber-300 transition-colors">The Imperial Boardroom</button></li>
-                            <li><button @click="scrollToSection('banquets')" class="hover:text-amber-300 transition-colors">Banquet Budget Calculator</button></li>
+                        <div class="text-[11px] font-medium uppercase tracking-[0.18em] text-[#C5A880]">Banquets & Venues</div>
+                        <ul class="space-y-2 text-xs text-[#A8A196] font-light">
+                            <li><button @click="scrollToSection('banquets')" class="hover:text-[#FAF8F5] transition-colors">Swarnim Grand Ballroom (1000+)</button></li>
+                            <li><button @click="scrollToSection('banquets')" class="hover:text-[#FAF8F5] transition-colors">Swarn Mahal Banquet (350)</button></li>
+                            <li><button @click="scrollToSection('banquets')" class="hover:text-[#FAF8F5] transition-colors">The Imperial Boardroom</button></li>
+                            <li><button @click="scrollToSection('banquets')" class="hover:text-[#FAF8F5] transition-colors">Banquet Budget Calculator</button></li>
                         </ul>
                     </div>
 
-                    <!-- Col 4: Portals & Helpdesk -->
+                    <!-- Col 4: Helpdesk -->
                     <div class="space-y-3">
-                        <div class="text-xs font-bold uppercase tracking-wider text-amber-400">Hotel Governance</div>
-                        <ul class="space-y-2 text-xs text-slate-400">
-                            <li><Link href="/login" class="text-amber-300 hover:text-amber-200 font-semibold">Staff ERP Portal &rarr;</Link></li>
-                            <li><a href="tel:+919794152222" class="hover:text-amber-300 transition-colors">+91 9794152222 (Desk 1)</a></li>
-                            <li><a href="tel:+919794152223" class="hover:text-amber-300 transition-colors">+91 9794152223 (Desk 2)</a></li>
-                            <li><a href="tel:+919794152225" class="hover:text-amber-300 transition-colors">+91 9794152225 (Events)</a></li>
+                        <div class="text-[11px] font-medium uppercase tracking-[0.18em] text-[#C5A880]">Concierge & Portal</div>
+                        <ul class="space-y-2 text-xs text-[#A8A196] font-light">
+                            <li><Link href="/login" class="text-[#DFCEB7] hover:text-[#FAF8F5] font-medium">Staff & ERP Login &rarr;</Link></li>
+                            <li><a href="tel:+919794152222" class="hover:text-[#FAF8F5] transition-colors">+91 9794152222 (Front Desk)</a></li>
+                            <li><a href="tel:+919794152223" class="hover:text-[#FAF8F5] transition-colors">+91 9794152223 (Banquets)</a></li>
+                            <li><a href="tel:+919794152225" class="hover:text-[#FAF8F5] transition-colors">+91 9794152225 (Events)</a></li>
                         </ul>
                     </div>
                 </div>
 
                 <!-- Bottom Copyright -->
-                <div class="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+                <div class="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-[#7A746D] gap-4 font-light">
                     <div>
                         © {{ new Date().getFullYear() }} Hotel Pleasant View, Raebareli. All Rights Reserved.
                     </div>
                     <div class="flex items-center gap-4">
                         <span>Civil Lines, Gandhi Nagar, Raebareli (UP)</span>
                         <span>•</span>
-                        <Link href="/login" class="text-slate-400 hover:text-white">ERP Access</Link>
+                        <Link href="/login" class="text-[#8C8479] hover:text-[#FAF8F5]">Staff ERP Access</Link>
                     </div>
                 </div>
             </div>
@@ -1827,42 +1795,42 @@ const hotelContacts = [
         <!-- ========================================================= -->
         <!-- MODAL 1: ROOM DETAILS MODAL                               -->
         <!-- ========================================================= -->
-        <div v-if="showRoomModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-            <div class="bg-[#0e1420] border-2 border-amber-500/40 rounded-2xl max-w-2xl w-full overflow-hidden shadow-2xl relative text-left max-h-[90vh] flex flex-col justify-between">
+        <div v-if="showRoomModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div class="bg-[#FFFFFF] border border-[#E2DCD2] rounded-xl max-w-2xl w-full overflow-hidden shadow-2xl relative text-left max-h-[90vh] flex flex-col justify-between">
                 <div>
                     <!-- Modal Header Image -->
                     <div class="relative h-56">
                         <img :src="selectedRoom.image" :alt="selectedRoom.title" class="w-full h-full object-cover" />
-                        <div class="absolute inset-0 bg-gradient-to-t from-[#0e1420] via-transparent to-black/40"></div>
-                        <button @click="showRoomModal = false" class="absolute top-4 right-4 p-2 rounded-full bg-black/60 text-white hover:bg-black">
-                            <X class="w-5 h-5" />
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                        <button @click="showRoomModal = false" class="absolute top-4 right-4 p-2 rounded-full bg-black/50 text-white hover:bg-black/80">
+                            <X class="w-4 h-4" />
                         </button>
                         <div class="absolute bottom-4 left-6">
-                            <h3 class="text-2xl font-serif font-bold text-white">{{ selectedRoom.title }}</h3>
-                            <p class="text-xs text-amber-300">{{ selectedRoom.subtitle }}</p>
+                            <h3 class="text-2xl font-serif text-white">{{ selectedRoom.title }}</h3>
+                            <p class="text-xs text-[#E8E2D8] font-light">{{ selectedRoom.subtitle }}</p>
                         </div>
                     </div>
 
                     <!-- Modal Body -->
                     <div class="p-6 overflow-y-auto space-y-4 max-h-[45vh]">
-                        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div class="flex items-center justify-between border-b border-[#ECE7DE] pb-3">
                             <div>
-                                <span class="text-xs text-slate-400">Tariff per night:</span>
-                                <div class="text-xl font-bold text-amber-400">₹{{ selectedRoom.price }} <span class="text-xs text-slate-400 font-normal">+ taxes</span></div>
+                                <span class="text-xs text-[#7A746D]">Nightly Tariff:</span>
+                                <div class="text-xl font-serif font-semibold text-[#1A1816]">₹{{ selectedRoom.price }} <span class="text-xs text-[#7A746D] font-normal font-sans">+ taxes</span></div>
                             </div>
-                            <div class="text-right text-xs text-slate-300">
+                            <div class="text-right text-xs text-[#5A544C]">
                                 <div><strong>Area:</strong> {{ selectedRoom.size }}</div>
                                 <div><strong>Occupancy:</strong> {{ selectedRoom.occupancy }}</div>
                             </div>
                         </div>
 
-                        <p class="text-xs text-slate-300 leading-relaxed">{{ selectedRoom.description }}</p>
+                        <p class="text-xs text-[#6B665F] leading-relaxed font-light">{{ selectedRoom.description }}</p>
 
                         <div>
-                            <div class="text-xs font-bold uppercase tracking-wider text-amber-400 mb-2">Room Amenities</div>
+                            <div class="text-xs font-semibold uppercase tracking-wider text-[#8E744B] mb-2">Amenities</div>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                <div v-for="(am, idx) in selectedRoom.amenities" :key="idx" class="flex items-center gap-2 text-xs text-slate-300">
-                                    <Check class="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                <div v-for="(am, idx) in selectedRoom.amenities" :key="idx" class="flex items-center gap-2 text-xs text-[#4A453E]">
+                                    <Check class="w-3.5 h-3.5 text-[#8E744B] shrink-0" />
                                     <span>{{ am }}</span>
                                 </div>
                             </div>
@@ -1871,9 +1839,9 @@ const hotelContacts = [
                 </div>
 
                 <!-- Modal Actions -->
-                <div class="p-4 bg-[#0a0e17] border-t border-slate-800 flex items-center justify-end gap-3">
-                    <button @click="showRoomModal = false" class="px-5 py-2.5 rounded-lg border border-slate-700 text-slate-300 text-xs font-semibold uppercase">Close</button>
-                    <button @click="initiateBooking(selectedRoom)" class="px-6 py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-yellow-500 text-black font-bold text-xs uppercase tracking-wider hover:brightness-110">
+                <div class="p-4 bg-[#FAF8F5] border-t border-[#ECE7DE] flex items-center justify-end gap-3">
+                    <button @click="showRoomModal = false" class="px-4 py-2 rounded border border-[#DDD6CB] text-[#4A453E] text-xs font-medium uppercase">Close</button>
+                    <button @click="initiateBooking(selectedRoom)" class="px-5 py-2 rounded bg-[#1C1B1A] text-[#FAF8F5] hover:bg-[#312E2B] font-medium text-xs uppercase tracking-wider">
                         Proceed to Reservation
                     </button>
                 </div>
@@ -1883,73 +1851,73 @@ const hotelContacts = [
         <!-- ========================================================= -->
         <!-- MODAL 2: DIRECT RESERVATION MODAL                         -->
         <!-- ========================================================= -->
-        <div v-if="showReservationModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-            <div class="bg-[#0e1420] border-2 border-amber-500/40 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl relative text-left">
-                <div class="p-6 bg-gradient-to-r from-[#171309] to-[#251d08] border-b border-amber-500/30 flex items-center justify-between">
+        <div v-if="showReservationModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div class="bg-[#FFFFFF] border border-[#E2DCD2] rounded-xl max-w-lg w-full overflow-hidden shadow-2xl relative text-left">
+                <div class="p-5 bg-[#1C1B1A] text-[#FAF8F5] flex items-center justify-between">
                     <div>
-                        <h3 class="text-xl font-serif font-bold text-white">Direct Room Reservation</h3>
-                        <p class="text-xs text-amber-300">Instant confirmation via official WhatsApp concierge</p>
+                        <h3 class="text-lg font-serif text-[#FAF8F5]">Room Reservation</h3>
+                        <p class="text-[11px] text-[#C5A880] font-light">Instant confirmation via front desk WhatsApp concierge</p>
                     </div>
-                    <button @click="showReservationModal = false" class="p-2 rounded-full bg-black/40 text-slate-300 hover:text-white">
-                        <X class="w-5 h-5" />
+                    <button @click="showReservationModal = false" class="p-1.5 rounded-full bg-white/10 text-slate-300 hover:text-white">
+                        <X class="w-4 h-4" />
                     </button>
                 </div>
 
                 <div class="p-6 space-y-4">
                     <!-- Selected Room Banner -->
-                    <div class="p-3.5 rounded-xl bg-[#141b2a] border border-amber-500/20 flex items-center justify-between">
+                    <div class="p-3.5 rounded bg-[#FAF8F5] border border-[#E2DCD2] flex items-center justify-between">
                         <div>
-                            <div class="text-xs text-slate-400">Selected Category:</div>
-                            <div class="text-sm font-bold text-amber-300">{{ activeBookingRoom.title }}</div>
+                            <div class="text-[10px] text-[#7A746D] uppercase">Selected Sanctuary</div>
+                            <div class="text-sm font-serif font-semibold text-[#1A1816]">{{ activeBookingRoom.title }}</div>
                         </div>
                         <div class="text-right">
-                            <span class="text-xs text-slate-400">Tariff / Night</span>
-                            <div class="text-sm font-bold text-white">₹{{ activeBookingRoom.price }}</div>
+                            <span class="text-[10px] text-[#7A746D] uppercase">Tariff / Night</span>
+                            <div class="text-sm font-semibold text-[#1A1816]">₹{{ activeBookingRoom.price }}</div>
                         </div>
                     </div>
 
-                    <!-- Stay Dates & Guests -->
+                    <!-- Stay Dates -->
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-[11px] font-semibold uppercase text-slate-400 mb-1">Check-in</label>
-                            <input v-model="bookingCheckIn" type="date" class="w-full bg-[#161f30] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white" />
+                            <label class="block text-[10px] font-semibold uppercase text-[#6B665F] mb-1">Check-in</label>
+                            <input v-model="bookingCheckIn" type="date" class="w-full bg-[#FAF8F5] border border-[#DDD6CB] rounded px-3 py-2 text-xs text-[#1A1816]" />
                         </div>
                         <div>
-                            <label class="block text-[11px] font-semibold uppercase text-slate-400 mb-1">Check-out</label>
-                            <input v-model="bookingCheckOut" type="date" class="w-full bg-[#161f30] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white" />
+                            <label class="block text-[10px] font-semibold uppercase text-[#6B665F] mb-1">Check-out</label>
+                            <input v-model="bookingCheckOut" type="date" class="w-full bg-[#FAF8F5] border border-[#DDD6CB] rounded px-3 py-2 text-xs text-[#1A1816]" />
                         </div>
                     </div>
 
                     <!-- Guest Details -->
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-[11px] font-semibold uppercase text-slate-400 mb-1">Guest Full Name</label>
-                            <input v-model="guestName" type="text" placeholder="e.g. Ramesh Chandra" class="w-full bg-[#161f30] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400" />
+                            <label class="block text-[10px] font-semibold uppercase text-[#6B665F] mb-1">Guest Full Name</label>
+                            <input v-model="guestName" type="text" placeholder="e.g. Ramesh Chandra" class="w-full bg-[#FAF8F5] border border-[#DDD6CB] rounded px-3 py-2 text-xs text-[#1A1816] focus:outline-none focus:border-[#8E744B]" />
                         </div>
                         <div>
-                            <label class="block text-[11px] font-semibold uppercase text-slate-400 mb-1">Mobile Contact / WhatsApp</label>
-                            <input v-model="guestPhone" type="tel" placeholder="+91 98XXXXXXXX" class="w-full bg-[#161f30] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400" />
+                            <label class="block text-[10px] font-semibold uppercase text-[#6B665F] mb-1">Mobile Contact / WhatsApp</label>
+                            <input v-model="guestPhone" type="tel" placeholder="+91 98XXXXXXXX" class="w-full bg-[#FAF8F5] border border-[#DDD6CB] rounded px-3 py-2 text-xs text-[#1A1816] focus:outline-none focus:border-[#8E744B]" />
                         </div>
                         <div>
-                            <label class="block text-[11px] font-semibold uppercase text-slate-400 mb-1">Special Preferences (Optional)</label>
-                            <input v-model="guestSpecialRequests" type="text" placeholder="Early check-in, extra bed, etc." class="w-full bg-[#161f30] border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400" />
+                            <label class="block text-[10px] font-semibold uppercase text-[#6B665F] mb-1">Special Preferences (Optional)</label>
+                            <input v-model="guestSpecialRequests" type="text" placeholder="Early check-in, dietary preferences, etc." class="w-full bg-[#FAF8F5] border border-[#DDD6CB] rounded px-3 py-2 text-xs text-[#1A1816] focus:outline-none focus:border-[#8E744B]" />
                         </div>
                     </div>
 
                     <!-- Total Calculation -->
-                    <div class="p-3 rounded-lg bg-[#111723] border border-slate-800 flex items-center justify-between text-xs">
-                        <span class="text-slate-400">{{ reservationNights }} Night(s) Stay Total:</span>
-                        <span class="text-base font-bold text-amber-400 font-mono">₹{{ estimatedStayTotal.toLocaleString('en-IN') }}</span>
+                    <div class="p-3 rounded bg-[#FAF8F5] border border-[#E2DCD2] flex items-center justify-between text-xs">
+                        <span class="text-[#7A746D]">{{ reservationNights }} Night(s) Stay Total:</span>
+                        <span class="text-base font-serif font-semibold text-[#1A1816]">₹{{ estimatedStayTotal.toLocaleString('en-IN') }}</span>
                     </div>
 
                     <!-- WhatsApp CTA -->
                     <a
                         :href="generateWhatsAppBookingUrl()"
                         target="_blank"
-                        class="w-full py-3 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs uppercase tracking-wider text-center flex items-center justify-center gap-2 hover:brightness-110 shadow-lg shadow-emerald-600/20"
+                        class="w-full py-3 rounded bg-[#1C1B1A] text-[#FAF8F5] font-medium text-xs uppercase tracking-wider text-center flex items-center justify-center gap-2 hover:bg-[#312E2B] transition-colors"
                     >
                         <MessageCircle class="w-4 h-4" />
-                        <span>Send Booking to Front Desk WhatsApp</span>
+                        <span>Send Reservation to Front Desk</span>
                     </a>
                 </div>
             </div>
@@ -1958,51 +1926,33 @@ const hotelContacts = [
         <!-- ========================================================= -->
         <!-- MODAL 3: FULLSCREEN PHOTO LIGHTBOX                        -->
         <!-- ========================================================= -->
-        <div v-if="activeLightboxIndex !== null" class="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-lg p-4">
-            <button @click="closeLightbox()" class="absolute top-6 right-6 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 z-50">
-                <X class="w-6 h-6" />
+        <div v-if="activeLightboxIndex !== null" class="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-4">
+            <button @click="closeLightbox()" class="absolute top-6 right-6 p-2.5 rounded-full bg-white/10 text-white hover:bg-white/20 z-50">
+                <X class="w-5 h-5" />
             </button>
 
-            <button @click="prevLightbox()" class="absolute left-6 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 z-50">
-                <ChevronLeft class="w-6 h-6" />
+            <button @click="prevLightbox()" class="absolute left-6 p-2.5 rounded-full bg-white/10 text-white hover:bg-white/20 z-50">
+                <ChevronLeft class="w-5 h-5" />
             </button>
 
-            <button @click="nextLightbox()" class="absolute right-6 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 z-50">
-                <ChevronRight class="w-6 h-6" />
+            <button @click="nextLightbox()" class="absolute right-6 p-2.5 rounded-full bg-white/10 text-white hover:bg-white/20 z-50">
+                <ChevronRight class="w-5 h-5" />
             </button>
 
             <div class="max-w-5xl max-h-[85vh] flex flex-col items-center">
                 <img
                     :src="filteredGallery[activeLightboxIndex].image"
                     :alt="filteredGallery[activeLightboxIndex].title"
-                    class="max-h-[72vh] max-w-full object-contain rounded-lg shadow-2xl border border-white/10"
+                    class="max-h-[72vh] max-w-full object-contain rounded shadow-2xl border border-white/10"
                 />
                 <div class="mt-4 text-center">
-                    <span class="inline-block px-3 py-1 rounded bg-amber-500 text-black font-bold text-[10px] uppercase tracking-wider mb-1">
+                    <span class="inline-block px-2.5 py-0.5 rounded bg-[#C5A880] text-[#1C1B1A] font-medium text-[10px] uppercase tracking-wider mb-1">
                         {{ filteredGallery[activeLightboxIndex].categoryLabel }}
                     </span>
-                    <h4 class="text-lg font-serif font-bold text-white">{{ filteredGallery[activeLightboxIndex].title }}</h4>
-                    <p class="text-xs text-slate-300 max-w-xl mx-auto mt-1">{{ filteredGallery[activeLightboxIndex].caption }}</p>
+                    <h4 class="text-base font-serif text-white">{{ filteredGallery[activeLightboxIndex].title }}</h4>
+                    <p class="text-xs text-slate-300 max-w-xl mx-auto mt-1 font-light">{{ filteredGallery[activeLightboxIndex].caption }}</p>
                 </div>
             </div>
         </div>
     </div>
 </template>
-
-<style scoped>
-@keyframes subtle-zoom {
-    0% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.04);
-    }
-    100% {
-        transform: scale(1);
-    }
-}
-
-.animate-subtle-zoom {
-    animation: subtle-zoom 20s infinite ease-in-out;
-}
-</style>
