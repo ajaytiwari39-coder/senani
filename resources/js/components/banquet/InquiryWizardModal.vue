@@ -54,6 +54,7 @@ import {
     type BanquetAuditEntry
 } from './auditTrail';
 import { printElement, downloadElementAsPdf } from './printService';
+import { generateBanquetVoucherVectorPdf } from './vectorPdfGenerator';
 import { buildGuestPortalUrl } from './guestShare';
 
 export interface BanquetInquiry {
@@ -693,21 +694,46 @@ const triggerPrint = async () => {
 const handleDownloadPdf = async () => {
     isPdfDownloading.value = true;
     await updateBarcodeAndQr();
-    const wasPreviewClosed = !showPrintPreview.value;
-    if (wasPreviewClosed) {
-        showPrintPreview.value = true;
-        await nextTick();
-        await new Promise(resolve => setTimeout(resolve, 200));
-    }
     try {
+        const success = await generateBanquetVoucherVectorPdf({
+            form: form.value,
+            effectiveMenuRate: effectiveMenuRate.value,
+            currentMenuCatalog: currentMenuCatalog.value,
+            foodTotal: foodTotal.value,
+            extraFoodingTotal: extraFoodingTotal.value,
+            venueTotal: venueTotal.value,
+            roomsTotal: roomsTotal.value,
+            decorAvTotal: decorAvTotal.value,
+            otherAddonsTotal: otherAddonsTotal.value,
+            totalGrossAmount: totalGrossAmount.value,
+            calculatedDiscountAmount: calculatedDiscountAmount.value,
+            calculatedDiscountPercent: calculatedDiscountPercent.value,
+            netPayableAmount: netPayableAmount.value,
+            balanceDueAmount: balanceDueAmount.value,
+            selectedVenuesDetailed: selectedVenuesDetailed.value,
+            paxRules: paxRules.value,
+            selectedDecorDetails: selectedDecorDetails.value,
+            selectedAvItems: selectedAvItems.value,
+            confirmedMenuCategories: confirmedMenuCategories.value,
+            authorityLevel: authorityLevel.value,
+            barcodeDataUrl: barcodeDataUrl.value,
+            qrCodeDataUrl: qrCodeDataUrl.value,
+        }, `Senani-Banquet-Voucher-${form.value.voucherNo}.pdf`);
+
+        if (!success) {
+            // Fallback to DOM-based PDF if vector generation encountered an issue
+            await downloadElementAsPdf(
+                'printable-voucher',
+                `Senani-Banquet-Voucher-${form.value.voucherNo}.pdf`
+            );
+        }
+    } catch (err) {
+        console.error('Vector PDF trigger failed, falling back to standard export:', err);
         await downloadElementAsPdf(
             'printable-voucher',
             `Senani-Banquet-Voucher-${form.value.voucherNo}.pdf`
         );
     } finally {
-        if (wasPreviewClosed) {
-            showPrintPreview.value = false;
-        }
         isPdfDownloading.value = false;
     }
 };
