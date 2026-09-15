@@ -1477,29 +1477,43 @@ const shareOnWhatsApp = () => {
                                     </div>
                                     <div v-if="form.isEngagementPackage" class="grid grid-cols-1 gap-2 pt-1">
                                         <label
-                                            class="flex items-center justify-between p-2 rounded-lg border cursor-pointer text-xs"
-                                            :class="form.engagementPackageType === 'swarnim' ? 'bg-white border-[#673DE6] shadow-xs' : 'bg-slate-50 border-slate-200'"
+                                            class="flex items-center justify-between p-2 rounded-lg border cursor-pointer text-xs transition"
+                                            :class="form.engagementPackageType === 'swarnim' ? 'bg-purple-50/70 border-[#673DE6] text-[#673DE6] font-semibold' : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100'"
                                         >
-                                            <div>
-                                                <div class="font-bold text-slate-900">Swarnim Hall (G) + Decor + DJ</div>
-                                                <div class="text-[10px] text-slate-500">Hall + Stage + Flowers + Full DJ Setup</div>
+                                            <div class="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    :checked="form.engagementPackageType === 'swarnim'"
+                                                    @change="form.engagementPackageType = form.engagementPackageType === 'swarnim' ? 'none' : 'swarnim'"
+                                                    class="rounded text-[#673DE6] focus:ring-[#673DE6]"
+                                                />
+                                                <div>
+                                                    <div class="font-bold text-slate-900">Swarnim Hall (G) + Decor + DJ</div>
+                                                    <div class="text-[10px] text-slate-500">Hall + Stage + Flowers + Full DJ Setup</div>
+                                                </div>
                                             </div>
                                             <div class="font-mono font-bold text-[#673DE6] text-right">
-                                                <input type="radio" value="swarnim" v-model="form.engagementPackageType" class="mr-1.5" />
                                                 ₹45,000
                                             </div>
                                         </label>
 
                                         <label
-                                            class="flex items-center justify-between p-2 rounded-lg border cursor-pointer text-xs"
-                                            :class="form.engagementPackageType === 'swarnmahal' ? 'bg-white border-[#673DE6] shadow-xs' : 'bg-slate-50 border-slate-200'"
+                                            class="flex items-center justify-between p-2 rounded-lg border cursor-pointer text-xs transition"
+                                            :class="form.engagementPackageType === 'swarnmahal' ? 'bg-purple-50/70 border-[#673DE6] text-[#673DE6] font-semibold' : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100'"
                                         >
-                                            <div>
-                                                <div class="font-bold text-slate-900">Swarnmahal Hall (-1) + Decor + DJ</div>
-                                                <div class="text-[10px] text-slate-500">Basement Hall + Stage + Flowers + DJ Setup</div>
+                                            <div class="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    :checked="form.engagementPackageType === 'swarnmahal'"
+                                                    @change="form.engagementPackageType = form.engagementPackageType === 'swarnmahal' ? 'none' : 'swarnmahal'"
+                                                    class="rounded text-[#673DE6] focus:ring-[#673DE6]"
+                                                />
+                                                <div>
+                                                    <div class="font-bold text-slate-900">Swarnmahal Hall (-1) + Decor + DJ</div>
+                                                    <div class="text-[10px] text-slate-500">Basement Hall + Stage + Flowers + DJ Setup</div>
+                                                </div>
                                             </div>
                                             <div class="font-mono font-bold text-[#673DE6] text-right">
-                                                <input type="radio" value="swarnmahal" v-model="form.engagementPackageType" class="mr-1.5" />
                                                 ₹40,000
                                             </div>
                                         </label>
@@ -1848,43 +1862,64 @@ const shareOnWhatsApp = () => {
                                     <label class="block text-[10px] font-bold text-slate-500 uppercase">Decor Package</label>
                                     <div class="space-y-1.5">
                                         <label
-                                            class="flex items-center justify-between p-2 rounded-lg border text-xs cursor-pointer"
-                                            :class="form.decorPackageType === 'standard' ? 'bg-purple-50 border-[#673DE6]' : 'bg-slate-50 border-slate-200'"
+                                            class="flex items-center justify-between p-2 rounded-lg border text-xs cursor-pointer transition"
+                                            :class="form.decorPackageType === 'standard' ? 'bg-purple-50/70 border-[#673DE6] text-[#673DE6] font-semibold' : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100'"
                                         >
-                                            <div>
-                                                <div class="font-bold text-slate-900">Standard Event Decor</div>
-                                                <div class="text-[10px] text-slate-500">DJ, Stage, Flower, Entrance, Selfie</div>
+                                            <div class="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    :checked="form.decorPackageType === 'standard'"
+                                                    @change="form.decorPackageType = form.decorPackageType === 'standard' ? 'none' : 'standard'"
+                                                    class="rounded text-[#673DE6] focus:ring-[#673DE6]"
+                                                />
+                                                <div>
+                                                    <div class="font-bold text-slate-900">Standard Event Decor</div>
+                                                    <div class="text-[10px] text-slate-500">DJ, Stage, Flower, Entrance, Selfie</div>
+                                                </div>
                                             </div>
                                             <div class="font-mono font-bold text-slate-900">
-                                                <input type="radio" value="standard" v-model="form.decorPackageType" class="mr-1" />
                                                 ₹30,000
                                             </div>
                                         </label>
 
                                         <label
-                                            class="flex items-center justify-between p-2 rounded-lg border text-xs cursor-pointer"
-                                            :class="form.decorPackageType === 'wedding' ? 'bg-purple-50 border-[#673DE6]' : 'bg-slate-50 border-slate-200'"
+                                            class="flex items-center justify-between p-2 rounded-lg border text-xs cursor-pointer transition"
+                                            :class="form.decorPackageType === 'wedding' ? 'bg-purple-50/70 border-[#673DE6] text-[#673DE6] font-semibold' : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100'"
                                         >
-                                            <div>
-                                                <div class="font-bold text-slate-900">Wedding Decor Package</div>
-                                                <div class="text-[10px] text-slate-500">Walkway, Garden, Dual DJ + Mandap</div>
+                                            <div class="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    :checked="form.decorPackageType === 'wedding'"
+                                                    @change="form.decorPackageType = form.decorPackageType === 'wedding' ? 'none' : 'wedding'"
+                                                    class="rounded text-[#673DE6] focus:ring-[#673DE6]"
+                                                />
+                                                <div>
+                                                    <div class="font-bold text-slate-900">Wedding Decor Package</div>
+                                                    <div class="text-[10px] text-slate-500">Walkway, Garden, Dual DJ + Mandap</div>
+                                                </div>
                                             </div>
                                             <div class="font-mono font-bold text-slate-900">
-                                                <input type="radio" value="wedding" v-model="form.decorPackageType" class="mr-1" />
                                                 ₹48,000
                                             </div>
                                         </label>
 
                                         <label
-                                            class="flex items-center justify-between p-2 rounded-lg border text-xs cursor-pointer"
-                                            :class="form.decorPackageType === 'grand' ? 'bg-purple-50 border-[#673DE6]' : 'bg-slate-50 border-slate-200'"
+                                            class="flex items-center justify-between p-2 rounded-lg border text-xs cursor-pointer transition"
+                                            :class="form.decorPackageType === 'grand' ? 'bg-purple-50/70 border-[#673DE6] text-[#673DE6] font-semibold' : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100'"
                                         >
-                                            <div>
-                                                <div class="font-bold text-slate-900">Grand Theme Setup</div>
-                                                <div class="text-[10px] text-slate-500">Light, Tent, Flowers, Theme Stage</div>
+                                            <div class="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    :checked="form.decorPackageType === 'grand'"
+                                                    @change="form.decorPackageType = form.decorPackageType === 'grand' ? 'none' : 'grand'"
+                                                    class="rounded text-[#673DE6] focus:ring-[#673DE6]"
+                                                />
+                                                <div>
+                                                    <div class="font-bold text-slate-900">Grand Theme Setup</div>
+                                                    <div class="text-[10px] text-slate-500">Light, Tent, Flowers, Theme Stage</div>
+                                                </div>
                                             </div>
                                             <div class="font-mono font-bold text-slate-900">
-                                                <input type="radio" value="grand" v-model="form.decorPackageType" class="mr-1" />
                                                 ₹60,000
                                             </div>
                                         </label>
