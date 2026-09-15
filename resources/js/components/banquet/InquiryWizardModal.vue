@@ -465,14 +465,16 @@ const calculatedDiscountPercent = computed(() => {
 
 // Sync both modes
 const setDiscountFromPercent = (pct: number) => {
-    form.value.discountPercent = pct;
-    form.value.discountRupees = Math.round((totalGrossAmount.value * pct) / 100);
+    const clampedPct = Math.max(0, Math.min(Number(pct) || 0, 100));
+    form.value.discountPercent = clampedPct;
+    form.value.discountRupees = Math.round((totalGrossAmount.value * clampedPct) / 100);
     form.value.discountInputMode = 'percent';
 };
 
 const setDiscountFromAmount = (amt: number) => {
-    form.value.discountRupees = amt;
-    form.value.discountPercent = totalGrossAmount.value > 0 ? Math.round((amt / totalGrossAmount.value) * 1000) / 10 : 0;
+    const clampedAmt = Math.max(0, Math.min(Number(amt) || 0, totalGrossAmount.value));
+    form.value.discountRupees = clampedAmt;
+    form.value.discountPercent = totalGrossAmount.value > 0 ? Math.round((clampedAmt / totalGrossAmount.value) * 1000) / 10 : 0;
     form.value.discountInputMode = 'amount';
 };
 
@@ -544,11 +546,32 @@ const toggleArrayItem = (arr: string[], item: string) => {
     }
 };
 
-// Stepper Actions
+// Stepper Validation & Actions
+const stepErrors = ref<{ guestName?: string; phonePrimary?: string }>({});
+
+const clearStepError = (field: 'guestName' | 'phonePrimary') => {
+    if (stepErrors.value[field]) {
+        delete stepErrors.value[field];
+    }
+};
+
 const nextStep = () => {
+    if (currentStep.value === 1) {
+        stepErrors.value = {};
+        if (!form.value.guestName || !form.value.guestName.trim()) {
+            stepErrors.value.guestName = 'Customer / Host Full Name is required.';
+        }
+        if (!form.value.phonePrimary || !form.value.phonePrimary.trim()) {
+            stepErrors.value.phonePrimary = 'Primary Phone Number is required.';
+        }
+        if (Object.keys(stepErrors.value).length > 0) {
+            return;
+        }
+    }
     if (currentStep.value < 3) currentStep.value++;
 };
 const prevStep = () => {
+    stepErrors.value = {};
     if (currentStep.value > 1) currentStep.value--;
 };
 
@@ -1115,11 +1138,18 @@ const shareOnWhatsApp = () => {
                                 </label>
                                 <input
                                     v-model="form.guestName"
+                                    @input="clearStepError('guestName')"
                                     type="text"
                                     required
                                     placeholder="e.g. Mr. Rajesh Kumar / Host Name"
-                                    class="w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition"
+                                    :class="[
+                                        'w-full h-8.5 rounded-lg border px-3 text-xs text-slate-900 focus:bg-white focus:outline-none transition',
+                                        stepErrors.guestName ? 'border-rose-400 bg-rose-50/50 focus:border-rose-500' : 'border-slate-200 bg-slate-50/60 focus:border-[#673DE6]'
+                                    ]"
                                 />
+                                <span v-if="stepErrors.guestName" class="text-[10px] text-rose-600 font-bold mt-0.5 block">
+                                    {{ stepErrors.guestName }}
+                                </span>
                             </div>
 
                             <div>
@@ -1129,11 +1159,18 @@ const shareOnWhatsApp = () => {
                                 </label>
                                 <input
                                     v-model="form.phonePrimary"
+                                    @input="clearStepError('phonePrimary')"
                                     type="tel"
                                     required
                                     placeholder="e.g. 8115711507"
-                                    class="w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition font-mono"
+                                    :class="[
+                                        'w-full h-8.5 rounded-lg border px-3 text-xs text-slate-900 focus:bg-white focus:outline-none transition font-mono',
+                                        stepErrors.phonePrimary ? 'border-rose-400 bg-rose-50/50 focus:border-rose-500' : 'border-slate-200 bg-slate-50/60 focus:border-[#673DE6]'
+                                    ]"
                                 />
+                                <span v-if="stepErrors.phonePrimary" class="text-[10px] text-rose-600 font-bold mt-0.5 block">
+                                    {{ stepErrors.phonePrimary }}
+                                </span>
                             </div>
 
                             <div>

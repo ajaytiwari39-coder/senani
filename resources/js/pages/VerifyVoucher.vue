@@ -126,7 +126,7 @@ const venueLabels = computed(() => {
             <!-- Top Luxury Branding Header -->
             <div class="bg-gradient-to-r from-slate-950 via-purple-950 to-slate-950 p-4 sm:p-6 border-b border-purple-800/40 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
-                    <img src="/assets/logo-dark.png" alt="Senani Hotel" class="h-10 sm:h-12 object-contain" />
+                    <img src="/images/logo-dark.png" alt="Senani Hotel" class="h-10 sm:h-12 object-contain" />
                     <div class="border-l border-purple-700/50 pl-3">
                         <div class="text-sm sm:text-base font-black tracking-wide text-white uppercase">
                             Digital Integrity & Audit Portal

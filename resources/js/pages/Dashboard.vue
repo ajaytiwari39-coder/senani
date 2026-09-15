@@ -49,7 +49,7 @@ import {
 import { home } from '@/routes';
 import InquiryWizardModal, { type BanquetInquiry } from '@/components/banquet/InquiryWizardModal.vue';
 import { downloadElementAsPdf } from '@/components/banquet/printService';
-import { buildGuestPortalUrl } from '@/components/banquet/guestShare';
+import { buildGuestPortalUrl, getInquiryFinancials } from '@/components/banquet/guestShare';
 
 defineOptions({
     layout: null,
@@ -1518,43 +1518,22 @@ const submitCheckIn = () => {
                                             </div>
                                         </td>
                                         <td class="py-3 text-right font-mono font-bold text-slate-900">
-                                            ₹{{ (
-                                                (inq.paxGuaranteed * (inq.effectiveMenuRate || inq.menuRate || 799)) +
-                                                (inq.additionalHallCharges || 0) +
-                                                (inq.additionalDecorCharges || 0) +
-                                                (inq.isEngagementPackage ? (inq.engagementPackageType === 'swarnim' ? 45000 : 40000) : (inq.selectedVenues?.length ? inq.selectedVenues.length * 35000 : 0)) +
-                                                ((inq.roomsNeeded || 0) * (inq.roomRate || 2500))
-                                            ).toLocaleString('en-IN') }}
+                                            ₹{{ getInquiryFinancials(inq).gross.toLocaleString('en-IN') }}
                                         </td>
                                         <td class="py-3 text-right font-mono">
-                                            <div v-if="(inq.discountRupees || 0) > 0" class="text-amber-600 font-bold">
-                                                -₹{{ inq.discountRupees.toLocaleString('en-IN') }}
-                                                <span class="text-[10px] text-slate-400 font-normal">({{ inq.discountPercent }}%)</span>
-                                            </div>
-                                            <div v-else-if="inq.discountPercent > 0" class="text-amber-600 font-bold">
-                                                -{{ inq.discountPercent }}%
+                                            <div v-if="getInquiryFinancials(inq).discount > 0" class="text-amber-600 font-bold">
+                                                -₹{{ getInquiryFinancials(inq).discount.toLocaleString('en-IN') }}
+                                                <span v-if="inq.discountPercent" class="text-[10px] text-slate-400 font-normal">({{ inq.discountPercent }}%)</span>
                                             </div>
                                             <span v-else class="text-slate-400">₹0</span>
                                         </td>
                                         <td class="py-3 text-right font-mono font-black text-emerald-700">
-                                            ₹{{ Math.max(0, (
-                                                (inq.paxGuaranteed * (inq.effectiveMenuRate || inq.menuRate || 799)) +
-                                                (inq.additionalHallCharges || 0) +
-                                                (inq.additionalDecorCharges || 0) +
-                                                (inq.isEngagementPackage ? (inq.engagementPackageType === 'swarnim' ? 45000 : 40000) : (inq.selectedVenues?.length ? inq.selectedVenues.length * 35000 : 0)) +
-                                                ((inq.roomsNeeded || 0) * (inq.roomRate || 2500))
-                                            ) - (inq.discountRupees || 0)).toLocaleString('en-IN') }}
+                                            ₹{{ getInquiryFinancials(inq).net.toLocaleString('en-IN') }}
                                         </td>
                                         <td class="py-3 text-right font-mono text-slate-700">
-                                            <span class="font-bold">₹{{ inq.amountPaid.toLocaleString('en-IN') }}</span>
+                                            <span class="font-bold">₹{{ (Number(inq.amountPaid) || 0).toLocaleString('en-IN') }}</span>
                                             <div class="text-[10px] text-slate-400">
-                                                Bal: ₹{{ Math.max(0, (
-                                                    (inq.paxGuaranteed * (inq.effectiveMenuRate || inq.menuRate || 799)) +
-                                                    (inq.additionalHallCharges || 0) +
-                                                    (inq.additionalDecorCharges || 0) +
-                                                    (inq.isEngagementPackage ? (inq.engagementPackageType === 'swarnim' ? 45000 : 40000) : (inq.selectedVenues?.length ? inq.selectedVenues.length * 35000 : 0)) +
-                                                    ((inq.roomsNeeded || 0) * (inq.roomRate || 2500))
-                                                ) - (inq.discountRupees || 0) - inq.amountPaid).toLocaleString('en-IN') }}
+                                                Bal: ₹{{ getInquiryFinancials(inq).balance.toLocaleString('en-IN') }}
                                             </div>
                                         </td>
                                         <td class="py-3 text-center">
