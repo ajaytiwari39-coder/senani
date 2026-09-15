@@ -1157,14 +1157,40 @@ const shareOnWhatsApp = () => {
                         </div>
                     </div>
 
-                    <!-- Close Button -->
-                    <button
-                        type="button"
-                        @click="$emit('close')"
-                        class="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition"
-                    >
-                        <X class="h-4 w-4" />
-                    </button>
+                    <!-- Top Action & Close Buttons -->
+                    <div class="flex items-center gap-2">
+                        <!-- Always Accessible Print Form / Voucher Button for Receptionist & All Roles -->
+                        <button
+                            type="button"
+                            @click="showPrintPreview = true"
+                            class="h-8 px-3 rounded-lg border border-purple-200 bg-purple-50 text-[#673DE6] hover:bg-purple-600 hover:text-white text-xs font-bold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                            title="Print Official Voucher & Full Quotation Bill at any stage"
+                        >
+                            <Printer class="h-3.5 w-3.5" />
+                            <span>Print Voucher / Bill</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            @click="handleDownloadPdf"
+                            :disabled="isPdfDownloading"
+                            class="h-8 px-2.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white text-xs font-bold transition flex items-center gap-1 disabled:opacity-60 disabled:cursor-wait cursor-pointer shadow-2xs"
+                            title="Download PDF Dossier"
+                        >
+                            <Loader2 v-if="isPdfDownloading" class="h-3.5 w-3.5 animate-spin" />
+                            <Download v-else class="h-3.5 w-3.5" />
+                            <span class="hidden sm:inline">{{ isPdfDownloading ? 'Generating…' : 'PDF' }}</span>
+                        </button>
+
+                        <!-- Close Button -->
+                        <button
+                            type="button"
+                            @click="$emit('close')"
+                            class="h-8 w-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
+                        >
+                            <X class="h-4 w-4" />
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Role-Aware Interactive Stepper Navigation -->
@@ -1204,6 +1230,51 @@ const shareOnWhatsApp = () => {
                 <!-- STEP 1: RECEPTION DESK INTAKE                     -->
                 <!-- ------------------------------------------------- -->
                 <div v-if="currentStep === 1" class="space-y-4 animate-in fade-in duration-150 max-w-6xl mx-auto">
+                    <!-- Reception Fast Print & Live Quotation Summary Bar -->
+                    <div class="p-3.5 rounded-xl bg-gradient-to-r from-purple-50 via-indigo-50/50 to-emerald-50/60 border border-purple-200/80 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
+                        <div class="flex items-center gap-2.5">
+                            <div class="h-9 w-9 rounded-lg bg-[#673DE6] text-white flex items-center justify-center shadow-xs shrink-0">
+                                <Printer class="h-4.5 w-4.5" />
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs font-black text-slate-900">Reception Print Desk Active</span>
+                                    <span
+                                        class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                                        :class="form.status === 'approved_md' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : (form.status === 'pending_md' ? 'bg-purple-100 text-purple-800 border border-purple-300' : 'bg-amber-100 text-amber-800 border border-amber-300')"
+                                    >
+                                        {{ form.status === 'approved_md' ? '✅ MD Approved & Sealed' : (form.status === 'pending_md' ? '⏳ Manager Costed / Awaiting MD' : '📝 Intake Stage') }}
+                                    </span>
+                                </div>
+                                <p class="text-[11px] text-slate-600 mt-0.5">
+                                    Gross Total: <strong class="text-slate-900 font-mono">₹{{ totalGrossAmount.toLocaleString('en-IN') }}</strong>
+                                    <span v-if="form.discountRupees > 0" class="text-emerald-700 font-bold ml-1.5">• Discount: ₹{{ form.discountRupees.toLocaleString('en-IN') }}</span>
+                                    <span class="text-purple-700 font-bold ml-1.5">• Net: ₹{{ netPayableAmount.toLocaleString('en-IN') }}</span>
+                                    <span class="text-slate-500 ml-1.5 font-mono">| Voucher #{{ form.voucherNo }}</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button
+                                type="button"
+                                @click="showPrintPreview = true"
+                                class="h-8 px-3.5 rounded-lg bg-[#673DE6] hover:bg-[#5832D0] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                            >
+                                <Printer class="h-3.5 w-3.5" />
+                                <span>Print Quotation / Voucher</span>
+                            </button>
+                            <button
+                                type="button"
+                                @click="handleDownloadPdf"
+                                :disabled="isPdfDownloading"
+                                class="h-8 px-3 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-60 cursor-pointer shadow-2xs"
+                            >
+                                <Loader2 v-if="isPdfDownloading" class="h-3.5 w-3.5 animate-spin" />
+                                <Download v-else class="h-3.5 w-3.5" />
+                                <span>PDF</span>
+                            </button>
+                        </div>
+                    </div>
                     <!-- Guest Profile Card -->
                     <div class="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-2xs space-y-4">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
