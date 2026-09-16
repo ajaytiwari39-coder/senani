@@ -177,8 +177,7 @@ const emit = defineEmits<{
 // Role-Aware Stepper Permission Bounds
 const maxAllowedStep = computed(() => {
     if (props.userRole === 'reception') return 1;
-    if (props.userRole === 'manager') return 2;
-    return 3;
+    return 3; // Manager, MD, and Super Admin can all access up to Step 3!
 });
 
 const visibleSteps = computed(() => {
@@ -189,14 +188,15 @@ const visibleSteps = computed(() => {
     }
     if (props.userRole === 'manager') {
         return [
-            { num: 1, title: 'Step 1: Reception Intake', short: 'Reception Intake' },
-            { num: 2, title: 'Step 2: Banquet Manager Costing', short: 'Manager Setup' }
+            { num: 1, title: 'Step 1: Reception Intake', short: 'Reception' },
+            { num: 2, title: 'Step 2: Banquet Costing & Catalog', short: 'Manager Costing' },
+            { num: 3, title: 'Step 3: Final Booking & Advance Log', short: 'Final Booking' }
         ];
     }
     return [
         { num: 1, title: 'Step 1: Reception Desk Intake', short: 'Reception' },
-        { num: 2, title: 'Step 2: Banquet Manager Costing', short: 'Manager' },
-        { num: 3, title: 'Step 3: MD Deal Sign-off & Seal', short: 'MD Sign-off' }
+        { num: 2, title: 'Step 2: Banquet Costing & Catalog', short: 'Costing' },
+        { num: 3, title: 'Step 3: MD / Super Admin Sign-off & Seal', short: 'MD / Admin Seal' }
     ];
 });
 
@@ -547,14 +547,15 @@ watch(
 // Discount Authorization Matrix:
 // "ALWAYS TELL AMOUNT IN NUMBERS NOT IN %"
 // - Manager / Regular: Max up to 7%
-// - Super Admin: 12% Slab shifted strictly to Super Admin!
+// - MD & Super Admin (Merged): 12% Slab Available!
 // -------------------------------------------------------------
+const isMdOrSuperAdmin = computed(() => props.userRole === 'superadmin' || props.userRole === 'md');
 const discountLimitManager = computed(() => Math.round((totalGrossAmount.value * 7) / 100));
-const discountLimitMD = computed(() => Math.round((totalGrossAmount.value * (props.userRole === 'superadmin' ? 12 : 7)) / 100));
+const discountLimitMD = computed(() => Math.round((totalGrossAmount.value * (isMdOrSuperAdmin.value ? 12 : 7)) / 100));
 
 const maxDiscountPercentAllowed = computed(() => {
-    if (props.userRole === 'superadmin') return 12; // 12% slab shifted strictly to super admin!
-    return 7; // Manager, MD, and everyone else capped at 7%
+    if (isMdOrSuperAdmin.value) return 12; // MD / Super Admin Merger: 12% slab!
+    return 7; // Manager capped at 7%
 });
 
 // Live Discount Calculation: Currency First!
@@ -573,25 +574,26 @@ const calculatedDiscountAmount = computed(() => {
 const calculatedDiscountPercent = computed(() => {
     if (totalGrossAmount.value === 0) return 0;
     const maxPct = maxDiscountPercentAllowed.value;
-    return Math.min(maxPct, Math.round((calculatedDiscountAmount.value / totalGrossAmount.value) * 1000) / 10);
+    if (form.value.discountInputMode === 'percent') {
+        return Math.min(maxPct, Math.max(0, Number(form.value.discountPercent) || 0));
+    }
+    const rawPct = (calculatedDiscountAmount.value / totalGrossAmount.value) * 100;
+    return Math.min(maxPct, Math.round(rawPct * 10) / 10);
 });
 
-// Sync both modes
-const setDiscountFromPercent = (pct: number) => {
-    const maxPct = maxDiscountPercentAllowed.value;
-    const clampedPct = Math.max(0, Math.min(Number(pct) || 0, maxPct));
-    form.value.discountPercent = clampedPct;
-    form.value.discountRupees = Math.round((totalGrossAmount.value * clampedPct) / 100);
-    form.value.discountInputMode = 'percent';
+const setDiscountFromAmount = (amt: number) => {
+    form.value.discountInputMode = 'amount';
+    const maxAmt = Math.round((totalGrossAmount.value * maxDiscountPercentAllowed.value) / 100);
+    const validAmt = Math.min(maxAmt, Math.max(0, amt));
+    form.value.discountRupees = validAmt;
+    form.value.discountPercent = totalGrossAmount.value > 0 ? Math.round((validAmt / totalGrossAmount.value) * 1000) / 10 : 0;
 };
 
-const setDiscountFromAmount = (amt: number) => {
-    const maxPct = maxDiscountPercentAllowed.value;
-    const maxAmt = Math.round((totalGrossAmount.value * maxPct) / 100);
-    const clampedAmt = Math.max(0, Math.min(Number(amt) || 0, maxAmt));
-    form.value.discountRupees = clampedAmt;
-    form.value.discountPercent = totalGrossAmount.value > 0 ? Math.round((clampedAmt / totalGrossAmount.value) * 1000) / 10 : 0;
-    form.value.discountInputMode = 'amount';
+const setDiscountFromPercent = (pct: number) => {
+    form.value.discountInputMode = 'percent';
+    const validPct = Math.min(maxDiscountPercentAllowed.value, Math.max(0, pct));
+    form.value.discountPercent = validPct;
+    form.value.discountRupees = Math.round((totalGrossAmount.value * validPct) / 100);
 };
 
 // Authority Tier Determination
@@ -610,10 +612,10 @@ const authorityLevel = computed(() => {
     }
     return {
         tier: 'md' as const,
-        title: 'Super Admin Special Sign-off',
-        signatureLabel: 'Authorized Signatory - Super Admin',
+        title: 'MD / Super Admin Special Sign-off',
+        signatureLabel: 'Authorized Signatory - MD / Super Admin',
         badgeClass: 'bg-purple-50 text-purple-700 border-purple-300',
-        maxAllowedText: `Super Admin Special Sign-off (Max 12% Fixed: ₹${discountLimitMD.value.toLocaleString('en-IN')})`,
+        maxAllowedText: `MD / Super Admin Special Sign-off (Max 12% Fixed: ₹${discountLimitMD.value.toLocaleString('en-IN')})`,
         isWarning: false,
     };
 });
@@ -662,7 +664,7 @@ const handleAddInstallment = () => {
         paymentDate: stamp.split(' ')[0] || stamp,
         timestamp: stamp,
         note: newInstallmentNote.value || '',
-        recordedBy: props.userRole === 'superadmin' ? 'Super Admin' : (props.userRole === 'md' ? 'Managing Director' : 'Banquet Manager')
+        recordedBy: isMdOrSuperAdmin.value ? 'MD / Super Admin' : (props.userRole === 'manager' ? 'Banquet Manager' : 'Staff')
     });
     form.value.amountPaid = form.value.paymentInstallments.reduce((sum, inst) => sum + (Number(inst.amount) || 0), 0);
     logAudit(
@@ -696,7 +698,7 @@ const handleStep2AdvanceChange = () => {
                 paymentDate: form.value.paymentDate || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
                 timestamp: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
                 note: 'Initial Advance Deposit (Step 2)',
-                recordedBy: 'Banquet Manager'
+                recordedBy: props.userRole === 'manager' ? 'Banquet Manager' : 'MD / Super Admin'
             }];
         } else {
             form.value.paymentInstallments[0].amount = amt;
@@ -709,7 +711,7 @@ const handleStep2AdvanceChange = () => {
 const markAsBookedByManager = () => {
     form.value.status = 'approved_md';
     form.value.isLocked = true;
-    form.value.lockedBy = props.userRole === 'manager' ? 'Banquet Manager' : (props.userRole === 'superadmin' ? 'Super Admin' : 'MD');
+    form.value.lockedBy = props.userRole === 'manager' ? 'Banquet Manager' : 'MD / Super Admin';
     form.value.lockedAt = new Date().toLocaleString('en-IN', {
         day: '2-digit',
         month: 'short',
@@ -827,7 +829,7 @@ const submitMdFinalize = () => {
     form.value.status = 'approved_md';
     form.value.isLocked = true;
     form.value.approverRole = authorityLevel.value.tier;
-    form.value.lockedBy = 'Managing Director (MD Sir)';
+    form.value.lockedBy = isMdOrSuperAdmin.value ? 'MD / Super Admin' : 'Banquet Manager';
     form.value.lockedAt = new Date().toLocaleString('en-IN', {
         day: '2-digit',
         month: 'short',
@@ -2517,7 +2519,7 @@ const shareOnWhatsApp = () => {
                 <!-- ------------------------------------------------- -->
                 <!-- STEP 3: TIERED APPROVAL & DISCOUNT (₹ FIRST)      -->
                 <!-- ------------------------------------------------- -->
-                <div v-if="currentStep === 3 && (userRole === 'md' || userRole === 'superadmin')" class="space-y-4 animate-in fade-in duration-150 w-full px-1 sm:px-2">
+                <div v-if="currentStep === 3 && userRole !== 'reception'" class="space-y-4 animate-in fade-in duration-150 w-full px-1 sm:px-2">
                     <!-- Executive Dark Card -->
                     <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-5 sm:p-6 rounded-2xl shadow-lg border border-slate-800">
                         <div class="flex items-center justify-between border-b border-slate-700/80 pb-3">
@@ -2679,7 +2681,7 @@ const shareOnWhatsApp = () => {
                                         Tiered Discount Controller (Always in ₹ Numbers)
                                     </h4>
                                     <p class="text-[11px] text-slate-500">
-                                        {{ userRole === 'superadmin' ? 'Super Admin Authority: Up to 12% Max Slab Available' : 'Manager / Standard Authority: Up to 7% Maximum Limit' }}
+                                        {{ isMdOrSuperAdmin ? 'MD / Super Admin Authority: Up to 12% Max Slab Available' : 'Banquet Manager Authority: Up to 7% Maximum Limit' }}
                                     </p>
                                 </div>
                             </div>
@@ -2697,10 +2699,10 @@ const shareOnWhatsApp = () => {
                                     />
                                 </div>
                                 <span class="text-xs text-slate-400">or</span>
-                                <!-- Quick Percent Buttons (12% only for Super Admin) -->
+                                <!-- Quick Percent Buttons (12% only for MD / Super Admin) -->
                                 <div class="flex items-center gap-1">
                                     <button
-                                        v-for="pct in (userRole === 'superadmin' ? [0, 3, 5, 7, 10, 12] : [0, 3, 5, 7])"
+                                        v-for="pct in (isMdOrSuperAdmin ? [0, 3, 5, 7, 10, 12] : [0, 3, 5, 7])"
                                         :key="pct"
                                         type="button"
                                         @click="setDiscountFromPercent(pct)"
@@ -2747,7 +2749,7 @@ const shareOnWhatsApp = () => {
                                 <div>0% (Standard)</div>
                                 <div class="text-center text-emerald-700 font-bold">5% (Manager Tier)</div>
                                 <div class="text-center text-blue-700 font-bold">7% (Max Limit: ₹{{ discountLimitManager.toLocaleString('en-IN') }})</div>
-                                <div v-if="userRole === 'superadmin'" class="text-right text-purple-700 font-bold">12% (Super Admin: ₹{{ discountLimitMD.toLocaleString('en-IN') }})</div>
+                                <div v-if="isMdOrSuperAdmin" class="text-right text-purple-700 font-bold">12% (MD / Super Admin: ₹{{ discountLimitMD.toLocaleString('en-IN') }})</div>
                             </div>
                         </div>
                     </div>
@@ -2901,14 +2903,14 @@ const shareOnWhatsApp = () => {
                     </div>
                 </div>
 
-                <!-- Step 3 Restricted Fallback (if non-MD somehow targets Step 3) -->
-                <div v-else-if="currentStep === 3 && userRole !== 'md' && userRole !== 'superadmin'" class="p-8 text-center bg-white rounded-2xl border border-amber-200 max-w-lg mx-auto my-8 space-y-3 shadow-xs">
+                <!-- Step 3 Restricted Fallback (if reception somehow targets Step 3) -->
+                <div v-else-if="currentStep === 3 && userRole === 'reception'" class="p-8 text-center bg-white rounded-2xl border border-amber-200 max-w-lg mx-auto my-8 space-y-3 shadow-xs">
                     <div class="h-12 w-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto text-xl font-bold">
                         🔒
                     </div>
-                    <h3 class="text-sm font-bold text-slate-900">Step 3 Restricted to Managing Director & Super Admin</h3>
+                    <h3 class="text-sm font-bold text-slate-900">Step 3 Restricted to Banquet Manager & Executive Authority</h3>
                     <p class="text-xs text-slate-600 leading-relaxed">
-                        Stage 3 (Final MD Approval, Custom Discounts & Contract Seal) requires Managing Director or Super Admin authorization. Please review or save from Step 2.
+                        Receptionists are limited to Step 1 Intake. Please contact Banquet Manager or MD / Super Admin for Step 3 bookings.
                     </p>
                 </div>
 
@@ -2992,30 +2994,39 @@ const shareOnWhatsApp = () => {
                             v-if="currentStep === 1"
                             type="button"
                             @click="nextStep"
-                            class="h-8 px-4 rounded-lg bg-[#673DE6] hover:bg-[#5832D0] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                            class="h-8 px-4 rounded-lg bg-[#673DE6] hover:bg-[#5832D0] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
                         >
-                            <span>Next: Configure Setup</span>
+                            <span>Next: Manager Costing (Step 2)</span>
+                            <ArrowRight class="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                            v-else-if="currentStep === 2"
+                            type="button"
+                            @click="nextStep"
+                            class="h-8 px-4 rounded-lg bg-[#673DE6] hover:bg-[#5832D0] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                        >
+                            <span>Next: Final Booking & Advances (Step 3)</span>
                             <ArrowRight class="h-3.5 w-3.5" />
                         </button>
                         <button
                             v-else
                             type="button"
-                            @click="submitManagerStep2"
-                            class="h-8 px-4 rounded-lg bg-[#673DE6] hover:bg-[#5832D0] text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                            @click="markAsBookedByManager"
+                            class="h-8 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
                         >
                             <CheckCircle2 class="h-3.5 w-3.5" />
-                            <span>Save & Forward to MD for Final Approval</span>
+                            <span>Confirm & Finalize Booking</span>
                         </button>
                     </template>
 
                     <!-- MD / Super Authority Actions -->
                     <template v-else>
                         <button
-                            v-if="userRole === 'superadmin' && initialInquiry"
+                            v-if="isMdOrSuperAdmin && initialInquiry"
                             type="button"
                             @click="$emit('delete', { ...form }); $emit('close')"
                             class="h-8 px-3 rounded-lg border border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                            title="Super Admin Only: Permanently Delete Inquiry"
+                            title="MD / Super Admin: Permanently Delete Inquiry"
                         >
                             <Trash2 class="h-3.5 w-3.5" />
                             <span>Delete Inquiry</span>
@@ -3036,7 +3047,7 @@ const shareOnWhatsApp = () => {
                             class="h-8 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
                         >
                             <CheckCircle2 class="h-3.5 w-3.5" />
-                            <span>👑 {{ userRole === 'superadmin' ? 'Super Admin Final Approve & Freeze' : 'MD Final Approve & Freeze Contract' }}</span>
+                            <span>👑 MD / Super Admin Final Approve & Freeze</span>
                         </button>
                     </template>
                 </div>

@@ -75,13 +75,9 @@ const sanitizeRole = (roleCandidate?: string | null): UserRole => {
     if (authRole === 'reception') return 'reception';
     if (authRole === 'manager') {
         if (roleCandidate === 'reception') return 'reception';
-        return 'manager'; // Manager can never exceed Step 2
+        return 'manager'; // Manager has access up to Step 3
     }
-    if (authRole === 'md') {
-        if (roleCandidate === 'reception' || roleCandidate === 'manager' || roleCandidate === 'md') return roleCandidate;
-        return 'md';
-    }
-    // Superadmin can view/simulate all roles
+    // MD and Super Admin are merged with full executive authority
     if (roleCandidate === 'reception' || roleCandidate === 'manager' || roleCandidate === 'md' || roleCandidate === 'superadmin') {
         return roleCandidate;
     }
@@ -98,7 +94,7 @@ const setRole = (r: UserRole) => {
     if (typeof window !== 'undefined') {
         localStorage.setItem('senani_active_role', valid);
     }
-    if ((valid === 'manager' || valid === 'superadmin') && typeof checkManagerPendingAlerts === 'function') {
+    if ((valid === 'manager' || valid === 'superadmin' || valid === 'md') && typeof checkManagerPendingAlerts === 'function') {
         checkManagerPendingAlerts();
     }
 };
@@ -113,24 +109,24 @@ const roleLabels: Record<UserRole, { title: string; badge: string; stepAccess: s
     },
     manager: {
         title: 'Banquet Operations Manager',
-        badge: 'Step 1 & 2 Access',
-        stepAccess: 'Intake + Costing & Catalog (Step 1 & 2)',
+        badge: 'Full Steps (1, 2, 3) Access',
+        stepAccess: 'Intake + Costing + Final Booking (Steps 1, 2, 3)',
         colorClass: 'text-blue-800',
         bgClass: 'bg-blue-50 border-blue-200'
     },
     md: {
-        title: 'Managing Director (MD Sir)',
-        badge: 'Full Access & Finalize',
-        stepAccess: 'Full Access, Approval & Final Seal (Steps 1, 2, 3)',
+        title: 'Managing Director / Super Admin',
+        badge: 'Merged Executive (12% Slab)',
+        stepAccess: 'Full Control, 12% Max Slab Approval & Delete Rights',
         colorClass: 'text-purple-800',
         bgClass: 'bg-purple-50 border-purple-200'
     },
     superadmin: {
-        title: 'Super Administrator',
-        badge: 'Full Control & Delete Rights',
-        stepAccess: 'Full Access (Steps 1, 2, 3) + Delete/Purge Inquiries',
-        colorClass: 'text-rose-800',
-        bgClass: 'bg-rose-50 border-rose-200'
+        title: 'Managing Director / Super Admin',
+        badge: 'Merged Executive (12% Slab)',
+        stepAccess: 'Full Control, 12% Max Slab Approval & Delete Rights',
+        colorClass: 'text-purple-800',
+        bgClass: 'bg-purple-50 border-purple-200'
     }
 };
 
@@ -274,7 +270,7 @@ const inquiryOpenPrintPreview = ref(queryPrint);
 
 const openNewInquiry = (step: number = 1) => {
     selectedInquiry.value = null;
-    const maxAllowed = activeRole.value === 'reception' ? 1 : (activeRole.value === 'manager' ? 2 : 3);
+    const maxAllowed = activeRole.value === 'reception' ? 1 : 3;
     inquiryDefaultStep.value = Math.min(step, maxAllowed);
     inquiryOpenPrintPreview.value = false;
     showInquiryModal.value = true;
@@ -282,7 +278,7 @@ const openNewInquiry = (step: number = 1) => {
 
 const openExistingInquiry = (inq: BanquetInquiry, step: number = 1, printPreview: boolean = false) => {
     selectedInquiry.value = inq;
-    const maxAllowed = activeRole.value === 'reception' ? 1 : (activeRole.value === 'manager' ? 2 : 3);
+    const maxAllowed = activeRole.value === 'reception' ? 1 : 3;
     inquiryDefaultStep.value = Math.min(step, maxAllowed);
     inquiryOpenPrintPreview.value = printPreview;
     showInquiryModal.value = true;
@@ -1551,45 +1547,30 @@ const submitCheckIn = () => {
                                         @click="setRole('manager')"
                                         :disabled="authenticatedRole === 'reception'"
                                         :class="[
-                                            'px-2 py-1 rounded-lg font-bold transition-all text-[11px] flex items-center gap-1',
+                                            'px-2.5 py-1 rounded-lg font-bold transition-all text-[11px] flex items-center gap-1',
                                             authenticatedRole === 'reception' ? 'opacity-40 cursor-not-allowed text-slate-400' : 'cursor-pointer',
                                             activeRole === 'manager'
                                                 ? 'bg-[#673DE6] text-white shadow-xs'
                                                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                                         ]"
-                                        :title="authenticatedRole === 'reception' ? 'Requires Manager or MD Account' : 'Banquet Manager: Steps 1 & 2 Setup & Quotations'"
+                                        title="Banquet Manager: Steps 1, 2 & 3 Final Booking"
                                     >
-                                        <span>👔 Manager (Step 1 & 2)</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        @click="setRole('md')"
-                                        :disabled="authenticatedRole === 'reception' || authenticatedRole === 'manager'"
-                                        :class="[
-                                            'px-2 py-1 rounded-lg font-bold transition-all text-[11px] flex items-center gap-1',
-                                            authenticatedRole === 'reception' || authenticatedRole === 'manager' ? 'opacity-40 cursor-not-allowed text-slate-400' : 'cursor-pointer',
-                                            activeRole === 'md'
-                                                ? 'bg-emerald-600 text-white shadow-xs'
-                                                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                                        ]"
-                                        :title="authenticatedRole === 'reception' || authenticatedRole === 'manager' ? 'Locked (Requires MD/Admin Login)' : 'MD Sir: Complete Super Authority & Contract Seal'"
-                                    >
-                                        <span>👑 MD Sir</span>
+                                        <span>👔 Manager (Steps 1, 2, 3)</span>
                                     </button>
                                     <button
                                         type="button"
                                         @click="setRole('superadmin')"
-                                        :disabled="authenticatedRole !== 'superadmin'"
+                                        :disabled="authenticatedRole === 'reception' || authenticatedRole === 'manager'"
                                         :class="[
-                                            'px-2 py-1 rounded-lg font-bold transition-all text-[11px] flex items-center gap-1',
-                                            authenticatedRole !== 'superadmin' ? 'opacity-40 cursor-not-allowed text-slate-400' : 'cursor-pointer',
-                                            activeRole === 'superadmin'
-                                                ? 'bg-rose-600 text-white shadow-xs'
+                                            'px-2.5 py-1 rounded-lg font-bold transition-all text-[11px] flex items-center gap-1',
+                                            authenticatedRole === 'reception' || authenticatedRole === 'manager' ? 'opacity-40 cursor-not-allowed text-slate-400' : 'cursor-pointer',
+                                            (activeRole === 'superadmin' || activeRole === 'md')
+                                                ? 'bg-gradient-to-r from-purple-700 to-indigo-700 text-white shadow-xs'
                                                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                                         ]"
-                                        :title="authenticatedRole !== 'superadmin' ? 'Locked (Requires Super Admin Login)' : 'Super Admin: Full Access + Delete Rights'"
+                                        title="MD / Super Admin (Merged): 12% Max Slab, Contract Seal & Delete Rights"
                                     >
-                                        <span>⚡ Super Admin</span>
+                                        <span>👑 MD / Super Admin (Merged)</span>
                                     </button>
                                 </div>
                         </div>
@@ -2241,14 +2222,14 @@ const submitCheckIn = () => {
                         >
                             <Plus class="h-4 w-4" />
                             <span v-if="activeRole === 'reception'">+ New Reception Intake (Step 1)</span>
-                            <span v-else-if="activeRole === 'manager'">+ New Banquet Costing (Step 1 & 2)</span>
-                            <span v-else>+ New Banquet Voucher (Full Access)</span>
+                            <span v-else-if="activeRole === 'manager'">+ New Banquet Booking (Steps 1, 2, 3)</span>
+                            <span v-else>+ New Banquet Voucher (MD / Super Admin)</span>
                         </button>
                     </div>
 
                     <!-- Banquet Manager: Reception Handover Alert Banner with Quick Slips -->
                     <div
-                        v-if="(activeRole === 'manager' || activeRole === 'superadmin') && pendingManagerInquiries.length > 0"
+                        v-if="(activeRole === 'manager' || activeRole === 'superadmin' || activeRole === 'md') && pendingManagerInquiries.length > 0"
                         class="rounded-2xl border-2 border-amber-300/90 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/5 p-4 sm:p-5 shadow-sm space-y-3 animate-in fade-in duration-300"
                     >
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -2478,38 +2459,18 @@ const submitCheckIn = () => {
                                                 </template>
                                                 <template v-else-if="activeRole === 'manager'">
                                                     <button
-                                                        v-if="inq.status === 'pending_manager' || inq.status === 'draft_reception'"
                                                         @click="openExistingInquiry(inq, 2)"
                                                         class="rounded-lg bg-purple-50 text-[#673DE6] hover:bg-[#673DE6] hover:text-white px-2.5 py-1 text-[11px] font-bold transition cursor-pointer"
-                                                        title="Configure Halls, Pax & Catering (Step 2)"
+                                                        title="Configure Halls, Pax & Catering Costing (Step 2)"
                                                     >
-                                                        Configure Step 2
+                                                        Costing (Step 2)
                                                     </button>
-                                                    <button
-                                                        v-else
-                                                        @click="openExistingInquiry(inq, 2)"
-                                                        class="rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-700 hover:text-white px-2.5 py-1 text-[11px] font-bold transition cursor-pointer"
-                                                        title="Review Step 1 & 2 Setup"
-                                                    >
-                                                        Edit Step 1 & 2
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        @click="requestDeleteInquiry(inq)"
-                                                        class="rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-rose-200 shadow-2xs cursor-pointer"
-                                                        title="Permanently Delete Inquiry"
-                                                    >
-                                                        <Trash2 class="h-3 w-3" />
-                                                        <span>Delete</span>
-                                                    </button>
-                                                </template>
-                                                <template v-else-if="activeRole === 'superadmin'">
                                                     <button
                                                         @click="openExistingInquiry(inq, 3)"
-                                                        class="rounded-lg bg-slate-100 text-slate-800 hover:bg-[#673DE6] hover:text-white px-2.5 py-1 text-[11px] font-bold transition cursor-pointer"
-                                                        title="Super Admin Edit & Review (All Steps)"
+                                                        class="rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white px-2.5 py-1 text-[11px] font-bold transition cursor-pointer"
+                                                        title="Review Specs, Add Advances & Confirm (Step 3)"
                                                     >
-                                                        Edit #{{ inq.voucherNo }}
+                                                        Final Booking (Step 3)
                                                     </button>
                                                     <button
                                                         type="button"
@@ -2523,22 +2484,12 @@ const submitCheckIn = () => {
                                                 </template>
                                                 <template v-else>
                                                     <button
-                                                        v-if="inq.status === 'pending_md'"
-                                                        @click="openExistingInquiry(inq, 3)"
-                                                        class="rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white px-2.5 py-1 text-[11px] font-bold transition cursor-pointer"
-                                                        title="MD Approval, Discount & Contract Seal"
-                                                    >
-                                                        👑 MD Sign-off
-                                                    </button>
-                                                    <button
-                                                        v-else
                                                         @click="openExistingInquiry(inq, 3)"
                                                         class="rounded-lg bg-[#F0EBFF] text-[#673DE6] hover:bg-[#673DE6] hover:text-white px-2.5 py-1 text-[11px] font-bold transition cursor-pointer"
-                                                        title="Full 3-Step Review & Voucher"
+                                                        title="MD / Super Admin Full Review, 12% Max Slab Approval & Contract Seal"
                                                     >
-                                                        Voucher #{{ inq.voucherNo }}
+                                                        👑 MD / Admin #{{ inq.voucherNo }}
                                                     </button>
-                                                    <!-- Delete button for MD Sir & Super Admin -->
                                                     <button
                                                         type="button"
                                                         @click="requestDeleteInquiry(inq)"
