@@ -45,7 +45,8 @@ import {
     FileText,
     History,
     Trash2,
-    ShieldAlert
+    ShieldAlert,
+    Users
 } from '@lucide/vue';
 import {
     renderSlimBarcode,
@@ -581,9 +582,9 @@ const toggleArrayItem = (arr: string[], item: string) => {
 };
 
 // Stepper Validation & Actions
-const stepErrors = ref<{ guestName?: string; phonePrimary?: string }>({});
+const stepErrors = ref<{ guestName?: string; phonePrimary?: string; paxGuaranteed?: string }>({});
 
-const clearStepError = (field: 'guestName' | 'phonePrimary') => {
+const clearStepError = (field: 'guestName' | 'phonePrimary' | 'paxGuaranteed') => {
     if (stepErrors.value[field]) {
         delete stepErrors.value[field];
     }
@@ -603,6 +604,9 @@ const nextStep = () => {
         }
         if (!form.value.phonePrimary || !form.value.phonePrimary.trim()) {
             stepErrors.value.phonePrimary = 'Primary Phone Number is required.';
+        }
+        if (!form.value.paxGuaranteed || Number(form.value.paxGuaranteed) <= 0) {
+            stepErrors.value.paxGuaranteed = 'Expected Guests / Pax count is required.';
         }
         if (Object.keys(stepErrors.value).length > 0) {
             return;
@@ -627,6 +631,9 @@ const submitReceptionStep1 = () => {
     }
     if (!form.value.phonePrimary || !form.value.phonePrimary.trim()) {
         stepErrors.value.phonePrimary = 'Primary Phone Number is required.';
+    }
+    if (!form.value.paxGuaranteed || Number(form.value.paxGuaranteed) <= 0) {
+        stepErrors.value.paxGuaranteed = 'Expected Guests / Pax count is required.';
     }
     if (Object.keys(stepErrors.value).length > 0) {
         return;
@@ -1247,6 +1254,8 @@ const shareOnWhatsApp = () => {
                                     </span>
                                 </div>
                                 <p class="text-[11px] text-slate-600 mt-0.5">
+                                    Expected: <strong class="text-slate-900 font-bold font-mono">{{ form.paxGuaranteed || 0 }} Pax</strong>
+                                    <span class="text-slate-300 mx-1.5">•</span>
                                     Gross Total: <strong class="text-slate-900 font-mono">₹{{ totalGrossAmount.toLocaleString('en-IN') }}</strong>
                                     <span v-if="form.discountRupees > 0" class="text-emerald-700 font-bold ml-1.5">• Discount: ₹{{ form.discountRupees.toLocaleString('en-IN') }}</span>
                                     <span class="text-purple-700 font-bold ml-1.5">• Net: ₹{{ netPayableAmount.toLocaleString('en-IN') }}</span>
@@ -1354,6 +1363,31 @@ const shareOnWhatsApp = () => {
 
                             <div>
                                 <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
+                                    <Users class="h-3.5 w-3.5 text-[#673DE6]" />
+                                    <span>Expected Guests / Pax Count *</span>
+                                </label>
+                                <div class="relative">
+                                    <input
+                                        v-model.number="form.paxGuaranteed"
+                                        @input="clearStepError('paxGuaranteed')"
+                                        type="number"
+                                        min="1"
+                                        required
+                                        placeholder="e.g. 150"
+                                        :class="[
+                                            'w-full h-8.5 rounded-lg border px-3 pr-14 text-xs text-slate-900 focus:bg-white focus:outline-none transition font-bold font-mono',
+                                            stepErrors.paxGuaranteed ? 'border-rose-400 bg-rose-50/50 focus:border-rose-500' : 'border-slate-200 bg-slate-50/60 focus:border-[#673DE6]'
+                                        ]"
+                                    />
+                                    <span class="absolute right-3 top-2 text-[10px] text-slate-500 font-bold uppercase pointer-events-none">Pax</span>
+                                </div>
+                                <span v-if="stepErrors.paxGuaranteed" class="text-[10px] text-rose-600 font-bold mt-0.5 block">
+                                    {{ stepErrors.paxGuaranteed }}
+                                </span>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
                                     <Mail class="h-3 w-3 text-blue-500" />
                                     Email Address (Optional)
                                 </label>
@@ -1365,7 +1399,7 @@ const shareOnWhatsApp = () => {
                                 />
                             </div>
 
-                            <div>
+                            <div class="sm:col-span-2 lg:col-span-3">
                                 <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
                                     <MapPin class="h-3 w-3 text-rose-500" />
                                     City / Address
