@@ -49,7 +49,9 @@ import {
     Users,
     MessageCircle,
     Tag,
-    Hash
+    Hash,
+    Plus,
+    PlusCircle
 } from '@lucide/vue';
 import {
     renderSlimBarcode,
@@ -62,6 +64,16 @@ import {
 import { printElement, downloadElementAsPdf } from './printService';
 import { generateBanquetVoucherVectorPdf } from './vectorPdfGenerator';
 import { buildGuestPortalUrl } from './guestShare';
+
+export interface PaymentInstallment {
+    id: string;
+    amount: number;
+    paymentMode: 'Cash' | 'UPI / QR' | 'Card' | 'Bank Transfer';
+    paymentDate: string;
+    timestamp: string;
+    note?: string;
+    recordedBy?: string;
+}
 
 export interface BanquetInquiry {
     id?: string;
@@ -118,6 +130,11 @@ export interface BanquetInquiry {
     amountPaid: number;
     paymentMode: 'Cash' | 'UPI / QR' | 'Card' | 'Bank Transfer';
     paymentDate: string;
+    paymentInstallments?: PaymentInstallment[];
+    subtotalAmount?: number;
+    taxAmount?: number;
+    totalGrossAmount?: number;
+    balanceDue?: number;
     status: 'draft_reception' | 'pending_manager' | 'pending_md' | 'approved_md';
     mdApprovedAt?: string;
     mdRemarks?: string;
@@ -289,6 +306,7 @@ const createBlankInquiry = (suggestedVoucher?: string): BanquetInquiry => ({
     amountPaid: 0,
     paymentMode: 'Cash',
     paymentDate: new Date().toLocaleDateString('en-GB'),
+    paymentInstallments: [],
     status: 'draft_reception',
     mdApprovedAt: undefined,
     mdRemarks: '',
@@ -310,6 +328,23 @@ watch(
             if (form.value.isQuotationMode === undefined) form.value.isQuotationMode = false;
             if (!form.value.selectedMenuCatalogItems) form.value.selectedMenuCatalogItems = [];
             if (!form.value.auditLog) form.value.auditLog = [];
+            if (!form.value.inquiryDate) {
+                form.value.inquiryDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            }
+            if (!form.value.paymentInstallments || !Array.isArray(form.value.paymentInstallments)) {
+                form.value.paymentInstallments = [];
+                if (form.value.amountPaid && form.value.amountPaid > 0) {
+                    form.value.paymentInstallments.push({
+                        id: 'inst-' + Date.now(),
+                        amount: Number(form.value.amountPaid),
+                        paymentMode: form.value.paymentMode || 'Cash',
+                        paymentDate: form.value.paymentDate || form.value.inquiryDate,
+                        timestamp: (form.value.paymentDate || form.value.inquiryDate) + ' (Advance Deposit)',
+                        note: 'Initial advance payment',
+                        recordedBy: 'Reception / Manager'
+                    });
+                }
+            }
             sanitizeCatalogSelections();
             updateBarcodeAndQr();
         } else {
@@ -482,40 +517,63 @@ const otherAddonsTotal = computed(() => {
     );
 });
 
-// Gross Total
-const totalGrossAmount = computed(() => {
+// Subtotal (Base Services before Tax)
+const subtotalAmount = computed(() => {
     return foodTotal.value + extraFoodingTotal.value + venueTotal.value + roomsTotal.value + decorAvTotal.value + otherAddonsTotal.value;
 });
+
+// 18% GST / Applicable Tax
+const taxAmount = computed(() => {
+    return Math.round((subtotalAmount.value * 18) / 100);
+});
+
+// Gross Total Baseline (Incl. 18% GST)
+const totalGrossAmount = computed(() => {
+    return subtotalAmount.value + taxAmount.value;
+});
+
+// Keep financial properties synced in form
+watch(
+    [subtotalAmount, taxAmount, totalGrossAmount],
+    ([sub, tax, gross]) => {
+        form.value.subtotalAmount = sub;
+        form.value.taxAmount = tax;
+        form.value.totalGrossAmount = gross;
+    },
+    { immediate: true }
+);
 
 // -------------------------------------------------------------
 // Discount Authorization Matrix:
 // "ALWAYS TELL AMOUNT IN NUMBERS NOT IN %"
-// - Manager: Max up to 7% (tell amount in numbers)
-// - Managing Director (MD): Up to 12% (Fixed Max Cap: 12%)
+// - Manager / Regular: Max up to 7%
+// - Super Admin: 12% Slab shifted strictly to Super Admin!
 // -------------------------------------------------------------
 const discountLimitManager = computed(() => Math.round((totalGrossAmount.value * 7) / 100));
-const discountLimitMD = computed(() => Math.round((totalGrossAmount.value * 12) / 100));
+const discountLimitMD = computed(() => Math.round((totalGrossAmount.value * (props.userRole === 'superadmin' ? 12 : 7)) / 100));
 
 const maxDiscountPercentAllowed = computed(() => {
-    if (props.userRole === 'manager') return 7;
-    return 12; // MD & Superadmin fixed at max 12%
+    if (props.userRole === 'superadmin') return 12; // 12% slab shifted strictly to super admin!
+    return 7; // Manager, MD, and everyone else capped at 7%
 });
 
 // Live Discount Calculation: Currency First!
 const calculatedDiscountAmount = computed(() => {
-    const maxAllowedAmt = Math.round((totalGrossAmount.value * 12) / 100); // System cap 12%
+    const maxPct = maxDiscountPercentAllowed.value;
+    const maxAllowedAmt = Math.round((totalGrossAmount.value * maxPct) / 100);
     if (form.value.discountInputMode === 'amount') {
         return Math.min(maxAllowedAmt, Math.max(0, Number(form.value.discountRupees) || 0));
     }
     // percent mode
-    const pct = Math.min(12, Math.max(0, Number(form.value.discountPercent) || 0));
+    const pct = Math.min(maxPct, Math.max(0, Number(form.value.discountPercent) || 0));
     return Math.round((totalGrossAmount.value * pct) / 100);
 });
 
 // Computed percentage from amount
 const calculatedDiscountPercent = computed(() => {
     if (totalGrossAmount.value === 0) return 0;
-    return Math.min(12, Math.round((calculatedDiscountAmount.value / totalGrossAmount.value) * 1000) / 10);
+    const maxPct = maxDiscountPercentAllowed.value;
+    return Math.min(maxPct, Math.round((calculatedDiscountAmount.value / totalGrossAmount.value) * 1000) / 10);
 });
 
 // Sync both modes
@@ -539,7 +597,6 @@ const setDiscountFromAmount = (amt: number) => {
 // Authority Tier Determination
 const authorityLevel = computed(() => {
     const pct = calculatedDiscountPercent.value;
-    const amt = calculatedDiscountAmount.value;
 
     if (pct <= 7.0) {
         return {
@@ -547,23 +604,131 @@ const authorityLevel = computed(() => {
             title: 'Authorized by Banquet Manager',
             signatureLabel: 'Authorized Signatory - Banquet Manager',
             badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-            maxAllowedText: `Within 7% Manager Limit (Max ₹${discountLimitManager.value.toLocaleString('en-IN')})`,
+            maxAllowedText: `Within 7% Standard Limit (Max ₹${discountLimitManager.value.toLocaleString('en-IN')})`,
             isWarning: false,
         };
     }
     return {
         tier: 'md' as const,
-        title: 'Managing Director (MD Sir) Approval',
-        signatureLabel: 'Authorized Signatory - Managing Director (MD Sir)',
+        title: 'Super Admin Special Sign-off',
+        signatureLabel: 'Authorized Signatory - Super Admin',
         badgeClass: 'bg-purple-50 text-purple-700 border-purple-300',
-        maxAllowedText: `Special MD Approval (Max 12% Fixed: ₹${discountLimitMD.value.toLocaleString('en-IN')})`,
+        maxAllowedText: `Super Admin Special Sign-off (Max 12% Fixed: ₹${discountLimitMD.value.toLocaleString('en-IN')})`,
         isWarning: false,
     };
 });
 
+// Multi-Installment Advance Payment Engine
+const newInstallmentAmount = ref<number | ''>('');
+const newInstallmentMode = ref<'Cash' | 'UPI / QR' | 'Card' | 'Bank Transfer'>('Cash');
+const newInstallmentTimestamp = ref<string>('');
+const newInstallmentNote = ref<string>('');
+
+const resetInstallmentForm = () => {
+    newInstallmentAmount.value = '';
+    newInstallmentMode.value = 'Cash';
+    newInstallmentTimestamp.value = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    newInstallmentNote.value = '';
+};
+
+const totalInstallmentsPaid = computed(() => {
+    if (!form.value.paymentInstallments || !Array.isArray(form.value.paymentInstallments)) {
+        return Number(form.value.amountPaid) || 0;
+    }
+    return form.value.paymentInstallments.reduce((sum, inst) => sum + (Number(inst.amount) || 0), 0);
+});
+
+// Keep form.amountPaid synchronized
+watch(totalInstallmentsPaid, (total) => {
+    if (form.value.paymentInstallments && form.value.paymentInstallments.length > 0) {
+        form.value.amountPaid = total;
+    }
+});
+
+const handleAddInstallment = () => {
+    const amt = Number(newInstallmentAmount.value);
+    if (!amt || amt <= 0) {
+        alert('Please enter a valid installment amount in ₹');
+        return;
+    }
+    if (!form.value.paymentInstallments) {
+        form.value.paymentInstallments = [];
+    }
+    const stamp = newInstallmentTimestamp.value || (new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }));
+    form.value.paymentInstallments.push({
+        id: 'inst-' + Date.now(),
+        amount: amt,
+        paymentMode: newInstallmentMode.value,
+        paymentDate: stamp.split(' ')[0] || stamp,
+        timestamp: stamp,
+        note: newInstallmentNote.value || '',
+        recordedBy: props.userRole === 'superadmin' ? 'Super Admin' : (props.userRole === 'md' ? 'Managing Director' : 'Banquet Manager')
+    });
+    form.value.amountPaid = form.value.paymentInstallments.reduce((sum, inst) => sum + (Number(inst.amount) || 0), 0);
+    logAudit(
+        'payment_update',
+        `Recorded advance installment of ₹${amt.toLocaleString('en-IN')} via ${newInstallmentMode.value} (${newInstallmentNote.value || 'No notes'})`
+    );
+    resetInstallmentForm();
+};
+
+const handleRemoveInstallment = (id: string) => {
+    if (!form.value.paymentInstallments) return;
+    const removed = form.value.paymentInstallments.find(i => i.id === id);
+    form.value.paymentInstallments = form.value.paymentInstallments.filter(i => i.id !== id);
+    form.value.amountPaid = form.value.paymentInstallments.reduce((sum, inst) => sum + (Number(inst.amount) || 0), 0);
+    if (removed) {
+        logAudit(
+            'payment_update',
+            `Removed advance installment of ₹${removed.amount.toLocaleString('en-IN')}`
+        );
+    }
+};
+
+const handleStep2AdvanceChange = () => {
+    const amt = Number(form.value.amountPaid) || 0;
+    if (amt > 0) {
+        if (!form.value.paymentInstallments || form.value.paymentInstallments.length === 0) {
+            form.value.paymentInstallments = [{
+                id: 'inst-' + Date.now(),
+                amount: amt,
+                paymentMode: form.value.paymentMode || 'Cash',
+                paymentDate: form.value.paymentDate || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+                timestamp: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+                note: 'Initial Advance Deposit (Step 2)',
+                recordedBy: 'Banquet Manager'
+            }];
+        } else {
+            form.value.paymentInstallments[0].amount = amt;
+            form.value.paymentInstallments[0].paymentMode = form.value.paymentMode || 'Cash';
+            form.value.paymentInstallments[0].paymentDate = form.value.paymentDate || form.value.paymentInstallments[0].paymentDate;
+        }
+    }
+};
+
+const markAsBookedByManager = () => {
+    form.value.status = 'approved_md';
+    form.value.isLocked = true;
+    form.value.lockedBy = props.userRole === 'manager' ? 'Banquet Manager' : (props.userRole === 'superadmin' ? 'Super Admin' : 'MD');
+    form.value.lockedAt = new Date().toLocaleString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+    logAudit('booking_locked', `Banquet marked as BOOKED & locked by Banquet Manager (Voucher #${form.value.voucherNo})`);
+    emit('save', { ...form.value });
+    emit('close');
+};
+
 // Net and Balance Due
 const netPayableAmount = computed(() => Math.max(0, totalGrossAmount.value - calculatedDiscountAmount.value));
 const balanceDueAmount = computed(() => Math.max(0, netPayableAmount.value - (Number(form.value.amountPaid) || 0)));
+
+watch(balanceDueAmount, (bal) => {
+    form.value.balanceDue = bal;
+}, { immediate: true });
 
 // Multi-select toggle helper
 const toggleVenue = (venueId: string) => {
@@ -795,6 +960,8 @@ const handleDownloadPdf = async () => {
             roomsTotal: roomsTotal.value,
             decorAvTotal: decorAvTotal.value,
             otherAddonsTotal: otherAddonsTotal.value,
+            subtotalAmount: subtotalAmount.value,
+            taxAmount: taxAmount.value,
             totalGrossAmount: totalGrossAmount.value,
             calculatedDiscountAmount: calculatedDiscountAmount.value,
             calculatedDiscountPercent: calculatedDiscountPercent.value,
@@ -1251,29 +1418,28 @@ const shareOnWhatsApp = () => {
                     <div class="p-3.5 rounded-xl bg-gradient-to-r from-purple-50 via-indigo-50/50 to-emerald-50/60 border border-purple-200/80 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
                         <div class="flex items-center gap-2.5">
                             <div class="h-9 w-9 rounded-lg bg-[#673DE6] text-white flex items-center justify-center shadow-xs shrink-0">
-                                <Printer class="h-4.5 w-4.5" />
+                                <FileText class="h-4.5 w-4.5" />
                             </div>
                             <div>
                                 <div class="flex items-center gap-2">
-                                    <span class="text-xs font-black text-slate-900">Reception Print Desk Active</span>
+                                    <span class="text-xs font-black text-slate-900">Reception Desk Intake</span>
                                     <span
                                         class="text-[10px] font-bold px-2 py-0.5 rounded-full"
-                                        :class="form.status === 'approved_md' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : (form.status === 'pending_md' ? 'bg-purple-100 text-purple-800 border border-purple-300' : 'bg-amber-100 text-amber-800 border border-amber-300')"
+                                        :class="form.status === 'approved_md' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : (form.status === 'pending_md' ? 'bg-purple-100 text-purple-800 border border-purple-300' : (form.status === 'pending_manager' ? 'bg-indigo-100 text-indigo-800 border border-indigo-300' : 'bg-amber-100 text-amber-800 border border-amber-300'))"
                                     >
-                                        {{ form.status === 'approved_md' ? '✅ MD Approved & Sealed' : (form.status === 'pending_md' ? '⏳ Manager Costed / Awaiting MD' : '📝 Intake Stage') }}
+                                        {{ form.status === 'approved_md' ? '✅ Confirmed & Booked' : (form.status === 'pending_md' ? '⏳ Manager Costed / Awaiting MD' : (form.status === 'pending_manager' ? '📤 Forwarded to Manager' : '📝 Draft Intake')) }}
                                     </span>
                                 </div>
                                 <p class="text-[11px] text-slate-600 mt-0.5">
                                     Expected: <strong class="text-slate-900 font-bold font-mono">{{ form.paxGuaranteed || 0 }} Pax</strong>
                                     <span class="text-slate-300 mx-1.5">•</span>
-                                    Gross Total: <strong class="text-slate-900 font-mono">₹{{ totalGrossAmount.toLocaleString('en-IN') }}</strong>
-                                    <span v-if="form.discountRupees > 0" class="text-emerald-700 font-bold ml-1.5">• Discount: ₹{{ form.discountRupees.toLocaleString('en-IN') }}</span>
-                                    <span class="text-purple-700 font-bold ml-1.5">• Net: ₹{{ netPayableAmount.toLocaleString('en-IN') }}</span>
-                                    <span class="text-slate-500 ml-1.5 font-mono">| Voucher #{{ form.voucherNo }}</span>
+                                    <span class="text-slate-600 font-mono">Slip #{{ form.voucherNo }}</span>
+                                    <span class="text-slate-300 mx-1.5">•</span>
+                                    <span class="text-slate-600 font-mono">Date: {{ form.inquiryDate }}</span>
                                 </p>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <div v-if="userRole !== 'reception'" class="flex items-center gap-2">
                             <button
                                 type="button"
                                 @click="showPrintPreview = true"
@@ -1313,37 +1479,34 @@ const shareOnWhatsApp = () => {
                                         <Tag class="h-3 w-3 text-[#673DE6]" />
                                         <span>Physical Slip / Voucher # *</span>
                                     </span>
-                                    <span class="text-[9.5px] text-slate-400 font-normal">Paper slip serial</span>
+                                    <span class="text-[9.5px] text-slate-400 font-normal">Auto-generated serial</span>
                                 </label>
                                 <div class="relative">
                                     <span class="absolute left-3 top-2 text-xs font-mono font-black text-[#673DE6]">#</span>
                                     <input
-                                        v-model="form.voucherNo"
-                                        @input="clearStepError('voucherNo')"
+                                        :value="form.voucherNo"
                                         type="text"
-                                        required
-                                        placeholder="e.g. 101, 251"
-                                        :class="[
-                                            'w-full h-8.5 rounded-lg border pl-7 pr-3 text-xs text-slate-900 font-mono font-bold focus:bg-white focus:outline-none transition',
-                                            stepErrors.voucherNo ? 'border-rose-400 bg-rose-50/50 focus:border-rose-500' : 'border-slate-200 bg-slate-50/60 focus:border-[#673DE6]'
-                                        ]"
+                                        readonly
+                                        disabled
+                                        class="w-full h-8.5 rounded-lg border border-slate-200 bg-slate-100 pl-7 pr-3 text-xs text-slate-700 font-mono font-bold cursor-not-allowed select-none"
+                                        title="Auto-generated serial voucher number (Non-editable)"
                                     />
                                 </div>
-                                <span v-if="stepErrors.voucherNo" class="text-[10px] text-rose-600 font-bold mt-0.5 block">
-                                    {{ stepErrors.voucherNo }}
-                                </span>
                             </div>
 
                             <div>
                                 <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
                                     <Calendar class="h-3 w-3 text-slate-500" />
                                     <span>Slip Date</span>
+                                    <span class="text-[9.5px] text-slate-400 font-normal ml-auto">Auto-picked</span>
                                 </label>
                                 <input
-                                    v-model="form.inquiryDate"
+                                    :value="form.inquiryDate"
                                     type="text"
-                                    placeholder="e.g. 16 Sep 2026"
-                                    class="w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition"
+                                    readonly
+                                    disabled
+                                    class="w-full h-8.5 rounded-lg border border-slate-200 bg-slate-100 px-3 text-xs text-slate-700 font-mono font-semibold cursor-not-allowed select-none"
+                                    title="Auto-picked slip date (Non-editable)"
                                 />
                             </div>
 
@@ -1626,7 +1789,7 @@ const shareOnWhatsApp = () => {
                                     title="Quotation Mode: Prospective offer with all catalog items shown without dish selection"
                                 >
                                     <FileText class="h-3.5 w-3.5" />
-                                    <span>📋 Quotation Mode (All Food Items)</span>
+                                    <span>📋 Quotation Mode</span>
                                 </button>
                                 <button
                                     type="button"
@@ -2205,7 +2368,7 @@ const shareOnWhatsApp = () => {
                             </div>
 
                             <!-- Live Baseline Costing & Manager Discount Formulation Card -->
-                            <div class="bg-slate-900 text-white p-4 rounded-xl shadow-md space-y-3 font-sans">
+                            <div class="bg-slate-900 text-white p-4 sm:p-5 rounded-xl shadow-md space-y-3 font-sans">
                                 <div class="flex items-center justify-between">
                                     <div class="text-[10px] font-bold tracking-wider uppercase text-slate-400">
                                         Live Cost Formulation
@@ -2222,8 +2385,21 @@ const shareOnWhatsApp = () => {
                                     <div v-if="extraFoodingTotal > 0" class="flex justify-between"><span>Extra Servings:</span> <span>₹{{ extraFoodingTotal.toLocaleString('en-IN') }}</span></div>
                                     <div v-if="paxRules.meetingSurcharge > 0" class="flex justify-between text-amber-300"><span>Meeting Surcharge:</span> <span>₹{{ paxRules.meetingSurcharge.toLocaleString('en-IN') }}</span></div>
                                 </div>
+
+                                <!-- Subtotal & 18% Tax Lines -->
+                                <div class="space-y-1 text-xs font-mono border-b border-slate-800 pb-2">
+                                    <div class="flex items-baseline justify-between text-slate-300">
+                                        <span>Subtotal (Base Bill):</span>
+                                        <span class="font-bold">₹{{ subtotalAmount.toLocaleString('en-IN') }}</span>
+                                    </div>
+                                    <div class="flex items-baseline justify-between text-indigo-300 font-bold">
+                                        <span>GST / Applicable Tax (18%):</span>
+                                        <span>+₹{{ taxAmount.toLocaleString('en-IN') }}</span>
+                                    </div>
+                                </div>
+
                                 <div class="flex items-baseline justify-between">
-                                    <span class="text-xs font-bold text-slate-300">Gross Baseline:</span>
+                                    <span class="text-xs font-bold text-slate-200">Gross Baseline (Incl. 18% Tax):</span>
                                     <span class="text-base font-black font-mono text-slate-100">
                                         ₹{{ totalGrossAmount.toLocaleString('en-IN') }}
                                     </span>
@@ -2278,6 +2454,60 @@ const shareOnWhatsApp = () => {
                                         ₹{{ netPayableAmount.toLocaleString('en-IN') }}
                                     </span>
                                 </div>
+
+                                <!-- Advance Payment Input Option for Manager -->
+                                <div class="p-2.5 rounded-lg bg-slate-800/90 border border-slate-700 space-y-2">
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-emerald-300 font-bold flex items-center gap-1">
+                                            <Receipt class="h-3.5 w-3.5" />
+                                            <span>Advance Payment Received (₹):</span>
+                                        </span>
+                                        <div class="flex items-center gap-1">
+                                            <span class="text-xs text-slate-400 font-mono">₹</span>
+                                            <input
+                                                v-model.number="form.amountPaid"
+                                                type="number"
+                                                min="0"
+                                                placeholder="0"
+                                                @input="handleStep2AdvanceChange"
+                                                class="w-28 h-7 rounded border border-slate-600 bg-slate-900 px-2 text-xs font-mono font-bold text-emerald-300 focus:border-emerald-400 focus:outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2 text-[11px]">
+                                        <div>
+                                            <label class="text-[10px] text-slate-400 block mb-0.5 font-bold">Payment Mode</label>
+                                            <select
+                                                v-model="form.paymentMode"
+                                                @change="handleStep2AdvanceChange"
+                                                class="w-full h-7 rounded border border-slate-600 bg-slate-900 px-1.5 text-[11px] text-slate-200 focus:outline-none"
+                                            >
+                                                <option value="Cash">Cash</option>
+                                                <option value="UPI / QR">UPI / QR</option>
+                                                <option value="Bank Transfer">Bank Transfer</option>
+                                                <option value="Card">Card</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-[10px] text-slate-400 block mb-0.5 font-bold">Receipt Date</label>
+                                            <input
+                                                v-model="form.paymentDate"
+                                                type="text"
+                                                @input="handleStep2AdvanceChange"
+                                                placeholder="e.g. 16 Sep 2026"
+                                                class="w-full h-7 rounded border border-slate-600 bg-slate-900 px-1.5 text-[11px] text-slate-200 focus:outline-none font-mono"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Balance Due on Event Day -->
+                                <div class="pt-1.5 border-t border-slate-800 flex items-baseline justify-between">
+                                    <span class="text-xs font-bold text-rose-400 uppercase tracking-wide">Balance Due on Event Day:</span>
+                                    <span class="text-lg font-black font-mono text-rose-400">
+                                        ₹{{ balanceDueAmount.toLocaleString('en-IN') }}
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
@@ -2287,7 +2517,7 @@ const shareOnWhatsApp = () => {
                 <!-- ------------------------------------------------- -->
                 <!-- STEP 3: TIERED APPROVAL & DISCOUNT (₹ FIRST)      -->
                 <!-- ------------------------------------------------- -->
-                <div v-if="currentStep === 3 && (userRole === 'md' || userRole === 'superadmin')" class="space-y-4 animate-in fade-in duration-150 max-w-6xl mx-auto">
+                <div v-if="currentStep === 3 && (userRole === 'md' || userRole === 'superadmin')" class="space-y-4 animate-in fade-in duration-150 w-full px-1 sm:px-2">
                     <!-- Executive Dark Card -->
                     <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-5 sm:p-6 rounded-2xl shadow-lg border border-slate-800">
                         <div class="flex items-center justify-between border-b border-slate-700/80 pb-3">
@@ -2313,7 +2543,7 @@ const shareOnWhatsApp = () => {
                         <!-- 4 Big Financial Indicators (Amount First!) -->
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 font-mono">
                             <div>
-                                <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Gross Total</span>
+                                <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Gross Total (Incl. 18% Tax)</span>
                                 <div class="text-lg sm:text-2xl font-black text-slate-100 mt-0.5">
                                     ₹{{ totalGrossAmount.toLocaleString('en-IN') }}
                                 </div>
@@ -2343,7 +2573,101 @@ const shareOnWhatsApp = () => {
                         </div>
                     </div>
 
-                    <!-- Interactive Discount Matrix Controller: Currency-First -->
+                    <!-- Full Booking Specifications Overview (Read-Only Finalized Contract Data) -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div class="flex items-center gap-2">
+                                <div class="h-8 w-8 rounded-lg bg-purple-50 text-[#673DE6] flex items-center justify-center">
+                                    <FileText class="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <h4 class="text-xs sm:text-sm font-bold text-slate-900">
+                                        Official Event Booking Specifications (Finalized Contract Data)
+                                    </h4>
+                                    <p class="text-[11px] text-slate-500">
+                                        Voucher #{{ form.voucherNo }} • Slip Date: {{ form.inquiryDate }} • Status: {{ form.status === 'approved_md' ? '✅ Confirmed & Booked' : '⏳ Awaiting Final Seal' }}
+                                    </p>
+                                </div>
+                            </div>
+                            <span class="text-xs font-mono font-bold px-2.5 py-1 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                Finalized Specs (Read-Only)
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                            <!-- Col 1: Host & Event Profile -->
+                            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                                <div class="font-bold text-slate-900 flex items-center gap-1.5 pb-1.5 border-b border-slate-200">
+                                    <User class="h-3.5 w-3.5 text-[#673DE6]" />
+                                    <span>Client / Host Profile</span>
+                                </div>
+                                <div class="space-y-1.5 text-[11.5px]">
+                                    <div class="flex justify-between"><span class="text-slate-500">Host Name:</span> <strong class="text-slate-900">{{ form.guestName }}</strong></div>
+                                    <div class="flex justify-between"><span class="text-slate-500">Primary Phone:</span> <strong class="font-mono text-slate-900">{{ form.phonePrimary }}</strong></div>
+                                    <div v-if="form.phoneSecondary" class="flex justify-between"><span class="text-slate-500">Alt Phone:</span> <span class="font-mono text-slate-700">{{ form.phoneSecondary }}</span></div>
+                                    <div v-if="form.email" class="flex justify-between"><span class="text-slate-500">Email:</span> <span class="text-slate-700 truncate max-w-[150px]">{{ form.email }}</span></div>
+                                    <div v-if="form.address" class="flex justify-between"><span class="text-slate-500">Address:</span> <span class="text-slate-700 truncate max-w-[150px]">{{ form.address }}</span></div>
+                                    <div class="flex justify-between pt-1 border-t border-slate-200/80"><span class="text-slate-500">Event Type:</span> <strong class="text-[#673DE6]">{{ form.eventType }}</strong></div>
+                                    <div class="flex justify-between"><span class="text-slate-500">Function Dates:</span> <span class="font-mono font-bold text-slate-800">{{ form.functionDateFrom || 'TBD' }} to {{ form.functionDateTo || 'TBD' }}</span></div>
+                                    <div class="flex justify-between"><span class="text-slate-500">Timings:</span> <span class="font-mono text-slate-700">{{ form.timeFrom || '10:00 AM' }} - {{ form.timeTo || '11:00 PM' }}</span></div>
+                                    <div class="flex justify-between"><span class="text-slate-500">Guaranteed Pax:</span> <strong class="text-slate-900 font-mono">{{ form.paxGuaranteed }} Guests</strong></div>
+                                </div>
+                            </div>
+
+                            <!-- Col 2: Venues, Rooms & Decor -->
+                            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                                <div class="font-bold text-slate-900 flex items-center gap-1.5 pb-1.5 border-b border-slate-200">
+                                    <Building2 class="h-3.5 w-3.5 text-[#673DE6]" />
+                                    <span>Halls, Rooms & Ambience</span>
+                                </div>
+                                <div class="space-y-1.5 text-[11.5px]">
+                                    <div>
+                                        <span class="text-slate-500 block mb-1">Reserved Venues:</span>
+                                        <div class="flex flex-wrap gap-1">
+                                            <span
+                                                v-for="v in selectedVenuesDetailed"
+                                                :key="v.name"
+                                                class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200"
+                                            >
+                                                {{ v.name }}
+                                            </span>
+                                            <span v-if="selectedVenuesDetailed.length === 0" class="text-slate-400 italic">No halls selected</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between pt-1 border-t border-slate-200/80"><span class="text-slate-500">Total Venue Cost:</span> <strong class="font-mono text-slate-900">₹{{ venueTotal.toLocaleString('en-IN') }}</strong></div>
+                                    <div class="flex justify-between"><span class="text-slate-500">Rooms Needed:</span> <span class="font-mono text-slate-900">{{ form.roomsNeeded || 0 }} Rooms (@ ₹{{ form.roomRate || 2500 }})</span></div>
+                                    <div class="flex justify-between"><span class="text-slate-500">Total Rooms Cost:</span> <strong class="font-mono text-slate-900">₹{{ roomsTotal.toLocaleString('en-IN') }}</strong></div>
+                                    <div class="flex justify-between"><span class="text-slate-500">Decor Package:</span> <strong class="capitalize text-slate-900">{{ form.decorPackageType }}</strong></div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500">Audio-Visual:</span>
+                                        <span class="font-medium text-slate-800">
+                                            {{ [form.soundMicSetup ? 'Sound/Mic' : '', form.projectorSetup ? 'Projector' : '', form.ledWallSetup ? 'LED Wall' : ''].filter(Boolean).join(', ') || 'None' }}
+                                        </span>
+                                    </div>
+                                    <div class="flex justify-between"><span class="text-slate-500">Total Decor & AV:</span> <strong class="font-mono text-slate-900">₹{{ decorAvTotal.toLocaleString('en-IN') }}</strong></div>
+                                </div>
+                            </div>
+
+                            <!-- Col 3: Catering & Financial Subtotal -->
+                            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                                <div class="font-bold text-slate-900 flex items-center gap-1.5 pb-1.5 border-b border-slate-200">
+                                    <Utensils class="h-3.5 w-3.5 text-[#673DE6]" />
+                                    <span>Catering & Financial Subtotal</span>
+                                </div>
+                                <div class="space-y-1.5 text-[11.5px]">
+                                    <div class="flex justify-between"><span class="text-slate-500">Catering Tier:</span> <strong class="text-[#673DE6]">₹{{ effectiveMenuRate }}/plate</strong></div>
+                                    <div class="flex justify-between"><span class="text-slate-500">Catalog Mode:</span> <span class="font-bold text-purple-700">{{ form.isQuotationMode ? 'Quotation Mode' : 'Confirmed Items' }}</span></div>
+                                    <div class="flex justify-between"><span class="text-slate-500">Food Base ({{ form.paxGuaranteed }} Pax):</span> <strong class="font-mono text-slate-900">₹{{ foodTotal.toLocaleString('en-IN') }}</strong></div>
+                                    <div v-if="extraFoodingTotal > 0" class="flex justify-between"><span class="text-slate-500">Extra Servings:</span> <strong class="font-mono text-slate-900">₹{{ extraFoodingTotal.toLocaleString('en-IN') }}</strong></div>
+                                    <div class="flex justify-between pt-1 border-t border-slate-200/80"><span class="text-slate-600 font-bold">Subtotal (Excl. Tax):</span> <strong class="font-mono text-slate-900">₹{{ subtotalAmount.toLocaleString('en-IN') }}</strong></div>
+                                    <div class="flex justify-between text-indigo-700 font-bold"><span>GST / Tax (18%):</span> <span class="font-mono">+₹{{ taxAmount.toLocaleString('en-IN') }}</span></div>
+                                    <div class="flex justify-between pt-1 border-t border-slate-200 font-black text-slate-900"><span>Gross Baseline (with Tax):</span> <span class="font-mono">₹{{ totalGrossAmount.toLocaleString('en-IN') }}</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Discount Matrix Controller: Currency-First (12% Strictly for Super Admin) -->
                     <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs space-y-4">
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
                             <div class="flex items-center gap-2">
@@ -2355,7 +2679,7 @@ const shareOnWhatsApp = () => {
                                         Tiered Discount Controller (Always in ₹ Numbers)
                                     </h4>
                                     <p class="text-[11px] text-slate-500">
-                                        Manager: up to 7% | MD Special Sign-off: up to 12% (Fixed Max Limit)
+                                        {{ userRole === 'superadmin' ? 'Super Admin Authority: Up to 12% Max Slab Available' : 'Manager / Standard Authority: Up to 7% Maximum Limit' }}
                                     </p>
                                 </div>
                             </div>
@@ -2373,10 +2697,10 @@ const shareOnWhatsApp = () => {
                                     />
                                 </div>
                                 <span class="text-xs text-slate-400">or</span>
-                                <!-- Quick Percent Buttons -->
+                                <!-- Quick Percent Buttons (12% only for Super Admin) -->
                                 <div class="flex items-center gap-1">
                                     <button
-                                        v-for="pct in [0, 5, 7, 10, 12]"
+                                        v-for="pct in (userRole === 'superadmin' ? [0, 3, 5, 7, 10, 12] : [0, 3, 5, 7])"
                                         :key="pct"
                                         type="button"
                                         @click="setDiscountFromPercent(pct)"
@@ -2411,7 +2735,7 @@ const shareOnWhatsApp = () => {
                             <input
                                 type="range"
                                 min="0"
-                                max="12"
+                                :max="maxDiscountPercentAllowed"
                                 step="0.5"
                                 :value="calculatedDiscountPercent"
                                 @input="setDiscountFromPercent(Number(($event.target as HTMLInputElement).value))"
@@ -2419,57 +2743,160 @@ const shareOnWhatsApp = () => {
                             />
 
                             <!-- Tier Range Indicators -->
-                            <div class="grid grid-cols-4 text-[10px] text-slate-500 pt-2 font-mono">
+                            <div class="grid grid-cols-3 sm:grid-cols-4 text-[10px] text-slate-500 pt-2 font-mono">
                                 <div>0% (Standard)</div>
                                 <div class="text-center text-emerald-700 font-bold">5% (Manager Tier)</div>
-                                <div class="text-center text-blue-700 font-bold">7% (Manager Limit: ₹{{ discountLimitManager.toLocaleString('en-IN') }})</div>
-                                <div class="text-right text-purple-700 font-bold">12% (MD Max: ₹{{ discountLimitMD.toLocaleString('en-IN') }})</div>
+                                <div class="text-center text-blue-700 font-bold">7% (Max Limit: ₹{{ discountLimitManager.toLocaleString('en-IN') }})</div>
+                                <div v-if="userRole === 'superadmin'" class="text-right text-purple-700 font-bold">12% (Super Admin: ₹{{ discountLimitMD.toLocaleString('en-IN') }})</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advance Payment Installments Log (Multi-Installments with Timestamps) -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs space-y-4">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                            <div class="flex items-center gap-2">
+                                <div class="h-8 w-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                                    <Receipt class="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <h4 class="text-xs sm:text-sm font-bold text-slate-900">
+                                        Advance Payment Installments Log
+                                    </h4>
+                                    <p class="text-[11px] text-slate-500">
+                                        Track multiple advance deposits with date, time stamp & receipt records
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Summary Badges -->
+                            <div class="flex items-center gap-2 font-mono">
+                                <div class="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
+                                    Total Paid: ₹{{ form.amountPaid.toLocaleString('en-IN') }}
+                                </div>
+                                <div class="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-800 border border-rose-200 text-xs font-bold">
+                                    Balance Due: ₹{{ balanceDueAmount.toLocaleString('en-IN') }}
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Advance Paid & Payment Mode -->
-                        <div class="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-700 mb-1">
-                                    Advance Amount Paid (₹)
-                                </label>
-                                <input
-                                    v-model.number="form.amountPaid"
-                                    type="number"
-                                    min="0"
-                                    class="w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition font-bold font-mono"
-                                />
-                            </div>
+                        <!-- Installments History Table -->
+                        <div v-if="form.paymentInstallments && form.paymentInstallments.length > 0" class="overflow-x-auto rounded-lg border border-slate-200">
+                            <table class="w-full text-xs text-left">
+                                <thead class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 uppercase text-[10px]">
+                                    <tr>
+                                        <th class="py-2.5 px-3">#</th>
+                                        <th class="py-2.5 px-3">Date & Timestamp</th>
+                                        <th class="py-2.5 px-3">Payment Mode</th>
+                                        <th class="py-2.5 px-3 text-right">Amount (₹)</th>
+                                        <th class="py-2.5 px-3">Notes / Ref</th>
+                                        <th class="py-2.5 px-3">Recorded By</th>
+                                        <th class="py-2.5 px-3 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 font-mono">
+                                    <tr v-for="(inst, idx) in form.paymentInstallments" :key="inst.id || idx" class="hover:bg-slate-50/80 transition">
+                                        <td class="py-2.5 px-3 text-slate-400 font-bold">{{ idx + 1 }}</td>
+                                        <td class="py-2.5 px-3 text-slate-800 font-medium">{{ inst.timestamp || inst.paymentDate }}</td>
+                                        <td class="py-2.5 px-3 font-sans">
+                                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                                {{ inst.paymentMode }}
+                                            </span>
+                                        </td>
+                                        <td class="py-2.5 px-3 text-right font-black text-emerald-700">
+                                            ₹{{ Number(inst.amount).toLocaleString('en-IN') }}
+                                        </td>
+                                        <td class="py-2.5 px-3 font-sans text-slate-600">{{ inst.note || '---' }}</td>
+                                        <td class="py-2.5 px-3 font-sans text-slate-500 text-[11px]">{{ inst.recordedBy || 'Staff' }}</td>
+                                        <td class="py-2.5 px-3 text-center font-sans">
+                                            <button
+                                                type="button"
+                                                @click="handleRemoveInstallment(inst.id)"
+                                                class="p-1 rounded text-rose-500 hover:text-rose-700 hover:bg-rose-50 cursor-pointer transition"
+                                                title="Delete Installment Record"
+                                            >
+                                                <Trash2 class="h-3.5 w-3.5" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div v-else class="p-4 text-center bg-slate-50/80 rounded-lg border border-dashed border-slate-300 text-xs text-slate-500">
+                            No advance payment installments recorded yet. Add an installment below.
+                        </div>
 
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-700 mb-1">
-                                    Payment Mode
-                                </label>
-                                <select
-                                    v-model="form.paymentMode"
-                                    class="w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition"
-                                >
-                                    <option value="Cash">Cash</option>
-                                    <option value="UPI / QR">UPI / QR</option>
-                                    <option value="Bank Transfer">Bank Transfer / NEFT</option>
-                                    <option value="Card">Credit / Debit Card</option>
-                                </select>
+                        <!-- Add New Installment Form -->
+                        <div class="p-3.5 bg-slate-50/80 rounded-xl border border-slate-200 space-y-3">
+                            <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                <PlusCircle class="h-4 w-4 text-emerald-600" />
+                                <span>+ Record Advance Payment Installment</span>
                             </div>
-
-                            <div>
-                                <label class="block text-[11px] font-bold text-slate-700 mb-1">
-                                    Authority Seal & Sign-off
-                                </label>
+                            <div class="grid grid-cols-1 sm:grid-cols-4 gap-2.5 text-xs">
+                                <div>
+                                    <label class="block text-[10.5px] font-bold text-slate-600 mb-1">Amount (₹) *</label>
+                                    <input
+                                        v-model.number="newInstallmentAmount"
+                                        type="number"
+                                        min="1"
+                                        placeholder="e.g. 50000"
+                                        class="w-full h-8.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-[#673DE6]"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="block text-[10.5px] font-bold text-slate-600 mb-1">Payment Mode</label>
+                                    <select
+                                        v-model="newInstallmentMode"
+                                        class="w-full h-8.5 rounded-lg border border-slate-300 bg-white px-2 text-xs text-slate-900 focus:outline-none focus:border-[#673DE6]"
+                                    >
+                                        <option value="Cash">Cash</option>
+                                        <option value="UPI / QR">UPI / QR</option>
+                                        <option value="Bank Transfer">Bank Transfer / NEFT</option>
+                                        <option value="Card">Credit / Debit Card</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10.5px] font-bold text-slate-600 mb-1">Date & Time Stamp</label>
+                                    <input
+                                        v-model="newInstallmentTimestamp"
+                                        type="text"
+                                        placeholder="e.g. 16 Sep 2026, 04:30 PM"
+                                        class="w-full h-8.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:border-[#673DE6]"
+                                    />
+                                </div>
+                                <div>
+                                    <label class="block text-[10.5px] font-bold text-slate-600 mb-1">Notes / Transaction Ref</label>
+                                    <input
+                                        v-model="newInstallmentNote"
+                                        type="text"
+                                        placeholder="e.g. UPI Ref #59283 / Desk Cash"
+                                        class="w-full h-8.5 rounded-lg border border-slate-300 bg-white px-2.5 text-xs text-slate-900 focus:outline-none focus:border-[#673DE6]"
+                                    />
+                                </div>
+                            </div>
+                            <div class="flex justify-end">
                                 <button
                                     type="button"
-                                    @click="approveByAuthority"
-                                    class="w-full h-8.5 rounded-lg text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs"
-                                    :class="form.status === 'approved_md' ? 'bg-emerald-600' : 'bg-[#673DE6] hover:bg-[#5832D0]'"
+                                    @click="handleAddInstallment"
+                                    class="h-8 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
                                 >
-                                    <ShieldCheck class="h-4 w-4" />
-                                    <span>{{ form.status === 'approved_md' ? 'Authorized & Signed' : 'Sign & Approve Estimate' }}</span>
+                                    <Plus class="h-3.5 w-3.5" />
+                                    <span>Record Installment Receipt</span>
                                 </button>
                             </div>
+                        </div>
+
+                        <!-- Sign & Finalize Seal Button -->
+                        <div class="pt-2 border-t border-slate-100">
+                            <button
+                                type="button"
+                                @click="approveByAuthority"
+                                class="w-full h-9 rounded-lg text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer"
+                                :class="form.status === 'approved_md' ? 'bg-emerald-600' : 'bg-[#673DE6] hover:bg-[#5832D0]'"
+                            >
+                                <ShieldCheck class="h-4 w-4" />
+                                <span>{{ form.status === 'approved_md' ? '✅ Officially Authorized & Booking Contract Sealed' : '👑 Sign & Officially Approve Booking Contract' }}</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -2505,19 +2932,34 @@ const shareOnWhatsApp = () => {
 
                 <div class="flex items-center gap-2">
                     <button
+                        v-if="userRole !== 'reception'"
                         type="button"
                         @click="showPrintPreview = true"
-                        class="h-8 px-3 rounded-lg border border-purple-200 bg-purple-50 text-[#673DE6] hover:bg-purple-100 text-xs font-bold transition flex items-center gap-1.5"
+                        class="h-8 px-3 rounded-lg border border-purple-200 bg-purple-50 text-[#673DE6] hover:bg-purple-100 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
                     >
                         <Printer class="h-3.5 w-3.5" />
                         <span>Print Voucher (#{{ form.voucherNo }})</span>
                     </button>
 
+                    <!-- Replaced Download PDF with Mark as Booked for Manager -->
                     <button
+                        v-if="userRole === 'manager'"
+                        type="button"
+                        @click="markAsBookedByManager"
+                        class="h-8 px-3.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        title="Mark Event as Officially Booked & Confirmed"
+                    >
+                        <CheckCircle2 class="h-3.5 w-3.5" />
+                        <span>Mark as Booked</span>
+                    </button>
+
+                    <!-- PDF download available for MD & Super Admin -->
+                    <button
+                        v-else-if="userRole !== 'reception'"
                         type="button"
                         @click="handleDownloadPdf"
                         :disabled="isPdfDownloading"
-                        class="h-8 px-3 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-wait"
+                        class="h-8 px-3 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-60 disabled:cursor-wait cursor-pointer"
                     >
                         <Loader2 v-if="isPdfDownloading" class="h-3.5 w-3.5 animate-spin" />
                         <Download v-else class="h-3.5 w-3.5" />
@@ -2677,7 +3119,7 @@ const shareOnWhatsApp = () => {
                                     <span class="font-mono font-black text-white text-sm">#{{ form.voucherNo }}</span>
                                 </div>
                                 <div class="text-[10.5px] font-mono uppercase px-2.5 py-0.5 rounded bg-slate-800 text-amber-300 border border-slate-700 font-bold">
-                                    {{ form.isQuotationMode ? 'OFFICIAL BANQUET QUOTATION PROPOSAL' : (form.status === 'approved_md' ? 'OFFICIAL BOOKING CONFIRMATION' : 'PROVISIONAL INQUIRY QUOTATION') }}
+                                    {{ form.isQuotationMode ? 'OFFICIAL BANQUET QUOTATION PROPOSAL' : (form.status === 'approved_md' ? 'OFFICIAL BOOKING CONFIRMATION' : 'PROVISIONAL INQUIRY') }}
                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <span class="text-slate-300">DATE:</span>
@@ -2779,9 +3221,19 @@ const shareOnWhatsApp = () => {
                                         <span class="font-bold">₹{{ otherAddonsTotal.toLocaleString('en-IN') }}</span>
                                     </div>
 
+                                    <!-- Subtotal & 18% Tax Lines -->
+                                    <div class="flex justify-between font-bold border-t border-slate-200 pt-1 text-slate-700">
+                                        <span>Subtotal (Base Services):</span>
+                                        <span>₹{{ subtotalAmount.toLocaleString('en-IN') }}</span>
+                                    </div>
+                                    <div class="flex justify-between text-indigo-900 font-bold">
+                                        <span>GST / Applicable Taxes (18%):</span>
+                                        <span>+ ₹{{ taxAmount.toLocaleString('en-IN') }}</span>
+                                    </div>
+
                                     <!-- Total Estimated Baseline -->
-                                    <div class="flex justify-between font-bold border-t border-slate-200 pt-1 text-slate-900">
-                                        <span>Total Estimated Baseline:</span>
+                                    <div class="flex justify-between font-black border-t border-slate-300 pt-1 text-slate-900">
+                                        <span>Gross Total (Incl. 18% Tax):</span>
                                         <span>₹{{ totalGrossAmount.toLocaleString('en-IN') }}</span>
                                     </div>
 

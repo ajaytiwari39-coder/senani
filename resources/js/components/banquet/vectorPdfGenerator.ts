@@ -27,6 +27,8 @@ export interface VectorPdfVoucherData {
     roomsTotal: number;
     decorAvTotal: number;
     otherAddonsTotal: number;
+    subtotalAmount?: number;
+    taxAmount?: number;
     totalGrossAmount: number;
     calculatedDiscountAmount: number;
     calculatedDiscountPercent: number;
@@ -184,7 +186,7 @@ export async function generateBanquetVoucherVectorPdf(
 
         const statusLabel = form.isQuotationMode
             ? 'OFFICIAL BANQUET QUOTATION PROPOSAL'
-            : (form.status === 'approved_md' ? 'OFFICIAL BOOKING CONFIRMATION' : 'PROVISIONAL INQUIRY QUOTATION');
+            : (form.status === 'approved_md' ? 'OFFICIAL BOOKING CONFIRMATION' : 'PROVISIONAL INQUIRY');
         setFont('bold', 7.5, [253, 230, 138]); // amber-200
         doc.text(statusLabel, marginX + contentWidth / 2, curY + 5, { align: 'center' });
 
@@ -347,9 +349,24 @@ export async function generateBanquetVoucherVectorPdf(
         doc.line(marginX + 3, lineY - 1, marginX + contentWidth - 3, lineY - 1);
         lineY += 2;
 
+        // Subtotal (before Tax)
+        if (data.subtotalAmount !== undefined && data.taxAmount !== undefined) {
+            setFont('normal', 7.5, [51, 65, 85]);
+            doc.text('Subtotal (Base Services):', marginX + 3, lineY);
+            setFont('bold', 7.5, [15, 23, 42]);
+            doc.text(`₹${data.subtotalAmount.toLocaleString('en-IN')}`, marginX + contentWidth - 3, lineY, { align: 'right' });
+            lineY += 4.2;
+
+            setFont('normal', 7.5, [51, 65, 85]);
+            doc.text('GST / Applicable Taxes (18%):', marginX + 3, lineY);
+            setFont('bold', 7.5, [15, 23, 42]);
+            doc.text(`+ ₹${data.taxAmount.toLocaleString('en-IN')}`, marginX + contentWidth - 3, lineY, { align: 'right' });
+            lineY += 4.2;
+        }
+
         // Baseline Gross Total
         setFont('bold', 8, [15, 23, 42]);
-        doc.text('Total Estimated Baseline:', marginX + 3, lineY);
+        doc.text('Gross Total (Incl. 18% Tax):', marginX + 3, lineY);
         doc.text(`₹${data.totalGrossAmount.toLocaleString('en-IN')}`, marginX + contentWidth - 3, lineY, { align: 'right' });
         lineY += 4.5;
 

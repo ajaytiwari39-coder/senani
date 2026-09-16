@@ -331,6 +331,14 @@ const toggleInquiryLock = (inq: BanquetInquiry) => {
 const showNotificationDropdown = ref(false);
 const readNotificationVouchers = ref<string[]>([]);
 
+const visibleBanquetInquiries = computed(() => {
+    if (activeRole.value === 'reception') {
+        // Receptionist only sees their intake drafts that have not been pushed to manager yet
+        return banquetInquiries.value.filter(i => i.status === 'draft_reception');
+    }
+    return banquetInquiries.value;
+});
+
 const pendingManagerInquiries = computed(() => {
     return banquetInquiries.value.filter(i => i.status === 'pending_manager');
 });
@@ -437,6 +445,29 @@ const checkManagerPendingAlerts = () => {
 let pollTimer: any = null;
 const isSyncingServer = ref(false);
 
+const getDeletedVouchers = (): Set<string> => {
+    if (typeof window === 'undefined') return new Set();
+    try {
+        const stored = localStorage.getItem('senani_deleted_vouchers');
+        if (stored) {
+            const arr = JSON.parse(stored);
+            if (Array.isArray(arr)) {
+                return new Set(arr.map(String));
+            }
+        }
+    } catch (e) {}
+    return new Set();
+};
+
+const recordDeletedVoucher = (voucherNo: string) => {
+    if (typeof window === 'undefined') return;
+    try {
+        const set = getDeletedVouchers();
+        set.add(String(voucherNo));
+        localStorage.setItem('senani_deleted_vouchers', JSON.stringify(Array.from(set)));
+    } catch (e) {}
+};
+
 const fetchInquiriesFromServer = async () => {
     if (typeof window === 'undefined') return;
     try {
@@ -448,9 +479,10 @@ const fetchInquiriesFromServer = async () => {
         if (!res.ok) return;
         const result = await res.json();
         if (result && result.success && Array.isArray(result.data)) {
-            // Filter out any legacy test data from earlier verification
+            const deletedSet = getDeletedVouchers();
+            // Filter out permanently deleted inquiries and legacy test data
             const serverList: BanquetInquiry[] = result.data.filter(
-                (i: BanquetInquiry) => !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
+                (i: BanquetInquiry) => !deletedSet.has(String(i.voucherNo)) && !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
             );
             
             // Detect newly arrived manager handovers from other users/devices
@@ -481,7 +513,11 @@ const fetchInquiriesFromServer = async () => {
 };
 
 const batchSyncInquiriesToServer = async (inquiriesToSync: BanquetInquiry[]) => {
-    if (inquiriesToSync.length === 0) return;
+    const deletedSet = getDeletedVouchers();
+    const validToSync = inquiriesToSync.filter(
+        i => !deletedSet.has(String(i.voucherNo)) && !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
+    );
+    if (validToSync.length === 0) return;
     try {
         const res = await fetch('/api/banquet-inquiries/batch-sync', {
             method: 'POST',
@@ -489,14 +525,17 @@ const batchSyncInquiriesToServer = async (inquiriesToSync: BanquetInquiry[]) => 
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
             },
-            body: JSON.stringify({ inquiries: inquiriesToSync })
+            body: JSON.stringify({ inquiries: validToSync })
         });
         if (res.ok) {
             const result = await res.json();
             if (result && result.data && Array.isArray(result.data)) {
-                banquetInquiries.value = result.data;
+                const filteredServer = result.data.filter(
+                    (i: BanquetInquiry) => !deletedSet.has(String(i.voucherNo)) && !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
+                );
+                banquetInquiries.value = filteredServer;
                 try {
-                    localStorage.setItem('senani_banquet_inquiries', JSON.stringify(result.data));
+                    localStorage.setItem('senani_banquet_inquiries', JSON.stringify(filteredServer));
                 } catch (e) {}
             }
         }
@@ -594,9 +633,10 @@ const requestDeleteInquiry = (inq: BanquetInquiry) => {
     showDeleteConfirmModal.value = true;
 };
 
-const confirmDeleteInquiry = () => {
+const confirmDeleteInquiry = async () => {
     if (!inquiryToDelete.value) return;
     const vNo = String(inquiryToDelete.value.voucherNo);
+    recordDeletedVoucher(vNo);
     banquetInquiries.value = banquetInquiries.value.filter(i => String(i.voucherNo) !== vNo);
     if (typeof window !== 'undefined') {
         try {
@@ -607,8 +647,9 @@ const confirmDeleteInquiry = () => {
     }
 
     // Delete from central server database
-    deleteInquiryFromServer(vNo);
+    await deleteInquiryFromServer(vNo);
 
+    showToast('🗑️ Inquiry Deleted', `Voucher #${vNo} permanently removed.`, 'info');
     showDeleteConfirmModal.value = false;
     inquiryToDelete.value = null;
 };
@@ -618,7 +659,10 @@ const handleStorageEvent = (e: StorageEvent) => {
         try {
             const list = JSON.parse(e.newValue);
             if (Array.isArray(list)) {
-                banquetInquiries.value = list;
+                const deletedSet = getDeletedVouchers();
+                banquetInquiries.value = list.filter(
+                    (i: BanquetInquiry) => !deletedSet.has(String(i.voucherNo)) && !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
+                );
             }
         } catch (err) {
             console.error('Failed to parse inquiries from storage event', err);
@@ -666,8 +710,9 @@ onMounted(() => {
             if (raw) {
                 const list = JSON.parse(raw);
                 if (Array.isArray(list) && list.length > 0) {
+                    const deletedSet = getDeletedVouchers();
                     banquetInquiries.value = list.filter(
-                        (i: BanquetInquiry) => !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
+                        (i: BanquetInquiry) => !deletedSet.has(String(i.voucherNo)) && !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
                     );
                 }
             }
@@ -2302,7 +2347,7 @@ const submitCheckIn = () => {
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 text-slate-600 font-medium">
-                                    <tr v-for="inq in banquetInquiries" :key="inq.voucherNo" class="hover:bg-slate-50/80 transition">
+                                    <tr v-for="inq in visibleBanquetInquiries" :key="inq.voucherNo" class="hover:bg-slate-50/80 transition">
                                         <td class="py-3 font-mono">
                                             <div class="font-bold text-[#673DE6]">#{{ inq.voucherNo }}</div>
                                             <div class="mt-0.5">
@@ -2391,24 +2436,26 @@ const submitCheckIn = () => {
                                                     <Share2 v-else class="h-3 w-3" />
                                                     <span>{{ guestLinkCopiedVoucher === inq.voucherNo ? 'Copied!' : 'Link' }}</span>
                                                 </button>
-                                                <button
-                                                    type="button"
-                                                    @click="openAndPrintInquiry(inq)"
-                                                    class="rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-800 hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-slate-200 shadow-2xs cursor-pointer"
-                                                    title="Print Full Voucher, Package & Menu"
-                                                >
-                                                    <Printer class="h-3 w-3" />
-                                                    <span>Print</span>
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    @click="openAndPrintInquiry(inq)"
-                                                    class="rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-emerald-200 shadow-2xs cursor-pointer"
-                                                    title="Open Print Preview to Download PDF"
-                                                >
-                                                    <Download class="h-3 w-3" />
-                                                    <span>PDF</span>
-                                                </button>
+                                                <template v-if="activeRole !== 'reception'">
+                                                    <button
+                                                        type="button"
+                                                        @click="openAndPrintInquiry(inq)"
+                                                        class="rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-800 hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-slate-200 shadow-2xs cursor-pointer"
+                                                        title="Print Full Voucher, Package & Menu"
+                                                    >
+                                                        <Printer class="h-3 w-3" />
+                                                        <span>Print</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        @click="openAndPrintInquiry(inq)"
+                                                        class="rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-emerald-200 shadow-2xs cursor-pointer"
+                                                        title="Open Print Preview to Download PDF"
+                                                    >
+                                                        <Download class="h-3 w-3" />
+                                                        <span>PDF</span>
+                                                    </button>
+                                                </template>
                                                 <a
                                                     :href="'/verify/voucher?v=' + inq.voucherNo"
                                                     target="_blank"
@@ -2445,6 +2492,15 @@ const submitCheckIn = () => {
                                                         title="Review Step 1 & 2 Setup"
                                                     >
                                                         Edit Step 1 & 2
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        @click="requestDeleteInquiry(inq)"
+                                                        class="rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-rose-200 shadow-2xs cursor-pointer"
+                                                        title="Permanently Delete Inquiry"
+                                                    >
+                                                        <Trash2 class="h-3 w-3" />
+                                                        <span>Delete</span>
                                                     </button>
                                                 </template>
                                                 <template v-else-if="activeRole === 'superadmin'">
@@ -2496,12 +2552,16 @@ const submitCheckIn = () => {
                                             </div>
                                         </td>
                                     </tr>
-                                    <tr v-if="banquetInquiries.length === 0">
+                                    <tr v-if="visibleBanquetInquiries.length === 0">
                                         <td colspan="10" class="py-8 text-center text-slate-400">
                                             <div class="flex flex-col items-center justify-center gap-1.5">
                                                 <Calendar class="h-7 w-7 text-slate-300" />
-                                                <span class="text-xs font-semibold text-slate-600">No Event Inquiries Registered Yet</span>
-                                                <span class="text-[10px] text-slate-400">Click "+ New Inquiry" to create the first 3-stage banquet slip</span>
+                                                <span class="text-xs font-semibold text-slate-600">
+                                                    {{ activeRole === 'reception' ? 'No Reception Drafts Pending' : 'No Event Inquiries Registered Yet' }}
+                                                </span>
+                                                <span class="text-[10px] text-slate-400">
+                                                    {{ activeRole === 'reception' ? 'All inquiries have been forwarded to Banquet Manager or none created yet.' : 'Click "+ New Inquiry" to create the first 3-stage banquet slip' }}
+                                                </span>
                                             </div>
                                         </td>
                                     </tr>

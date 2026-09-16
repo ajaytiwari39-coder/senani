@@ -144,7 +144,9 @@ class BanquetInquiryController extends Controller
      */
      public function destroy(string $voucherNo): JsonResponse
      {
-         $deleted = BanquetInquiry::where('voucher_no', $voucherNo)->delete();
+         $deleted = BanquetInquiry::where('voucher_no', $voucherNo)
+             ->orWhere('id', $voucherNo)
+             ->delete();
 
          return response()->json([
              'success' => true,
