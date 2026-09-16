@@ -2520,58 +2520,33 @@ const shareOnWhatsApp = () => {
                 <!-- STEP 3: TIERED APPROVAL & DISCOUNT (₹ FIRST)      -->
                 <!-- ------------------------------------------------- -->
                 <div v-if="currentStep === 3 && userRole !== 'reception'" class="space-y-4 animate-in fade-in duration-150 w-full px-1 sm:px-2">
-                    <!-- Executive Dark Card -->
-                    <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white p-5 sm:p-6 rounded-2xl shadow-lg border border-slate-800">
-                        <div class="flex items-center justify-between border-b border-slate-700/80 pb-3">
-                            <div>
-                                <p class="text-[10px] font-bold tracking-widest uppercase text-slate-400">SENANI HOTEL PLEASANT VIEW • ESTIMATE #{{ form.voucherNo }}</p>
-                                <h3 class="text-base sm:text-lg font-extrabold text-white mt-0.5">
-                                    {{ form.guestName }} • {{ form.eventType }}
-                                </h3>
-                                <p class="text-xs text-slate-400 font-mono">
-                                    Guaranteed: {{ form.paxGuaranteed }} Pax @ ₹{{ effectiveMenuRate }}/plate | Function: {{ form.functionDateFrom }}
-                                </p>
-                            </div>
-                            <div class="text-right">
-                                <span class="rounded-full px-3 py-1 text-xs font-bold border inline-flex items-center gap-1" :class="authorityLevel.badgeClass">
-                                    {{ authorityLevel.title }}
-                                </span>
-                                <div class="text-[10px] text-slate-400 mt-1.5 font-mono">
-                                    {{ authorityLevel.maxAllowedText }}
-                                </div>
-                            </div>
+                    <!-- Compact Summary Strip (Clean & Lightweight) -->
+                    <div class="bg-white border border-slate-200/90 rounded-xl px-4 py-2.5 shadow-2xs flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div class="flex items-center gap-2 sm:gap-3">
+                            <span class="font-mono font-bold text-[#673DE6] bg-purple-50 px-2 py-0.5 rounded border border-purple-200">#{{ form.voucherNo }}</span>
+                            <span class="font-bold text-slate-800">{{ form.guestName }}</span>
+                            <span class="text-slate-400 text-[11px]">• {{ form.eventType }} ({{ form.paxGuaranteed }} Pax)</span>
                         </div>
-
-                        <!-- 4 Big Financial Indicators (Amount First!) -->
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 font-mono">
+                        <div class="flex items-center gap-3 sm:gap-4 font-mono text-[11.5px]">
                             <div>
-                                <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Gross Total (Incl. 18% Tax)</span>
-                                <div class="text-lg sm:text-2xl font-black text-slate-100 mt-0.5">
-                                    ₹{{ totalGrossAmount.toLocaleString('en-IN') }}
-                                </div>
+                                <span class="text-slate-400 text-[10.5px]">Gross:</span>
+                                <strong class="text-slate-800 font-bold ml-1">₹{{ totalGrossAmount.toLocaleString('en-IN') }}</strong>
                             </div>
-
+                            <div v-if="calculatedDiscountAmount > 0">
+                                <span class="text-amber-500 text-[10.5px]">Disc:</span>
+                                <strong class="text-amber-700 font-bold ml-1">-₹{{ calculatedDiscountAmount.toLocaleString('en-IN') }} ({{ calculatedDiscountPercent }}%)</strong>
+                            </div>
                             <div>
-                                <span class="text-[10px] font-semibold uppercase tracking-wider text-amber-400">Discount in ₹ (Amount)</span>
-                                <div class="text-lg sm:text-2xl font-black text-amber-300 mt-0.5">
-                                    -₹{{ calculatedDiscountAmount.toLocaleString('en-IN') }}
-                                    <span class="text-xs font-normal text-amber-200/80">({{ calculatedDiscountPercent }}%)</span>
-                                </div>
+                                <span class="text-slate-400 text-[10.5px]">Net:</span>
+                                <strong class="text-emerald-700 font-black ml-1 text-xs sm:text-sm">₹{{ netPayableAmount.toLocaleString('en-IN') }}</strong>
                             </div>
-
                             <div>
-                                <span class="text-[10px] font-semibold uppercase tracking-wider text-emerald-400">Net Payable</span>
-                                <div class="text-xl sm:text-2xl font-black text-emerald-300 mt-0.5">
-                                    ₹{{ netPayableAmount.toLocaleString('en-IN') }}
-                                </div>
+                                <span class="text-slate-400 text-[10.5px]">Balance:</span>
+                                <strong class="text-rose-600 font-black ml-1 text-xs sm:text-sm">₹{{ balanceDueAmount.toLocaleString('en-IN') }}</strong>
                             </div>
-
-                            <div>
-                                <span class="text-[10px] font-semibold uppercase tracking-wider text-rose-300">Balance Due</span>
-                                <div class="text-xl sm:text-2xl font-black text-rose-400 mt-0.5">
-                                    ₹{{ balanceDueAmount.toLocaleString('en-IN') }}
-                                </div>
-                            </div>
+                            <span class="rounded-full px-2.5 py-0.5 text-[10px] font-bold border shrink-0" :class="authorityLevel.badgeClass">
+                                {{ authorityLevel.title }}
+                            </span>
                         </div>
                     </div>
 
