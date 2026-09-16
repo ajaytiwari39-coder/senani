@@ -318,6 +318,10 @@ const createBlankInquiry = (suggestedVoucher?: string): BanquetInquiry => ({
 
 const form = ref<BanquetInquiry>(createBlankInquiry());
 
+const isBookingFinalized = computed(() => {
+    return form.value.status === 'approved_md' || form.value.isLocked === true;
+});
+
 // Watch for incoming edits
 watch(
     () => props.initialInquiry,
@@ -582,6 +586,7 @@ const calculatedDiscountPercent = computed(() => {
 });
 
 const setDiscountFromAmount = (amt: number) => {
+    if (isBookingFinalized.value) return;
     form.value.discountInputMode = 'amount';
     const maxAmt = Math.round((totalGrossAmount.value * maxDiscountPercentAllowed.value) / 100);
     const validAmt = Math.min(maxAmt, Math.max(0, amt));
@@ -590,6 +595,7 @@ const setDiscountFromAmount = (amt: number) => {
 };
 
 const setDiscountFromPercent = (pct: number) => {
+    if (isBookingFinalized.value) return;
     form.value.discountInputMode = 'percent';
     const validPct = Math.min(maxDiscountPercentAllowed.value, Math.max(0, pct));
     form.value.discountPercent = validPct;
@@ -688,6 +694,7 @@ const handleRemoveInstallment = (id: string) => {
 };
 
 const handleStep2AdvanceChange = () => {
+    if (isBookingFinalized.value) return;
     const amt = Number(form.value.amountPaid) || 0;
     if (amt > 0) {
         if (!form.value.paymentInstallments || form.value.paymentInstallments.length === 0) {
@@ -734,6 +741,7 @@ watch(balanceDueAmount, (bal) => {
 
 // Multi-select toggle helper
 const toggleVenue = (venueId: string) => {
+    if (isBookingFinalized.value) return;
     const idx = form.value.selectedVenues.indexOf(venueId);
     if (idx > -1) {
         form.value.selectedVenues.splice(idx, 1);
@@ -1048,7 +1056,7 @@ const totalCatalogItemsCount = computed(() => {
 });
 
 const setQuotationMode = (active: boolean) => {
-    if (form.value.isLocked) return;
+    if (isBookingFinalized.value) return;
     form.value.isQuotationMode = active;
     if (active) {
         // "kuch select nhi rhega": in quotation mode, clear selected items
@@ -1094,7 +1102,7 @@ const confirmedMenuCategories = computed(() => {
 
 // Strict Quota Limit Enforcement (Never allow more than allowed limit)
 const toggleMenuItem = (item: string, categoryItems?: string[], maxAllowed?: number) => {
-    if (form.value.isLocked) return;
+    // Menu dishes remain editable even after booking contract finalization
     if (!form.value.selectedMenuCatalogItems) {
         form.value.selectedMenuCatalogItems = [];
     }
@@ -1142,7 +1150,6 @@ const sanitizeCatalogSelections = () => {
 };
 
 const selectAllDefaults = () => {
-    if (form.value.isLocked) return;
     const cat = currentMenuCatalog.value;
     const picked: string[] = [];
     if (cat.welcomeDrinks) picked.push(...cat.welcomeDrinks.slice(0, cat.welcomeDrinksCount));
@@ -1162,7 +1169,6 @@ const selectAllDefaults = () => {
 };
 
 const clearMenuSelection = () => {
-    if (form.value.isLocked) return;
     form.value.selectedMenuCatalogItems = [];
 };
 
@@ -1187,6 +1193,9 @@ const updateBarcodeAndQr = async () => {
 
 // Manager Deal Lock / Freeze Mechanism with Full Audit Trail Tracking
 const toggleDealLock = () => {
+    if (form.value.status === 'approved_md') {
+        return;
+    }
     form.value.isLocked = !form.value.isLocked;
 
     if (!form.value.auditLog) {
@@ -1462,6 +1471,15 @@ const shareOnWhatsApp = () => {
                             </button>
                         </div>
                     </div>
+                    <!-- Finalized & Sealed Booking Notice -->
+                    <div v-if="isBookingFinalized" class="p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 text-xs flex items-center justify-between gap-2 shadow-2xs">
+                        <div class="flex items-center gap-2 font-bold">
+                            <Lock class="h-4 w-4 text-amber-700 shrink-0" />
+                            <span>Booking Finalized & Contract Sealed: Customer profile and schedule are locked (Read-Only). Only catering menu dishes can be adjusted in Step 2.</span>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-200 text-amber-900 shrink-0">LOCKED</span>
+                    </div>
+
                     <!-- Guest Profile Card -->
                     <div class="bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-2xs space-y-4">
                         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
@@ -1521,10 +1539,12 @@ const shareOnWhatsApp = () => {
                                     @input="clearStepError('guestName')"
                                     type="text"
                                     required
+                                    :disabled="isBookingFinalized"
                                     placeholder="e.g. Mr. Rajesh Kumar / Host Name"
                                     :class="[
                                         'w-full h-8.5 rounded-lg border px-3 text-xs text-slate-900 focus:bg-white focus:outline-none transition',
-                                        stepErrors.guestName ? 'border-rose-400 bg-rose-50/50 focus:border-rose-500' : 'border-slate-200 bg-slate-50/60 focus:border-[#673DE6]'
+                                        stepErrors.guestName ? 'border-rose-400 bg-rose-50/50 focus:border-rose-500' : 'border-slate-200 bg-slate-50/60 focus:border-[#673DE6]',
+                                        isBookingFinalized ? 'bg-slate-100! text-slate-600! cursor-not-allowed select-none' : ''
                                     ]"
                                 />
                                 <span v-if="stepErrors.guestName" class="text-[10px] text-rose-600 font-bold mt-0.5 block">
@@ -1542,10 +1562,12 @@ const shareOnWhatsApp = () => {
                                     @input="clearStepError('phonePrimary')"
                                     type="tel"
                                     required
+                                    :disabled="isBookingFinalized"
                                     placeholder="e.g. 8115711507"
                                     :class="[
                                         'w-full h-8.5 rounded-lg border px-3 text-xs text-slate-900 focus:bg-white focus:outline-none transition font-mono',
-                                        stepErrors.phonePrimary ? 'border-rose-400 bg-rose-50/50 focus:border-rose-500' : 'border-slate-200 bg-slate-50/60 focus:border-[#673DE6]'
+                                        stepErrors.phonePrimary ? 'border-rose-400 bg-rose-50/50 focus:border-rose-500' : 'border-slate-200 bg-slate-50/60 focus:border-[#673DE6]',
+                                        isBookingFinalized ? 'bg-slate-100! text-slate-600! cursor-not-allowed select-none' : ''
                                     ]"
                                 />
                                 <span v-if="stepErrors.phonePrimary" class="text-[10px] text-rose-600 font-bold mt-0.5 block">
@@ -1561,8 +1583,12 @@ const shareOnWhatsApp = () => {
                                 <input
                                     v-model="form.phoneSecondary"
                                     type="tel"
+                                    :disabled="isBookingFinalized"
                                     placeholder="e.g. 7081219880"
-                                    class="w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition font-mono"
+                                    :class="[
+                                        'w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition font-mono',
+                                        isBookingFinalized ? 'bg-slate-100! text-slate-600! cursor-not-allowed select-none' : ''
+                                    ]"
                                 />
                             </div>
 
@@ -1573,8 +1599,12 @@ const shareOnWhatsApp = () => {
                                 <input
                                     v-model="form.eventType"
                                     type="text"
+                                    :disabled="isBookingFinalized"
                                     placeholder="e.g. Wedding Reception, Engagement, Tilak, Corporate Meeting"
-                                    class="w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition"
+                                    :class="[
+                                        'w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition',
+                                        isBookingFinalized ? 'bg-slate-100! text-slate-600! cursor-not-allowed select-none' : ''
+                                    ]"
                                 />
                             </div>
 
@@ -1590,10 +1620,12 @@ const shareOnWhatsApp = () => {
                                         type="number"
                                         min="1"
                                         required
+                                        :disabled="isBookingFinalized"
                                         placeholder="e.g. 150"
                                         :class="[
                                             'w-full h-8.5 rounded-lg border px-3 pr-14 text-xs text-slate-900 focus:bg-white focus:outline-none transition font-bold font-mono',
-                                            stepErrors.paxGuaranteed ? 'border-rose-400 bg-rose-50/50 focus:border-rose-500' : 'border-slate-200 bg-slate-50/60 focus:border-[#673DE6]'
+                                            stepErrors.paxGuaranteed ? 'border-rose-400 bg-rose-50/50 focus:border-rose-500' : 'border-slate-200 bg-slate-50/60 focus:border-[#673DE6]',
+                                            isBookingFinalized ? 'bg-slate-100! text-slate-600! cursor-not-allowed select-none' : ''
                                         ]"
                                     />
                                     <span class="absolute right-3 top-2 text-[10px] text-slate-500 font-bold uppercase pointer-events-none">Pax</span>
@@ -1611,8 +1643,12 @@ const shareOnWhatsApp = () => {
                                 <input
                                     v-model="form.email"
                                     type="email"
+                                    :disabled="isBookingFinalized"
                                     placeholder="e.g. guest@domain.com"
-                                    class="w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition"
+                                    :class="[
+                                        'w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition',
+                                        isBookingFinalized ? 'bg-slate-100! text-slate-600! cursor-not-allowed select-none' : ''
+                                    ]"
                                 />
                             </div>
 
@@ -1624,8 +1660,12 @@ const shareOnWhatsApp = () => {
                                 <input
                                     v-model="form.address"
                                     type="text"
+                                    :disabled="isBookingFinalized"
                                     placeholder="e.g. Civil Lines, Raebareli"
-                                    class="w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition"
+                                    :class="[
+                                        'w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition',
+                                        isBookingFinalized ? 'bg-slate-100! text-slate-600! cursor-not-allowed select-none' : ''
+                                    ]"
                                 />
                             </div>
                         </div>
@@ -1649,7 +1689,11 @@ const shareOnWhatsApp = () => {
                                 <input
                                     v-model="form.functionDateFrom"
                                     type="date"
-                                    class="w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition"
+                                    :disabled="isBookingFinalized"
+                                    :class="[
+                                        'w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition',
+                                        isBookingFinalized ? 'bg-slate-100! text-slate-600! cursor-not-allowed select-none' : ''
+                                    ]"
                                 />
                             </div>
 
@@ -1660,7 +1704,11 @@ const shareOnWhatsApp = () => {
                                 <input
                                     v-model="form.functionDateTo"
                                     type="date"
-                                    class="w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition"
+                                    :disabled="isBookingFinalized"
+                                    :class="[
+                                        'w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition',
+                                        isBookingFinalized ? 'bg-slate-100! text-slate-600! cursor-not-allowed select-none' : ''
+                                    ]"
                                 />
                             </div>
 
@@ -1672,7 +1720,11 @@ const shareOnWhatsApp = () => {
                                 <input
                                     v-model="form.timeFrom"
                                     type="time"
-                                    class="w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition"
+                                    :disabled="isBookingFinalized"
+                                    :class="[
+                                        'w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition',
+                                        isBookingFinalized ? 'bg-slate-100! text-slate-600! cursor-not-allowed select-none' : ''
+                                    ]"
                                 />
                             </div>
 
@@ -1684,7 +1736,11 @@ const shareOnWhatsApp = () => {
                                 <input
                                     v-model="form.timeTo"
                                     type="time"
-                                    class="w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition"
+                                    :disabled="isBookingFinalized"
+                                    :class="[
+                                        'w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition',
+                                        isBookingFinalized ? 'bg-slate-100! text-slate-600! cursor-not-allowed select-none' : ''
+                                    ]"
                                 />
                             </div>
                         </div>
@@ -1695,6 +1751,18 @@ const shareOnWhatsApp = () => {
                 <!-- STEP 2: BANQUET MANAGER FULL-WIDTH ENGINE         -->
                 <!-- ------------------------------------------------- -->
                 <div v-if="currentStep === 2" class="space-y-4 animate-in fade-in duration-150">
+
+                    <!-- Finalized Booking Notice (Menu Editable) -->
+                    <div v-if="isBookingFinalized" class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs flex items-center justify-between gap-2 shadow-2xs">
+                        <div class="flex items-center gap-2">
+                            <Utensils class="h-4 w-4 text-emerald-600 shrink-0" />
+                            <div>
+                                <span class="font-bold text-emerald-900">Contract Finalized — Menu Dishes Editable:</span>
+                                <span class="text-emerald-800 ml-1">You can customize food course dishes and items below. Halls, packages, pax, rates, and costing remain locked.</span>
+                            </div>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-200 text-emerald-900 shrink-0">MENU EDITABLE</span>
+                    </div>
 
                     <!-- Live Pax Validation Banner -->
                     <div
@@ -1726,10 +1794,10 @@ const shareOnWhatsApp = () => {
                     <div class="p-3 rounded-xl bg-gradient-to-r from-purple-50 via-white to-purple-50 border border-purple-200 flex flex-wrap items-center justify-between gap-3 text-xs shadow-2xs">
                         <div class="flex flex-wrap items-center gap-2.5">
                             <!-- Deal Lock / Unlock Status Button with Slim Barcode -->
-                            <div v-if="form.isLocked" class="flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-950 font-bold shadow-2xs">
+                            <div v-if="isBookingFinalized" class="flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-950 font-bold shadow-2xs">
                                 <div class="flex items-center gap-1.5 text-xs">
                                     <Lock class="h-3.5 w-3.5 text-amber-700 shrink-0" />
-                                    <span>🔒 DEAL LOCKED</span>
+                                    <span>🔒 {{ form.status === 'approved_md' ? 'CONTRACT FINALIZED' : 'DEAL LOCKED' }}</span>
                                 </div>
                                 <!-- Slim Barcode ("Ptla sa Barcode") -->
                                 <div class="hidden sm:flex flex-col items-center bg-white px-2 py-0.5 rounded border border-slate-200">
@@ -1744,7 +1812,11 @@ const shareOnWhatsApp = () => {
                                     <History class="h-3 w-3 text-purple-700" />
                                     <span>Audit Log ({{ form.auditLog?.length || 0 }})</span>
                                 </button>
+                                <span v-if="form.status === 'approved_md'" class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10.5px] font-bold border border-emerald-200">
+                                    Menu Customization Active
+                                </span>
                                 <button
+                                    v-else
                                     type="button"
                                     @click="toggleDealLock"
                                     class="px-2 py-0.5 rounded bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-black cursor-pointer transition shadow-2xs"
@@ -1779,11 +1851,11 @@ const shareOnWhatsApp = () => {
                             <div class="hidden sm:block text-slate-300">|</div>
 
                             <!-- Mode Selector Switcher: Quotation Mode vs Confirmed Selection -->
-                            <div class="inline-flex p-0.5 bg-slate-200/90 rounded-lg border border-slate-300 text-xs shadow-2xs">
+                            <div class="inline-flex p-0.5 bg-slate-200/90 rounded-lg border border-slate-300 text-xs shadow-2xs" :class="{ 'opacity-60 pointer-events-none': isBookingFinalized }">
                                 <button
                                     type="button"
                                     @click="setQuotationMode(true)"
-                                    :disabled="form.isLocked"
+                                    :disabled="isBookingFinalized"
                                     class="flex items-center gap-1.5 px-3 py-1.5 rounded-md font-bold transition cursor-pointer"
                                     :class="form.isQuotationMode 
                                         ? 'bg-purple-700 text-white shadow-xs' 
@@ -1796,7 +1868,7 @@ const shareOnWhatsApp = () => {
                                 <button
                                     type="button"
                                     @click="setQuotationMode(false)"
-                                    :disabled="form.isLocked"
+                                    :disabled="isBookingFinalized"
                                     class="flex items-center gap-1.5 px-3 py-1.5 rounded-md font-bold transition cursor-pointer"
                                     :class="!form.isQuotationMode 
                                         ? 'bg-[#673DE6] text-white shadow-xs' 
@@ -1825,8 +1897,7 @@ const shareOnWhatsApp = () => {
                                 <button
                                     type="button"
                                     @click="selectAllDefaults"
-                                    :disabled="form.isLocked"
-                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
                                     title="Auto-select recommended dishes according to official tier quotas"
                                 >
                                     ✨ Pick Recommended
@@ -1834,8 +1905,7 @@ const shareOnWhatsApp = () => {
                                 <button
                                     type="button"
                                     @click="clearMenuSelection"
-                                    :disabled="form.isLocked"
-                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-rose-50 hover:text-rose-700 text-slate-500 text-xs font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-rose-50 hover:text-rose-700 text-slate-500 text-xs font-semibold transition cursor-pointer"
                                     title="Clear all chosen items"
                                 >
                                     Clear
@@ -1886,20 +1956,25 @@ const shareOnWhatsApp = () => {
                                         <input
                                             type="checkbox"
                                             v-model="form.isEngagementPackage"
-                                            class="rounded text-[#673DE6] focus:ring-[#673DE6]"
+                                            :disabled="isBookingFinalized"
+                                            class="rounded text-[#673DE6] focus:ring-[#673DE6] disabled:opacity-50"
                                         />
                                     </div>
                                     <div v-if="form.isEngagementPackage" class="grid grid-cols-1 gap-2 pt-1">
                                         <label
-                                            class="flex items-center justify-between p-2 rounded-lg border cursor-pointer text-xs transition"
-                                            :class="form.engagementPackageType === 'swarnim' ? 'bg-purple-50/70 border-[#673DE6] text-[#673DE6] font-semibold' : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100'"
+                                            class="flex items-center justify-between p-2 rounded-lg border text-xs transition"
+                                            :class="[
+                                                form.engagementPackageType === 'swarnim' ? 'bg-purple-50/70 border-[#673DE6] text-[#673DE6] font-semibold' : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100',
+                                                isBookingFinalized ? 'cursor-not-allowed pointer-events-none opacity-80' : 'cursor-pointer'
+                                            ]"
                                         >
                                             <div class="flex items-center gap-2">
                                                 <input
                                                     type="checkbox"
                                                     :checked="form.engagementPackageType === 'swarnim'"
+                                                    :disabled="isBookingFinalized"
                                                     @change="form.engagementPackageType = form.engagementPackageType === 'swarnim' ? 'none' : 'swarnim'"
-                                                    class="rounded text-[#673DE6] focus:ring-[#673DE6]"
+                                                    class="rounded text-[#673DE6] focus:ring-[#673DE6] disabled:opacity-50"
                                                 />
                                                 <div>
                                                     <div class="font-bold text-slate-900">Swarnim Hall (G) + Decor + DJ</div>
@@ -1912,15 +1987,19 @@ const shareOnWhatsApp = () => {
                                         </label>
 
                                         <label
-                                            class="flex items-center justify-between p-2 rounded-lg border cursor-pointer text-xs transition"
-                                            :class="form.engagementPackageType === 'swarnmahal' ? 'bg-purple-50/70 border-[#673DE6] text-[#673DE6] font-semibold' : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100'"
+                                            class="flex items-center justify-between p-2 rounded-lg border text-xs transition"
+                                            :class="[
+                                                form.engagementPackageType === 'swarnmahal' ? 'bg-purple-50/70 border-[#673DE6] text-[#673DE6] font-semibold' : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100',
+                                                isBookingFinalized ? 'cursor-not-allowed pointer-events-none opacity-80' : 'cursor-pointer'
+                                            ]"
                                         >
                                             <div class="flex items-center gap-2">
                                                 <input
                                                     type="checkbox"
                                                     :checked="form.engagementPackageType === 'swarnmahal'"
+                                                    :disabled="isBookingFinalized"
                                                     @change="form.engagementPackageType = form.engagementPackageType === 'swarnmahal' ? 'none' : 'swarnmahal'"
-                                                    class="rounded text-[#673DE6] focus:ring-[#673DE6]"
+                                                    class="rounded text-[#673DE6] focus:ring-[#673DE6] disabled:opacity-50"
                                                 />
                                                 <div>
                                                     <div class="font-bold text-slate-900">Swarnmahal Hall (-1) + Decor + DJ</div>
@@ -1941,17 +2020,19 @@ const shareOnWhatsApp = () => {
                                         :key="venue.id"
                                         @click="toggleVenue(venue.id)"
                                         :class="[
-                                            'flex items-center justify-between p-2 rounded-lg border text-xs cursor-pointer transition',
+                                            'flex items-center justify-between p-2 rounded-lg border text-xs transition',
                                             form.selectedVenues.includes(venue.id)
                                                 ? 'bg-purple-50/70 border-[#673DE6] text-[#673DE6] font-semibold'
-                                                : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100'
+                                                : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100',
+                                            isBookingFinalized ? 'cursor-not-allowed pointer-events-none opacity-80' : 'cursor-pointer'
                                         ]"
                                     >
                                         <div class="flex items-center gap-2">
                                             <input
                                                 type="checkbox"
                                                 :checked="form.selectedVenues.includes(venue.id)"
-                                                class="rounded text-[#673DE6] focus:ring-[#673DE6]"
+                                                :disabled="isBookingFinalized"
+                                                class="rounded text-[#673DE6] focus:ring-[#673DE6] disabled:opacity-50"
                                             />
                                             <div>
                                                 <div class="font-bold text-slate-900">{{ venue.name }}</div>
@@ -1982,7 +2063,11 @@ const shareOnWhatsApp = () => {
                                         v-model.number="form.paxGuaranteed"
                                         type="number"
                                         min="10"
-                                        class="w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition font-bold"
+                                        :disabled="isBookingFinalized"
+                                        :class="[
+                                            'w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition font-bold',
+                                            isBookingFinalized ? 'bg-slate-100! cursor-not-allowed select-none' : ''
+                                        ]"
                                     />
                                 </div>
 
@@ -1996,7 +2081,8 @@ const shareOnWhatsApp = () => {
                                         <input
                                             type="checkbox"
                                             v-model="form.isMeetingSetup"
-                                            class="rounded text-amber-600 focus:ring-amber-500"
+                                            :disabled="isBookingFinalized"
+                                            class="rounded text-amber-600 focus:ring-amber-500 disabled:opacity-50"
                                         />
                                     </div>
                                 </div>
@@ -2012,20 +2098,32 @@ const shareOnWhatsApp = () => {
                                             v-model.number="form.roomsNeeded"
                                             type="number"
                                             min="0"
+                                            :disabled="isBookingFinalized"
                                             placeholder="Rooms"
-                                            class="h-8 rounded-lg border border-slate-200 bg-slate-50 px-2 text-xs font-bold text-slate-900"
+                                            :class="[
+                                                'h-8 rounded-lg border border-slate-200 bg-slate-50 px-2 text-xs font-bold text-slate-900',
+                                                isBookingFinalized ? 'bg-slate-100! cursor-not-allowed select-none' : ''
+                                            ]"
                                         />
                                         <input
                                             v-model="form.roomArrival"
                                             type="time"
                                             title="Arrival Time"
-                                            class="h-8 rounded-lg border border-slate-200 bg-slate-50 px-2 text-[11px]"
+                                            :disabled="isBookingFinalized"
+                                            :class="[
+                                                'h-8 rounded-lg border border-slate-200 bg-slate-50 px-2 text-[11px]',
+                                                isBookingFinalized ? 'bg-slate-100! cursor-not-allowed select-none' : ''
+                                            ]"
                                         />
                                         <input
                                             v-model="form.roomDeparture"
                                             type="time"
                                             title="Departure Time"
-                                            class="h-8 rounded-lg border border-slate-200 bg-slate-50 px-2 text-[11px]"
+                                            :disabled="isBookingFinalized"
+                                            :class="[
+                                                'h-8 rounded-lg border border-slate-200 bg-slate-50 px-2 text-[11px]',
+                                                isBookingFinalized ? 'bg-slate-100! cursor-not-allowed select-none' : ''
+                                            ]"
                                         />
                                     </div>
                                 </div>
@@ -2053,12 +2151,14 @@ const shareOnWhatsApp = () => {
                                         v-for="tier in ([499, 799, 999, 1199] as const)"
                                         :key="tier"
                                         type="button"
+                                        :disabled="isBookingFinalized"
                                         @click="form.menuRateTier = tier; activeMenuPreviewTier = tier"
                                         :class="[
                                             'p-2.5 rounded-xl border text-left transition flex flex-col justify-between',
                                             form.menuRateTier === tier
                                                 ? 'bg-[#673DE6] text-white border-[#673DE6] shadow-xs'
-                                                : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100'
+                                                : 'bg-slate-50 border-slate-200 text-slate-800 hover:bg-slate-100',
+                                            isBookingFinalized ? 'cursor-not-allowed pointer-events-none opacity-80' : 'cursor-pointer'
                                         ]"
                                     >
                                         <div class="text-[10px] font-medium" :class="form.menuRateTier === tier ? 'text-purple-200' : 'text-slate-400'">
@@ -2097,8 +2197,12 @@ const shareOnWhatsApp = () => {
                                                 v-model.number="form.engagementBreakfastPax"
                                                 type="number"
                                                 min="0"
+                                                :disabled="isBookingFinalized"
                                                 placeholder="Pax count"
-                                                class="w-full h-7 rounded border border-slate-200 px-2 text-xs font-bold"
+                                                :class="[
+                                                    'w-full h-7 rounded border border-slate-200 px-2 text-xs font-bold',
+                                                    isBookingFinalized ? 'bg-slate-100! cursor-not-allowed select-none' : ''
+                                                ]"
                                             />
                                         </div>
 
@@ -2111,8 +2215,12 @@ const shareOnWhatsApp = () => {
                                                 v-model.number="form.regularBreakfastPax"
                                                 type="number"
                                                 min="0"
+                                                :disabled="isBookingFinalized"
                                                 placeholder="Pax count"
-                                                class="w-full h-7 rounded border border-slate-200 px-2 text-xs font-bold"
+                                                :class="[
+                                                    'w-full h-7 rounded border border-slate-200 px-2 text-xs font-bold',
+                                                    isBookingFinalized ? 'bg-slate-100! cursor-not-allowed select-none' : ''
+                                                ]"
                                             />
                                         </div>
 
@@ -2125,8 +2233,12 @@ const shareOnWhatsApp = () => {
                                                 v-model.number="form.bainaBoxes"
                                                 type="number"
                                                 min="0"
+                                                :disabled="isBookingFinalized"
                                                 placeholder="Box count"
-                                                class="w-full h-7 rounded border border-slate-200 px-2 text-xs font-bold"
+                                                :class="[
+                                                    'w-full h-7 rounded border border-slate-200 px-2 text-xs font-bold',
+                                                    isBookingFinalized ? 'bg-slate-100! cursor-not-allowed select-none' : ''
+                                                ]"
                                             />
                                         </div>
 
@@ -2139,8 +2251,12 @@ const shareOnWhatsApp = () => {
                                                 v-model.number="form.mandapServingsPax"
                                                 type="number"
                                                 min="0"
+                                                :disabled="isBookingFinalized"
                                                 placeholder="Pax count"
-                                                class="w-full h-7 rounded border border-slate-200 px-2 text-xs font-bold"
+                                                :class="[
+                                                    'w-full h-7 rounded border border-slate-200 px-2 text-xs font-bold',
+                                                    isBookingFinalized ? 'bg-slate-100! cursor-not-allowed select-none' : ''
+                                                ]"
                                             />
                                         </div>
                                     </div>
@@ -2171,9 +2287,12 @@ const shareOnWhatsApp = () => {
                                             <button
                                                 type="button"
                                                 @click="setQuotationMode(!form.isQuotationMode)"
-                                                :disabled="form.isLocked"
+                                                :disabled="isBookingFinalized"
                                                 class="px-2 py-0.5 rounded text-[10.5px] font-bold border transition cursor-pointer"
-                                                :class="form.isQuotationMode ? 'bg-purple-100 text-purple-900 border-purple-300 hover:bg-purple-200' : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200'"
+                                                :class="[
+                                                    form.isQuotationMode ? 'bg-purple-100 text-purple-900 border-purple-300 hover:bg-purple-200' : 'bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200',
+                                                    isBookingFinalized ? 'opacity-60 cursor-not-allowed pointer-events-none' : ''
+                                                ]"
                                             >
                                                 {{ form.isQuotationMode ? '🎯 Pick Dishes' : '📋 Quotation Mode' }}
                                             </button>
@@ -2239,13 +2358,13 @@ const shareOnWhatsApp = () => {
                                                 <label
                                                     v-for="item in course.items"
                                                     :key="item"
-                                                    :class="['flex items-center gap-1.5 select-none', form.isLocked || (!isItemSelected(item) && isCategoryFull(course.items, course.count)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']"
+                                                    :class="['flex items-center gap-1.5 select-none', (!isItemSelected(item) && isCategoryFull(course.items, course.count)) ? 'cursor-not-allowed opacity-60' : 'cursor-pointer']"
                                                 >
                                                     <input
                                                         type="checkbox"
                                                         :checked="isItemSelected(item)"
                                                         @change="toggleMenuItem(item, course.items, course.count)"
-                                                        :disabled="form.isLocked || (!isItemSelected(item) && isCategoryFull(course.items, course.count))"
+                                                        :disabled="!isItemSelected(item) && isCategoryFull(course.items, course.count)"
                                                         class="rounded text-[#673DE6] focus:ring-[#673DE6] h-3 w-3 disabled:opacity-40 cursor-pointer"
                                                     />
                                                     <span :class="isItemSelected(item) ? 'font-bold text-slate-900' : 'text-slate-600'" class="truncate">{{ item }}</span>
@@ -2276,15 +2395,19 @@ const shareOnWhatsApp = () => {
                                     <label class="block text-[10px] font-bold text-slate-500 uppercase">Decor Package</label>
                                     <div class="space-y-1.5">
                                         <label
-                                            class="flex items-center justify-between p-2 rounded-lg border text-xs cursor-pointer transition"
-                                            :class="form.decorPackageType === 'standard' ? 'bg-purple-50/70 border-[#673DE6] text-[#673DE6] font-semibold' : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100'"
+                                            class="flex items-center justify-between p-2 rounded-lg border text-xs transition"
+                                            :class="[
+                                                form.decorPackageType === 'standard' ? 'bg-purple-50/70 border-[#673DE6] text-[#673DE6] font-semibold' : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100',
+                                                isBookingFinalized ? 'cursor-not-allowed pointer-events-none opacity-80' : 'cursor-pointer'
+                                            ]"
                                         >
                                             <div class="flex items-center gap-2">
                                                 <input
                                                     type="checkbox"
                                                     :checked="form.decorPackageType === 'standard'"
+                                                    :disabled="isBookingFinalized"
                                                     @change="form.decorPackageType = form.decorPackageType === 'standard' ? 'none' : 'standard'"
-                                                    class="rounded text-[#673DE6] focus:ring-[#673DE6]"
+                                                    class="rounded text-[#673DE6] focus:ring-[#673DE6] disabled:opacity-50"
                                                 />
                                                 <div>
                                                     <div class="font-bold text-slate-900">Standard Event Decor</div>
@@ -2297,15 +2420,19 @@ const shareOnWhatsApp = () => {
                                         </label>
 
                                         <label
-                                            class="flex items-center justify-between p-2 rounded-lg border text-xs cursor-pointer transition"
-                                            :class="form.decorPackageType === 'wedding' ? 'bg-purple-50/70 border-[#673DE6] text-[#673DE6] font-semibold' : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100'"
+                                            class="flex items-center justify-between p-2 rounded-lg border text-xs transition"
+                                            :class="[
+                                                form.decorPackageType === 'wedding' ? 'bg-purple-50/70 border-[#673DE6] text-[#673DE6] font-semibold' : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100',
+                                                isBookingFinalized ? 'cursor-not-allowed pointer-events-none opacity-80' : 'cursor-pointer'
+                                            ]"
                                         >
                                             <div class="flex items-center gap-2">
                                                 <input
                                                     type="checkbox"
                                                     :checked="form.decorPackageType === 'wedding'"
+                                                    :disabled="isBookingFinalized"
                                                     @change="form.decorPackageType = form.decorPackageType === 'wedding' ? 'none' : 'wedding'"
-                                                    class="rounded text-[#673DE6] focus:ring-[#673DE6]"
+                                                    class="rounded text-[#673DE6] focus:ring-[#673DE6] disabled:opacity-50"
                                                 />
                                                 <div>
                                                     <div class="font-bold text-slate-900">Wedding Decor Package</div>
@@ -2318,15 +2445,19 @@ const shareOnWhatsApp = () => {
                                         </label>
 
                                         <label
-                                            class="flex items-center justify-between p-2 rounded-lg border text-xs cursor-pointer transition"
-                                            :class="form.decorPackageType === 'grand' ? 'bg-purple-50/70 border-[#673DE6] text-[#673DE6] font-semibold' : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100'"
+                                            class="flex items-center justify-between p-2 rounded-lg border text-xs transition"
+                                            :class="[
+                                                form.decorPackageType === 'grand' ? 'bg-purple-50/70 border-[#673DE6] text-[#673DE6] font-semibold' : 'bg-slate-50/60 border-slate-200 text-slate-700 hover:bg-slate-100',
+                                                isBookingFinalized ? 'cursor-not-allowed pointer-events-none opacity-80' : 'cursor-pointer'
+                                            ]"
                                         >
                                             <div class="flex items-center gap-2">
                                                 <input
                                                     type="checkbox"
                                                     :checked="form.decorPackageType === 'grand'"
+                                                    :disabled="isBookingFinalized"
                                                     @change="form.decorPackageType = form.decorPackageType === 'grand' ? 'none' : 'grand'"
-                                                    class="rounded text-[#673DE6] focus:ring-[#673DE6]"
+                                                    class="rounded text-[#673DE6] focus:ring-[#673DE6] disabled:opacity-50"
                                                 />
                                                 <div>
                                                     <div class="font-bold text-slate-900">Grand Theme Setup</div>
@@ -2343,25 +2474,25 @@ const shareOnWhatsApp = () => {
                                 <!-- AV Setup Checklist -->
                                 <div class="pt-2 border-t border-slate-100 space-y-1.5">
                                     <label class="block text-[10px] font-bold text-slate-500 uppercase">Audio / Visual Addons</label>
-                                    <label class="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs cursor-pointer">
+                                    <label class="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs" :class="isBookingFinalized ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'">
                                         <span class="flex items-center gap-1.5">
-                                            <input type="checkbox" v-model="form.soundMicSetup" class="rounded text-[#673DE6]" />
+                                            <input type="checkbox" v-model="form.soundMicSetup" :disabled="isBookingFinalized" class="rounded text-[#673DE6] disabled:opacity-50" />
                                             Sound & Mic Setup
                                         </span>
                                         <span class="font-mono font-bold text-slate-700">₹7,000</span>
                                     </label>
 
-                                    <label class="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs cursor-pointer">
+                                    <label class="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs" :class="isBookingFinalized ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'">
                                         <span class="flex items-center gap-1.5">
-                                            <input type="checkbox" v-model="form.projectorSetup" class="rounded text-[#673DE6]" />
+                                            <input type="checkbox" v-model="form.projectorSetup" :disabled="isBookingFinalized" class="rounded text-[#673DE6] disabled:opacity-50" />
                                             Projector & Screen
                                         </span>
                                         <span class="font-mono font-bold text-slate-700">₹5,000</span>
                                     </label>
 
-                                    <label class="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs cursor-pointer">
+                                    <label class="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs" :class="isBookingFinalized ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'">
                                         <span class="flex items-center gap-1.5">
-                                            <input type="checkbox" v-model="form.ledWallSetup" class="rounded text-[#673DE6]" />
+                                            <input type="checkbox" v-model="form.ledWallSetup" :disabled="isBookingFinalized" class="rounded text-[#673DE6] disabled:opacity-50" />
                                             LED Video Wall
                                         </span>
                                         <span class="font-mono font-bold text-slate-700">₹12,000</span>
@@ -2424,9 +2555,13 @@ const shareOnWhatsApp = () => {
                                         min="0"
                                         :max="maxDiscountPercentAllowed"
                                         step="0.5"
+                                        :disabled="isBookingFinalized"
                                         :value="calculatedDiscountPercent"
                                         @input="setDiscountFromPercent(Number(($event.target as HTMLInputElement).value))"
-                                        class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#673DE6]"
+                                        :class="[
+                                            'w-full h-2 bg-slate-700 rounded-lg appearance-none accent-[#673DE6]',
+                                            isBookingFinalized ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                                        ]"
                                     />
 
                                     <div class="flex items-center justify-between text-[10px] font-mono text-slate-400">
@@ -2436,10 +2571,12 @@ const shareOnWhatsApp = () => {
                                                 v-for="p in [0, 3, 5, 7]"
                                                 :key="p"
                                                 type="button"
+                                                :disabled="isBookingFinalized"
                                                 @click="setDiscountFromPercent(p)"
                                                 :class="[
-                                                    'px-1.5 py-0.5 rounded text-[9.5px] font-bold transition cursor-pointer',
-                                                    calculatedDiscountPercent === p ? 'bg-[#673DE6] text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                                    'px-1.5 py-0.5 rounded text-[9.5px] font-bold transition',
+                                                    calculatedDiscountPercent === p ? 'bg-[#673DE6] text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600',
+                                                    isBookingFinalized ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'
                                                 ]"
                                             >
                                                 {{ p }}%
@@ -2471,8 +2608,12 @@ const shareOnWhatsApp = () => {
                                                 type="number"
                                                 min="0"
                                                 placeholder="0"
+                                                :disabled="isBookingFinalized"
                                                 @input="handleStep2AdvanceChange"
-                                                class="w-28 h-7 rounded border border-slate-600 bg-slate-900 px-2 text-xs font-mono font-bold text-emerald-300 focus:border-emerald-400 focus:outline-none"
+                                                :class="[
+                                                    'w-28 h-7 rounded border border-slate-600 bg-slate-900 px-2 text-xs font-mono font-bold text-emerald-300 focus:border-emerald-400 focus:outline-none',
+                                                    isBookingFinalized ? 'bg-slate-800! text-slate-400! cursor-not-allowed select-none' : ''
+                                                ]"
                                             />
                                         </div>
                                     </div>
@@ -2481,8 +2622,12 @@ const shareOnWhatsApp = () => {
                                             <label class="text-[10px] text-slate-400 block mb-0.5 font-bold">Payment Mode</label>
                                             <select
                                                 v-model="form.paymentMode"
+                                                :disabled="isBookingFinalized"
                                                 @change="handleStep2AdvanceChange"
-                                                class="w-full h-7 rounded border border-slate-600 bg-slate-900 px-1.5 text-[11px] text-slate-200 focus:outline-none"
+                                                :class="[
+                                                    'w-full h-7 rounded border border-slate-600 bg-slate-900 px-1.5 text-[11px] text-slate-200 focus:outline-none',
+                                                    isBookingFinalized ? 'bg-slate-800! text-slate-400! cursor-not-allowed pointer-events-none' : ''
+                                                ]"
                                             >
                                                 <option value="Cash">Cash</option>
                                                 <option value="UPI / QR">UPI / QR</option>
@@ -2495,9 +2640,13 @@ const shareOnWhatsApp = () => {
                                             <input
                                                 v-model="form.paymentDate"
                                                 type="text"
+                                                :disabled="isBookingFinalized"
                                                 @input="handleStep2AdvanceChange"
                                                 placeholder="e.g. 16 Sep 2026"
-                                                class="w-full h-7 rounded border border-slate-600 bg-slate-900 px-1.5 text-[11px] text-slate-200 focus:outline-none font-mono"
+                                                :class="[
+                                                    'w-full h-7 rounded border border-slate-600 bg-slate-900 px-1.5 text-[11px] text-slate-200 focus:outline-none font-mono',
+                                                    isBookingFinalized ? 'bg-slate-800! text-slate-400! cursor-not-allowed select-none' : ''
+                                                ]"
                                             />
                                         </div>
                                     </div>
@@ -2652,25 +2801,34 @@ const shareOnWhatsApp = () => {
                                     <Sliders class="h-4 w-4" />
                                 </div>
                                 <div>
-                                    <h4 class="text-xs sm:text-sm font-bold text-slate-900">
-                                        Tiered Discount Controller (Always in ₹ Numbers)
-                                    </h4>
+                                    <div class="flex items-center gap-2">
+                                        <h4 class="text-xs sm:text-sm font-bold text-slate-900">
+                                            Tiered Discount Controller (Always in ₹ Numbers)
+                                        </h4>
+                                        <span v-if="isBookingFinalized" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
+                                            🔒 Locked (Booking Finalized)
+                                        </span>
+                                    </div>
                                     <p class="text-[11px] text-slate-500">
-                                        {{ isMdOrSuperAdmin ? 'MD / Super Admin Authority: Up to 12% Max Slab Available' : 'Banquet Manager Authority: Up to 7% Maximum Limit' }}
+                                        {{ isBookingFinalized ? 'Contract is sealed. Discount structure cannot be altered.' : (isMdOrSuperAdmin ? 'MD / Super Admin Authority: Up to 12% Max Slab Available' : 'Banquet Manager Authority: Up to 7% Maximum Limit') }}
                                     </p>
                                 </div>
                             </div>
 
                             <!-- Discount Input Direct in Rupees -->
                             <div class="flex items-center gap-2">
-                                <div class="flex items-center gap-1 border border-slate-300 rounded-lg px-2 py-1 bg-slate-50">
+                                <div
+                                    class="flex items-center gap-1 border border-slate-300 rounded-lg px-2 py-1 transition"
+                                    :class="isBookingFinalized ? 'bg-slate-100 opacity-60 cursor-not-allowed' : 'bg-slate-50'"
+                                >
                                     <span class="text-xs font-bold text-slate-500">₹</span>
                                     <input
                                         type="number"
                                         :value="form.discountRupees"
+                                        :disabled="isBookingFinalized"
                                         @input="setDiscountFromAmount(Number(($event.target as HTMLInputElement).value))"
                                         placeholder="Discount in ₹"
-                                        class="w-28 text-xs font-bold text-slate-900 bg-transparent focus:outline-none font-mono"
+                                        class="w-28 text-xs font-bold text-slate-900 bg-transparent focus:outline-none font-mono disabled:cursor-not-allowed"
                                     />
                                 </div>
                                 <span class="text-xs text-slate-400">or</span>
@@ -2680,9 +2838,11 @@ const shareOnWhatsApp = () => {
                                         v-for="pct in (isMdOrSuperAdmin ? [0, 3, 5, 7, 10, 12] : [0, 3, 5, 7])"
                                         :key="pct"
                                         type="button"
+                                        :disabled="isBookingFinalized"
                                         @click="setDiscountFromPercent(pct)"
                                         :class="[
-                                            'h-7 px-2 rounded-lg text-xs font-bold transition font-mono cursor-pointer',
+                                            'h-7 px-2 rounded-lg text-xs font-bold transition font-mono',
+                                            isBookingFinalized ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
                                             calculatedDiscountPercent === pct
                                                 ? 'bg-[#673DE6] text-white'
                                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -2715,8 +2875,10 @@ const shareOnWhatsApp = () => {
                                 :max="maxDiscountPercentAllowed"
                                 step="0.5"
                                 :value="calculatedDiscountPercent"
+                                :disabled="isBookingFinalized"
                                 @input="setDiscountFromPercent(Number(($event.target as HTMLInputElement).value))"
-                                class="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#673DE6]"
+                                class="w-full h-2.5 bg-slate-200 rounded-lg appearance-none accent-[#673DE6]"
+                                :class="isBookingFinalized ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'"
                             />
 
                             <!-- Tier Range Indicators -->
@@ -2867,12 +3029,13 @@ const shareOnWhatsApp = () => {
                         <div class="pt-2 border-t border-slate-100">
                             <button
                                 type="button"
+                                :disabled="isBookingFinalized"
                                 @click="approveByAuthority"
-                                class="w-full h-9 rounded-lg text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer"
-                                :class="form.status === 'approved_md' ? 'bg-emerald-600' : 'bg-[#673DE6] hover:bg-[#5832D0]'"
+                                class="w-full h-9 rounded-lg text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs"
+                                :class="isBookingFinalized ? 'bg-emerald-600 opacity-90 cursor-not-allowed' : (form.status === 'approved_md' ? 'bg-emerald-600' : 'bg-[#673DE6] hover:bg-[#5832D0] cursor-pointer')"
                             >
                                 <ShieldCheck class="h-4 w-4" />
-                                <span>{{ form.status === 'approved_md' ? '✅ Officially Authorized & Booking Contract Sealed' : '👑 Sign & Officially Approve Booking Contract' }}</span>
+                                <span>{{ isBookingFinalized ? '✅ Officially Authorized & Booking Contract Sealed' : '👑 Sign & Officially Approve Booking Contract' }}</span>
                             </button>
                         </div>
                     </div>
@@ -2920,7 +3083,7 @@ const shareOnWhatsApp = () => {
 
                     <!-- Replaced Download PDF with Mark as Booked for Manager -->
                     <button
-                        v-if="userRole === 'manager'"
+                        v-if="userRole === 'manager' && !isBookingFinalized"
                         type="button"
                         @click="markAsBookedByManager"
                         class="h-8 px-3.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
@@ -2943,12 +3106,24 @@ const shareOnWhatsApp = () => {
                         <span>{{ isPdfDownloading ? 'Generating…' : 'Download PDF' }}</span>
                     </button>
 
+                    <!-- Save & Exit / Save Menu Changes -->
                     <button
+                        v-if="!isBookingFinalized"
                         type="button"
                         @click="saveAndClose"
-                        class="h-8 px-3 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition"
+                        class="h-8 px-3 rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
                     >
                         Save & Exit Draft
+                    </button>
+                    <button
+                        v-else
+                        type="button"
+                        @click="saveAndClose"
+                        class="h-8 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                        title="Save updated catering menu and close"
+                    >
+                        <CheckCircle2 class="h-3.5 w-3.5" />
+                        <span>💾 Save Menu Changes</span>
                     </button>
 
                     <!-- Reception Action -->
@@ -2984,7 +3159,7 @@ const shareOnWhatsApp = () => {
                             <ArrowRight class="h-3.5 w-3.5" />
                         </button>
                         <button
-                            v-else
+                            v-else-if="!isBookingFinalized"
                             type="button"
                             @click="markAsBookedByManager"
                             class="h-8 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
@@ -3016,7 +3191,7 @@ const shareOnWhatsApp = () => {
                             <ArrowRight class="h-3.5 w-3.5" />
                         </button>
                         <button
-                            v-else
+                            v-else-if="!isBookingFinalized"
                             type="button"
                             @click="submitMdFinalize"
                             class="h-8 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
