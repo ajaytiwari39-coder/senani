@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import {
     Building2,
     ShieldCheck,
@@ -97,6 +97,9 @@ const setRole = (r: UserRole) => {
     activeRole.value = valid;
     if (typeof window !== 'undefined') {
         localStorage.setItem('senani_active_role', valid);
+    }
+    if ((valid === 'manager' || valid === 'superadmin') && typeof checkManagerPendingAlerts === 'function') {
+        checkManagerPendingAlerts();
     }
 };
 
@@ -311,6 +314,112 @@ const toggleInquiryLock = (inq: BanquetInquiry) => {
     handleSaveInquiry(inq);
 };
 
+// -------------------------------------------------------------
+// Banquet Manager Reception Handover Notifications & System
+// -------------------------------------------------------------
+const showNotificationDropdown = ref(false);
+const readNotificationVouchers = ref<string[]>([]);
+
+const pendingManagerInquiries = computed(() => {
+    return banquetInquiries.value.filter(i => i.status === 'pending_manager');
+});
+
+const unreadManagerNotifications = computed(() => {
+    return pendingManagerInquiries.value.filter(i => !readNotificationVouchers.value.includes(String(i.voucherNo)));
+});
+
+const markNotificationAsRead = (voucherNo: string | number) => {
+    const v = String(voucherNo);
+    if (!readNotificationVouchers.value.includes(v)) {
+        readNotificationVouchers.value.push(v);
+        if (typeof window !== 'undefined') {
+            try {
+                localStorage.setItem('senani_read_manager_vouchers', JSON.stringify(readNotificationVouchers.value));
+            } catch (e) {
+                console.error('Error saving read vouchers', e);
+            }
+        }
+    }
+};
+
+const markAllNotificationsAsRead = () => {
+    readNotificationVouchers.value = pendingManagerInquiries.value.map(i => String(i.voucherNo));
+    if (typeof window !== 'undefined') {
+        try {
+            localStorage.setItem('senani_read_manager_vouchers', JSON.stringify(readNotificationVouchers.value));
+        } catch (e) {
+            console.error('Error saving read vouchers', e);
+        }
+    }
+};
+
+const openInquiryFromNotification = (inq: BanquetInquiry) => {
+    markNotificationAsRead(inq.voucherNo);
+    showNotificationDropdown.value = false;
+    currentTab.value = 'banquet';
+    openExistingInquiry(inq, 2);
+};
+
+const openVoucherByNumber = (vNo: string) => {
+    const found = banquetInquiries.value.find(i => String(i.voucherNo) === String(vNo));
+    if (found) {
+        openInquiryFromNotification(found);
+    }
+};
+
+// Lightweight In-App Floating Toasts & Web Audio Beep
+interface DashboardToast {
+    id: string;
+    title: string;
+    message: string;
+    type: 'info' | 'success' | 'warning';
+    voucherNo?: string;
+}
+const activeToasts = ref<DashboardToast[]>([]);
+
+const showToast = (title: string, message: string, type: 'info' | 'success' | 'warning' = 'info', voucherNo?: string) => {
+    const id = Math.random().toString(36).substring(2, 9);
+    activeToasts.value.push({ id, title, message, type, voucherNo });
+    setTimeout(() => {
+        activeToasts.value = activeToasts.value.filter(t => t.id !== id);
+    }, 6000);
+};
+
+const playNotificationChime = () => {
+    try {
+        if (typeof window !== 'undefined') {
+            const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+            if (AudioContextClass) {
+                const ctx = new AudioContextClass();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+                osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08); // A5
+                gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.35);
+            }
+        }
+    } catch (e) {
+        // audio policy ignored safely
+    }
+};
+
+const checkManagerPendingAlerts = () => {
+    if (unreadManagerNotifications.value.length > 0) {
+        showToast(
+            '🔔 Reception Handovers Pending',
+            `You have ${unreadManagerNotifications.value.length} inquiry intake(s) from Reception awaiting Step 2 costing.`,
+            'warning'
+        );
+        playNotificationChime();
+    }
+};
+
 const handleSaveInquiry = (inq: BanquetInquiry) => {
     const existingIdx = banquetInquiries.value.findIndex(i => i.voucherNo === inq.voucherNo);
     if (existingIdx > -1) {
@@ -324,6 +433,37 @@ const handleSaveInquiry = (inq: BanquetInquiry) => {
         } catch (e) {
             console.error('Error saving banquet inquiries to localStorage', e);
         }
+    }
+
+    // Interactive Notification Handover Feedback
+    if (inq.status === 'pending_manager') {
+        if (activeRole.value === 'manager' || activeRole.value === 'superadmin') {
+            showToast(
+                '🔔 New Reception Handover Received',
+                `Voucher #${inq.voucherNo} for ${inq.guestName || 'Guest'} (${inq.paxGuaranteed || inq.paxExpected || 0} Pax) is awaiting your Step 2 costing!`,
+                'warning',
+                String(inq.voucherNo)
+            );
+            playNotificationChime();
+        } else {
+            showToast(
+                '✅ Intake Forwarded to Manager',
+                `Voucher #${inq.voucherNo} for ${inq.guestName || 'Guest'} successfully forwarded to Banquet Manager.`,
+                'success'
+            );
+        }
+    } else if (inq.status === 'pending_md') {
+        showToast(
+            '✅ Costing Forwarded to MD',
+            `Voucher #${inq.voucherNo} submitted to Managing Director for discount approval & final seal.`,
+            'info'
+        );
+    } else if (inq.status === 'approved_md') {
+        showToast(
+            '🎉 Event Booking Sealed & Locked',
+            `Voucher #${inq.voucherNo} has been officially approved & locked by MD Sir.`,
+            'success'
+        );
     }
 };
 
@@ -353,8 +493,64 @@ const confirmDeleteInquiry = () => {
     inquiryToDelete.value = null;
 };
 
+const handleStorageEvent = (e: StorageEvent) => {
+    if (e.key === 'senani_banquet_inquiries' && e.newValue) {
+        try {
+            const list = JSON.parse(e.newValue);
+            if (Array.isArray(list)) {
+                const oldVouchers = banquetInquiries.value.map(i => String(i.voucherNo));
+                const newHandovers = list.filter(i => i.status === 'pending_manager' && !oldVouchers.includes(String(i.voucherNo)));
+                banquetInquiries.value = list;
+                if (newHandovers.length > 0 && (activeRole.value === 'manager' || activeRole.value === 'superadmin')) {
+                    const latest = newHandovers[0];
+                    showToast(
+                        '🔔 New Reception Handover!',
+                        `Slip #${latest.voucherNo} for ${latest.guestName || 'Guest'} (${latest.paxGuaranteed || latest.paxExpected || 0} Pax) was forwarded by Reception.`,
+                        'warning',
+                        String(latest.voucherNo)
+                    );
+                    playNotificationChime();
+                }
+            }
+        } catch (err) {
+            console.error('Failed to parse inquiries from storage event', err);
+        }
+    }
+    if (e.key === 'senani_read_manager_vouchers' && e.newValue) {
+        try {
+            readNotificationVouchers.value = JSON.parse(e.newValue);
+        } catch (err) {
+            console.error('Failed to parse read vouchers from storage event', err);
+        }
+    }
+};
+
+const handleDocumentClick = (e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (showNotificationDropdown.value && !target.closest('#notification-bell-container')) {
+        showNotificationDropdown.value = false;
+    }
+};
+
 onMounted(() => {
     if (typeof window !== 'undefined') {
+        // Load read vouchers history
+        try {
+            const rawRead = localStorage.getItem('senani_read_manager_vouchers');
+            if (rawRead) {
+                const list = JSON.parse(rawRead);
+                if (Array.isArray(list)) {
+                    readNotificationVouchers.value = list;
+                }
+            }
+        } catch (e) {
+            console.error('Error loading read vouchers', e);
+        }
+
+        // Multi-tab / cross-tab realtime sync & click-away dismissal
+        window.addEventListener('storage', handleStorageEvent);
+        document.addEventListener('click', handleDocumentClick);
+
         try {
             const raw = localStorage.getItem('senani_banquet_inquiries');
             if (raw) {
@@ -387,6 +583,20 @@ onMounted(() => {
                 }
             }
         }
+
+        // Check if there are active manager alerts on mount
+        if (activeRole.value === 'manager' || activeRole.value === 'superadmin') {
+            setTimeout(() => {
+                checkManagerPendingAlerts();
+            }, 800);
+        }
+    }
+});
+
+onUnmounted(() => {
+    if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', handleStorageEvent);
+        document.removeEventListener('click', handleDocumentClick);
     }
 });
 
@@ -683,6 +893,145 @@ const submitCheckIn = () => {
                     <span class="hidden sm:inline">Fast GST Bill</span>
                     <span class="sm:hidden">Bill</span>
                 </button>
+
+                <!-- Notification Bell (Reception Handovers & Stage Pipeline) -->
+                <div id="notification-bell-container" class="relative">
+                    <button
+                        type="button"
+                        @click="showNotificationDropdown = !showNotificationDropdown"
+                        class="relative h-7 px-2 flex items-center justify-center gap-1.5 rounded-lg border transition cursor-pointer"
+                        :class="[
+                            showNotificationDropdown
+                                ? 'border-[#673DE6] bg-purple-50 text-[#673DE6]'
+                                : (unreadManagerNotifications.length > 0 && (activeRole === 'manager' || activeRole === 'superadmin')
+                                    ? 'border-amber-300 bg-amber-50 text-amber-900 shadow-xs'
+                                    : 'border-slate-200 bg-white text-slate-600 hover:text-[#673DE6] hover:border-[#673DE6]/40 hover:bg-slate-50')
+                        ]"
+                        :title="activeRole === 'manager' || activeRole === 'superadmin' ? `Manager Alerts: ${unreadManagerNotifications.length} unread handover(s)` : 'Reception Handovers'"
+                    >
+                        <Bell
+                            class="h-3.5 w-3.5"
+                            :class="unreadManagerNotifications.length > 0 && (activeRole === 'manager' || activeRole === 'superadmin') ? 'text-amber-600 animate-pulse' : 'text-slate-500'"
+                        />
+                        <span
+                            v-if="pendingManagerInquiries.length > 0"
+                            class="text-[10px] font-extrabold"
+                            :class="unreadManagerNotifications.length > 0 && (activeRole === 'manager' || activeRole === 'superadmin') ? 'text-rose-600' : 'text-slate-600'"
+                        >
+                            {{ pendingManagerInquiries.length }}
+                        </span>
+                        <span
+                            v-if="unreadManagerNotifications.length > 0 && (activeRole === 'manager' || activeRole === 'superadmin')"
+                            class="absolute -top-1 -right-1 flex h-3.5 min-w-3.5 px-0.5 items-center justify-center rounded-full bg-rose-600 text-[8px] font-black text-white shadow-xs"
+                        >
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                            <span class="relative">{{ unreadManagerNotifications.length }}</span>
+                        </span>
+                    </button>
+
+                    <!-- Notification Popover Dropdown -->
+                    <div
+                        v-if="showNotificationDropdown"
+                        class="absolute right-0 top-full mt-2 w-80 sm:w-96 rounded-2xl bg-white shadow-2xl border border-slate-200/90 z-50 overflow-hidden divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-150"
+                    >
+                        <!-- Header -->
+                        <div class="p-3.5 bg-slate-50/80 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div class="h-7 w-7 rounded-lg bg-[#F0EBFF] text-[#673DE6] flex items-center justify-center">
+                                    <Bell class="h-4 w-4" />
+                                </div>
+                                <div>
+                                    <h3 class="text-xs font-black text-slate-900 leading-tight">Reception Handovers</h3>
+                                    <p class="text-[10px] text-slate-500 font-medium">
+                                        {{ pendingManagerInquiries.length }} lead(s) awaiting Step 2 costing
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                v-if="unreadManagerNotifications.length > 0"
+                                @click="markAllNotificationsAsRead"
+                                class="text-[10px] font-bold text-[#673DE6] hover:text-[#5832D0] hover:underline cursor-pointer"
+                            >
+                                Mark all read
+                            </button>
+                        </div>
+
+                        <!-- Inquiry Notification Items -->
+                        <div class="max-h-80 overflow-y-auto divide-y divide-slate-100">
+                            <div
+                                v-for="inq in pendingManagerInquiries"
+                                :key="inq.voucherNo"
+                                class="p-3 hover:bg-slate-50/80 transition flex items-start justify-between gap-2"
+                                :class="{ 'bg-purple-50/20': !readNotificationVouchers.includes(String(inq.voucherNo)) }"
+                            >
+                                <div class="space-y-1 min-w-0 flex-1">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="font-mono font-black text-[#673DE6] text-xs">#{{ inq.voucherNo }}</span>
+                                        <span class="text-xs font-bold text-slate-900 truncate">{{ inq.guestName || 'Unnamed Guest' }}</span>
+                                        <span
+                                            v-if="!readNotificationVouchers.includes(String(inq.voucherNo))"
+                                            class="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse"
+                                            title="Unread notification"
+                                        ></span>
+                                    </div>
+                                    <div class="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
+                                        <span v-if="inq.phonePrimary || inq.phone" class="flex items-center gap-0.5">
+                                            <Phone class="h-2.5 w-2.5 text-slate-400" />
+                                            {{ inq.phonePrimary || inq.phone }}
+                                        </span>
+                                        <span class="flex items-center gap-0.5 font-bold text-slate-700">
+                                            <Users class="h-2.5 w-2.5 text-slate-400" />
+                                            {{ inq.paxGuaranteed || inq.paxExpected || 0 }} Pax
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5 text-[10px] text-slate-400">
+                                        <span class="bg-amber-50 text-amber-700 border border-amber-200/80 px-1.5 py-0.2 rounded font-bold text-[9px]">
+                                            Step 1 Captured by Reception
+                                        </span>
+                                        <span class="text-slate-500">{{ inq.eventType || 'Banquet Event' }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col items-end gap-1.5 shrink-0">
+                                    <button
+                                        @click="openInquiryFromNotification(inq)"
+                                        class="px-2.5 py-1 rounded-lg bg-[#673DE6] text-white text-[10px] font-extrabold hover:bg-[#5832D0] transition shadow-xs flex items-center gap-1 cursor-pointer"
+                                    >
+                                        <span>⚡ Cost Step 2</span>
+                                    </button>
+                                    <button
+                                        v-if="!readNotificationVouchers.includes(String(inq.voucherNo))"
+                                        @click="markNotificationAsRead(inq.voucherNo)"
+                                        class="text-[9px] text-slate-400 hover:text-slate-600 transition cursor-pointer"
+                                    >
+                                        Dismiss
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Empty State -->
+                            <div v-if="pendingManagerInquiries.length === 0" class="p-6 text-center">
+                                <div class="h-10 w-10 mx-auto rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2">
+                                    <CheckCircle2 class="h-5 w-5" />
+                                </div>
+                                <p class="text-xs font-bold text-slate-800">All Handovers Handled!</p>
+                                <p class="text-[11px] text-slate-400 mt-0.5">
+                                    No inquiries from Reception are waiting for manager costing.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="p-2.5 bg-slate-50/60 text-center border-t border-slate-100">
+                            <button
+                                @click="currentTab = 'banquet'; showNotificationDropdown = false"
+                                class="text-[11px] font-bold text-[#673DE6] hover:underline cursor-pointer"
+                            >
+                                Open Banquet 3-Stage Pipeline →
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Sign Out -->
                 <button
@@ -1034,6 +1383,44 @@ const submitCheckIn = () => {
                                 <Activity class="h-3 w-3 text-emerald-500 animate-pulse" />
                                 <span>Realtime</span>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Manager Reception Handover Alert (Overview Banner) -->
+                    <div
+                        v-if="(activeRole === 'manager' || activeRole === 'superadmin') && pendingManagerInquiries.length > 0"
+                        class="rounded-2xl border-2 border-amber-300/80 bg-gradient-to-r from-amber-500/10 via-purple-500/5 to-white p-3.5 sm:p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200"
+                    >
+                        <div class="flex items-start sm:items-center gap-3">
+                            <div class="h-9 w-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-amber-200">
+                                <Bell class="h-4.5 w-4.5 animate-pulse" />
+                            </div>
+                            <div>
+                                <div class="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-2 flex-wrap">
+                                    <span>{{ pendingManagerInquiries.length }} Reception Intake{{ pendingManagerInquiries.length > 1 ? 's' : '' }} Waiting for Costing</span>
+                                    <span class="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-full">
+                                        Action Required (Step 2)
+                                    </span>
+                                </div>
+                                <p class="text-[11px] sm:text-xs text-slate-600 mt-0.5">
+                                    Reception has completed guest intake and forwarded lead(s). Configure hall setup, menu tier & pricing.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                            <button
+                                @click="openInquiryFromNotification(pendingManagerInquiries[0])"
+                                class="px-3 py-1.5 rounded-xl bg-[#673DE6] hover:bg-[#5832D0] text-white text-xs font-extrabold transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                            >
+                                <span>Cost Voucher #{{ pendingManagerInquiries[0].voucherNo }}</span>
+                                <ChevronRight class="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                                @click="currentTab = 'banquet'"
+                                class="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
+                            >
+                                View Pipeline
+                            </button>
                         </div>
                     </div>
 
@@ -1605,6 +1992,61 @@ const submitCheckIn = () => {
                             <span v-else-if="activeRole === 'manager'">+ New Banquet Costing (Step 1 & 2)</span>
                             <span v-else>+ New Banquet Voucher (Full Access)</span>
                         </button>
+                    </div>
+
+                    <!-- Banquet Manager: Reception Handover Alert Banner with Quick Slips -->
+                    <div
+                        v-if="(activeRole === 'manager' || activeRole === 'superadmin') && pendingManagerInquiries.length > 0"
+                        class="rounded-2xl border-2 border-amber-300/90 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-indigo-500/5 p-4 sm:p-5 shadow-sm space-y-3 animate-in fade-in duration-300"
+                    >
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div class="flex items-start sm:items-center gap-3">
+                                <div class="relative h-10 w-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-200 shrink-0">
+                                    <Bell class="h-5 w-5 animate-pulse" />
+                                    <span class="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-600 text-[9px] font-black text-white">
+                                        {{ pendingManagerInquiries.length }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <h3 class="text-sm sm:text-base font-black text-slate-900">
+                                            Attention Banquet Manager: {{ pendingManagerInquiries.length }} Reception Intake{{ pendingManagerInquiries.length > 1 ? 's' : '' }} Waiting for Costing
+                                        </h3>
+                                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                                            Action Required (Step 2)
+                                        </span>
+                                    </div>
+                                    <p class="text-xs text-slate-600 mt-0.5">
+                                        Reception desk has captured new event inquiries. Click any slip below to configure hall allocation, menu packages, and client quotation.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2 self-end sm:self-center shrink-0">
+                                <button
+                                    @click="openInquiryFromNotification(pendingManagerInquiries[0])"
+                                    class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#673DE6] text-white text-xs font-bold hover:bg-[#5832D0] transition shadow-xs cursor-pointer"
+                                >
+                                    <span>⚡ Cost Next Pending (#{{ pendingManagerInquiries[0].voucherNo }})</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Quick Voucher Chips List -->
+                        <div class="flex items-center gap-2 overflow-x-auto pt-1 pb-0.5">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">Pending Slips:</span>
+                            <button
+                                v-for="pInq in pendingManagerInquiries"
+                                :key="pInq.voucherNo"
+                                @click="openInquiryFromNotification(pInq)"
+                                class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-purple-200 bg-white hover:bg-purple-50 text-xs font-medium text-slate-700 hover:text-[#673DE6] transition shadow-2xs shrink-0 cursor-pointer"
+                            >
+                                <span class="font-mono font-bold text-[#673DE6]">#{{ pInq.voucherNo }}</span>
+                                <span class="font-semibold text-slate-900">{{ pInq.guestName || 'Guest' }}</span>
+                                <span class="text-slate-400 text-[10px]">({{ pInq.paxGuaranteed || pInq.paxExpected || 0 }} Pax)</span>
+                                <span class="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">Cost Step 2 →</span>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- 3-Stage Event Inquiry & Physical Voucher Pipeline -->
@@ -2589,6 +3031,55 @@ const submitCheckIn = () => {
                         <span>Confirm & Delete</span>
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Real-Time Floating Notification Toasts -->
+        <div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-3 sm:px-0">
+            <div
+                v-for="toast in activeToasts"
+                :key="toast.id"
+                class="pointer-events-auto rounded-2xl bg-white/95 backdrop-blur-md p-3.5 shadow-2xl border flex items-start gap-3 transition-all duration-300 transform translate-y-0 animate-in slide-in-from-bottom-5"
+                :class="[
+                    toast.type === 'success'
+                        ? 'border-emerald-300 bg-emerald-50/40 text-emerald-950'
+                        : (toast.type === 'warning'
+                            ? 'border-amber-400 bg-amber-50/60 text-amber-950'
+                            : 'border-purple-300 bg-purple-50/40 text-slate-900')
+                ]"
+            >
+                <div
+                    class="h-8 w-8 rounded-xl flex items-center justify-center shrink-0 shadow-xs"
+                    :class="[
+                        toast.type === 'success'
+                            ? 'bg-emerald-500 text-white'
+                            : (toast.type === 'warning'
+                                ? 'bg-amber-500 text-white'
+                                : 'bg-[#673DE6] text-white')
+                    ]"
+                >
+                    <Bell class="h-4 w-4" />
+                </div>
+                <div class="flex-1 min-w-0">
+                    <h4 class="text-xs font-black leading-tight">{{ toast.title }}</h4>
+                    <p class="text-[11px] mt-0.5 leading-snug opacity-90">{{ toast.message }}</p>
+                    <div v-if="toast.voucherNo && (activeRole === 'manager' || activeRole === 'superadmin')" class="mt-2">
+                        <button
+                            type="button"
+                            @click="openVoucherByNumber(toast.voucherNo)"
+                            class="px-2.5 py-1 rounded-lg bg-[#673DE6] text-white text-[10px] font-extrabold hover:bg-[#5832D0] transition shadow-xs flex items-center gap-1 cursor-pointer"
+                        >
+                            <span>⚡ Cost Step 2 Now</span>
+                        </button>
+                    </div>
+                </div>
+                <button
+                    type="button"
+                    @click="activeToasts = activeToasts.filter(t => t.id !== toast.id)"
+                    class="text-slate-400 hover:text-slate-600 shrink-0 p-1 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+                >
+                    <X class="h-3.5 w-3.5" />
+                </button>
             </div>
         </div>
 
