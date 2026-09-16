@@ -46,7 +46,8 @@ import {
     History,
     Trash2,
     ShieldAlert,
-    Users
+    Users,
+    MessageCircle
 } from '@lucide/vue';
 import {
     renderSlimBarcode,
@@ -475,40 +476,47 @@ const totalGrossAmount = computed(() => {
 // -------------------------------------------------------------
 // Discount Authorization Matrix:
 // "ALWAYS TELL AMOUNT IN NUMBERS NOT IN %"
-// - Manager: Max 5% (tell amount in numbers)
-// - General Manager: Max 7% (tell amount in numbers)
-// - Above 7% up to 10%: Harshit's call compulsory (max 10% by Harshit, tell amount in numbers)
-// - Above 10%: MD Sir approval required
+// - Manager: Max up to 7% (tell amount in numbers)
+// - Managing Director (MD): Up to 12% (Fixed Max Cap: 12%)
 // -------------------------------------------------------------
-const discountLimitManager = computed(() => Math.round((totalGrossAmount.value * 5) / 100));
-const discountLimitGM = computed(() => Math.round((totalGrossAmount.value * 7) / 100));
-const discountLimitHarshit = computed(() => Math.round((totalGrossAmount.value * 10) / 100));
+const discountLimitManager = computed(() => Math.round((totalGrossAmount.value * 7) / 100));
+const discountLimitMD = computed(() => Math.round((totalGrossAmount.value * 12) / 100));
+
+const maxDiscountPercentAllowed = computed(() => {
+    if (props.userRole === 'manager') return 7;
+    return 12; // MD & Superadmin fixed at max 12%
+});
 
 // Live Discount Calculation: Currency First!
 const calculatedDiscountAmount = computed(() => {
+    const maxAllowedAmt = Math.round((totalGrossAmount.value * 12) / 100); // System cap 12%
     if (form.value.discountInputMode === 'amount') {
-        return Math.min(totalGrossAmount.value, Math.max(0, Number(form.value.discountRupees) || 0));
+        return Math.min(maxAllowedAmt, Math.max(0, Number(form.value.discountRupees) || 0));
     }
     // percent mode
-    return Math.round((totalGrossAmount.value * (Number(form.value.discountPercent) || 0)) / 100);
+    const pct = Math.min(12, Math.max(0, Number(form.value.discountPercent) || 0));
+    return Math.round((totalGrossAmount.value * pct) / 100);
 });
 
 // Computed percentage from amount
 const calculatedDiscountPercent = computed(() => {
     if (totalGrossAmount.value === 0) return 0;
-    return Math.round((calculatedDiscountAmount.value / totalGrossAmount.value) * 1000) / 10;
+    return Math.min(12, Math.round((calculatedDiscountAmount.value / totalGrossAmount.value) * 1000) / 10);
 });
 
 // Sync both modes
 const setDiscountFromPercent = (pct: number) => {
-    const clampedPct = Math.max(0, Math.min(Number(pct) || 0, 100));
+    const maxPct = maxDiscountPercentAllowed.value;
+    const clampedPct = Math.max(0, Math.min(Number(pct) || 0, maxPct));
     form.value.discountPercent = clampedPct;
     form.value.discountRupees = Math.round((totalGrossAmount.value * clampedPct) / 100);
     form.value.discountInputMode = 'percent';
 };
 
 const setDiscountFromAmount = (amt: number) => {
-    const clampedAmt = Math.max(0, Math.min(Number(amt) || 0, totalGrossAmount.value));
+    const maxPct = maxDiscountPercentAllowed.value;
+    const maxAmt = Math.round((totalGrossAmount.value * maxPct) / 100);
+    const clampedAmt = Math.max(0, Math.min(Number(amt) || 0, maxAmt));
     form.value.discountRupees = clampedAmt;
     form.value.discountPercent = totalGrossAmount.value > 0 ? Math.round((clampedAmt / totalGrossAmount.value) * 1000) / 10 : 0;
     form.value.discountInputMode = 'amount';
@@ -519,43 +527,23 @@ const authorityLevel = computed(() => {
     const pct = calculatedDiscountPercent.value;
     const amt = calculatedDiscountAmount.value;
 
-    if (pct <= 5.0) {
+    if (pct <= 7.0) {
         return {
             tier: 'manager' as const,
             title: 'Authorized by Banquet Manager',
             signatureLabel: 'Authorized Signatory - Banquet Manager',
             badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-            maxAllowedText: `Within 5% Limit (Max ₹${discountLimitManager.value.toLocaleString('en-IN')})`,
+            maxAllowedText: `Within 7% Manager Limit (Max ₹${discountLimitManager.value.toLocaleString('en-IN')})`,
             isWarning: false,
-        };
-    }
-    if (pct <= 7.0) {
-        return {
-            tier: 'gm' as const,
-            title: 'Authorized by General Manager (GM)',
-            signatureLabel: 'Authorized Signatory - General Manager (GM)',
-            badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
-            maxAllowedText: `Within 7% GM Limit (Max ₹${discountLimitGM.value.toLocaleString('en-IN')})`,
-            isWarning: false,
-        };
-    }
-    if (pct <= 10.0) {
-        return {
-            tier: 'harshit' as const,
-            title: "Harshit's Approval Compulsory",
-            signatureLabel: "Authorized Signatory - Harshit's Approval",
-            badgeClass: 'bg-amber-50 text-amber-800 border-amber-300',
-            maxAllowedText: `Harshit Call Compulsory (Max 10%: ₹${discountLimitHarshit.value.toLocaleString('en-IN')})`,
-            isWarning: true,
         };
     }
     return {
         tier: 'md' as const,
-        title: 'Managing Director (MD Sir) Special Discretion',
+        title: 'Managing Director (MD Sir) Approval',
         signatureLabel: 'Authorized Signatory - Managing Director (MD Sir)',
         badgeClass: 'bg-purple-50 text-purple-700 border-purple-300',
-        maxAllowedText: `Exceeds 10% (Discount: ₹${amt.toLocaleString('en-IN')}) - Requires MD Signature`,
-        isWarning: true,
+        maxAllowedText: `Special MD Approval (Max 12% Fixed: ₹${discountLimitMD.value.toLocaleString('en-IN')})`,
+        isWarning: false,
     };
 });
 
@@ -1627,12 +1615,21 @@ const shareOnWhatsApp = () => {
                             </template>
                             <button
                                 type="button"
+                                @click="shareOnWhatsApp"
+                                class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-xs cursor-pointer"
+                                :title="'Send direct WhatsApp link to customer ' + (form.phonePrimary ? '(' + form.phonePrimary + ')' : '')"
+                            >
+                                <MessageCircle class="h-3.5 w-3.5" />
+                                <span>WhatsApp to Customer</span>
+                            </button>
+                            <button
+                                type="button"
                                 @click="showShareModal = true"
-                                class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#673DE6] hover:bg-[#5832D0] text-white font-bold transition shadow-xs cursor-pointer"
+                                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#673DE6] hover:bg-[#5832D0] text-white font-bold text-xs transition shadow-xs cursor-pointer"
                                 title="Share guest portal link with client to choose dishes"
                             >
                                 <Share2 class="h-3.5 w-3.5" />
-                                <span>Share Link to Guest</span>
+                                <span>Share Options</span>
                             </button>
                         </div>
                     </div>
@@ -2144,10 +2141,15 @@ const shareOnWhatsApp = () => {
                                 </div>
                             </div>
 
-                            <!-- Live Baseline Costing Summary Card -->
-                            <div class="bg-slate-900 text-white p-4 rounded-xl shadow-md space-y-2 font-sans">
-                                <div class="text-[10px] font-bold tracking-wider uppercase text-slate-400">
-                                    Live Cost Formulation
+                            <!-- Live Baseline Costing & Manager Discount Formulation Card -->
+                            <div class="bg-slate-900 text-white p-4 rounded-xl shadow-md space-y-3 font-sans">
+                                <div class="flex items-center justify-between">
+                                    <div class="text-[10px] font-bold tracking-wider uppercase text-slate-400">
+                                        Live Cost Formulation
+                                    </div>
+                                    <span class="text-[10px] font-mono text-purple-300 bg-purple-950/80 px-2 py-0.5 rounded border border-purple-800 font-bold">
+                                        Manager Costing Engine
+                                    </span>
                                 </div>
                                 <div class="space-y-1 text-xs border-b border-slate-800 pb-2 font-mono">
                                     <div class="flex justify-between"><span>Fooding:</span> <span>₹{{ foodTotal.toLocaleString('en-IN') }}</span></div>
@@ -2157,10 +2159,60 @@ const shareOnWhatsApp = () => {
                                     <div v-if="extraFoodingTotal > 0" class="flex justify-between"><span>Extra Servings:</span> <span>₹{{ extraFoodingTotal.toLocaleString('en-IN') }}</span></div>
                                     <div v-if="paxRules.meetingSurcharge > 0" class="flex justify-between text-amber-300"><span>Meeting Surcharge:</span> <span>₹{{ paxRules.meetingSurcharge.toLocaleString('en-IN') }}</span></div>
                                 </div>
-                                <div class="flex items-baseline justify-between pt-1">
+                                <div class="flex items-baseline justify-between">
                                     <span class="text-xs font-bold text-slate-300">Gross Baseline:</span>
-                                    <span class="text-xl font-black font-mono text-emerald-400">
+                                    <span class="text-base font-black font-mono text-slate-100">
                                         ₹{{ totalGrossAmount.toLocaleString('en-IN') }}
+                                    </span>
+                                </div>
+
+                                <!-- Manager Discount Slider (Max 7%) -->
+                                <div class="p-2.5 rounded-lg bg-slate-800/90 border border-slate-700 space-y-2">
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-amber-400 font-bold flex items-center gap-1">
+                                            <Sliders class="h-3 w-3" />
+                                            <span>Manager Discount (Max 7%):</span>
+                                        </span>
+                                        <span class="font-mono font-bold text-amber-300">
+                                            -₹{{ calculatedDiscountAmount.toLocaleString('en-IN') }} ({{ calculatedDiscountPercent }}%)
+                                        </span>
+                                    </div>
+
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        :max="maxDiscountPercentAllowed"
+                                        step="0.5"
+                                        :value="calculatedDiscountPercent"
+                                        @input="setDiscountFromPercent(Number(($event.target as HTMLInputElement).value))"
+                                        class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#673DE6]"
+                                    />
+
+                                    <div class="flex items-center justify-between text-[10px] font-mono text-slate-400">
+                                        <span>0%</span>
+                                        <div class="flex items-center gap-1">
+                                            <button
+                                                v-for="p in [0, 3, 5, 7]"
+                                                :key="p"
+                                                type="button"
+                                                @click="setDiscountFromPercent(p)"
+                                                :class="[
+                                                    'px-1.5 py-0.5 rounded text-[9.5px] font-bold transition cursor-pointer',
+                                                    calculatedDiscountPercent === p ? 'bg-[#673DE6] text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                                ]"
+                                            >
+                                                {{ p }}%
+                                            </button>
+                                        </div>
+                                        <span>Max 7% (₹{{ discountLimitManager.toLocaleString('en-IN') }})</span>
+                                    </div>
+                                </div>
+
+                                <!-- Net Final Amount -->
+                                <div class="pt-2 border-t border-slate-800 flex items-baseline justify-between">
+                                    <span class="text-xs font-black text-emerald-400 uppercase tracking-wide">Net Final Amount:</span>
+                                    <span class="text-xl font-black font-mono text-emerald-400">
+                                        ₹{{ netPayableAmount.toLocaleString('en-IN') }}
                                     </span>
                                 </div>
                             </div>
@@ -2240,7 +2292,7 @@ const shareOnWhatsApp = () => {
                                         Tiered Discount Controller (Always in ₹ Numbers)
                                     </h4>
                                     <p class="text-[11px] text-slate-500">
-                                        Manager: up to 5% | GM: up to 7% | Harshit Call: up to 10% | MD: >10%
+                                        Manager: up to 7% | MD Special Sign-off: up to 12% (Fixed Max Limit)
                                     </p>
                                 </div>
                             </div>
@@ -2261,12 +2313,12 @@ const shareOnWhatsApp = () => {
                                 <!-- Quick Percent Buttons -->
                                 <div class="flex items-center gap-1">
                                     <button
-                                        v-for="pct in [0, 5, 7, 10]"
+                                        v-for="pct in [0, 5, 7, 10, 12]"
                                         :key="pct"
                                         type="button"
                                         @click="setDiscountFromPercent(pct)"
                                         :class="[
-                                            'h-7 px-2.5 rounded-lg text-xs font-bold transition font-mono',
+                                            'h-7 px-2 rounded-lg text-xs font-bold transition font-mono cursor-pointer',
                                             calculatedDiscountPercent === pct
                                                 ? 'bg-[#673DE6] text-white'
                                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -2296,7 +2348,7 @@ const shareOnWhatsApp = () => {
                             <input
                                 type="range"
                                 min="0"
-                                max="20"
+                                max="12"
                                 step="0.5"
                                 :value="calculatedDiscountPercent"
                                 @input="setDiscountFromPercent(Number(($event.target as HTMLInputElement).value))"
@@ -2306,9 +2358,9 @@ const shareOnWhatsApp = () => {
                             <!-- Tier Range Indicators -->
                             <div class="grid grid-cols-4 text-[10px] text-slate-500 pt-2 font-mono">
                                 <div>0% (Standard)</div>
-                                <div class="text-center text-emerald-700 font-bold">5% (Manager: ₹{{ discountLimitManager.toLocaleString('en-IN') }})</div>
-                                <div class="text-center text-blue-700 font-bold">7% (GM: ₹{{ discountLimitGM.toLocaleString('en-IN') }})</div>
-                                <div class="text-right text-amber-700 font-bold">10% (Harshit: ₹{{ discountLimitHarshit.toLocaleString('en-IN') }})</div>
+                                <div class="text-center text-emerald-700 font-bold">5% (Manager Tier)</div>
+                                <div class="text-center text-blue-700 font-bold">7% (Manager Limit: ₹{{ discountLimitManager.toLocaleString('en-IN') }})</div>
+                                <div class="text-right text-purple-700 font-bold">12% (MD Max: ₹{{ discountLimitMD.toLocaleString('en-IN') }})</div>
                             </div>
                         </div>
 
