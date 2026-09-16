@@ -62,8 +62,8 @@ interface HotelSlide {
 
 const slides: HotelSlide[] = [
     {
-        title: 'Grand Facade & Porte-Cochère',
-        subtitle: 'Prime Civil Lines address located 200m from Gol Chauraha with 24/7 valet concierge.',
+        title: 'Grand Facade & Main Entrance',
+        subtitle: 'Prime Civil Lines address located 200m from Gol Chauraha with 24/7 valet parking.',
         tag: 'Prime Location',
         image: '/images/hotel/gmb_assets/mmt_hotel_facade.jpg',
         category: 'Hotel Exterior',

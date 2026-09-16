@@ -101,8 +101,8 @@ const heroSlides: HeroSlide[] = [
     },
     {
         id: 5,
-        title: 'Regal Porte-Cochère & Reception',
-        highlight: '24/7 Valet Concierge',
+        title: 'Grand Main Entrance & Reception',
+        highlight: '24/7 Valet Parking & Concierge',
         subtitle: 'Conveniently located 200m from Gol Chauraha on Manika Cinema Road with warm grand reception lobby and ample valet parking.',
         image: '/images/hotel/gmb_assets/gmb_hotel_reception_hd.jpg',
         badge: '200m from Gol Chauraha'
@@ -459,7 +459,7 @@ interface GalleryItem {
 const galleryItems: GalleryItem[] = [
     {
         id: 1,
-        title: 'Grand Hotel Facade & Porte-Cochère',
+        title: 'Grand Hotel Facade & Main Entrance',
         category: 'property',
         categoryLabel: 'Property & Facade',
         image: '/images/hotel/gmb_assets/mmt_hotel_facade.jpg',
@@ -477,7 +477,7 @@ const galleryItems: GalleryItem[] = [
     },
     {
         id: 3,
-        title: 'Porte-Cochère & Valet Parking Area',
+        title: 'Driveway & Valet Parking Area',
         category: 'property',
         categoryLabel: 'Property & Facade',
         image: '/images/hotel/gmb_assets/gmb_valet_parking_area.jpg',
@@ -603,7 +603,7 @@ const galleryItems: GalleryItem[] = [
     },
     {
         id: 17,
-        title: 'Hotel Entrance & Porte-Cochère - Trip.com Verified',
+        title: 'Hotel Entrance & Driveway - Trip.com Verified',
         category: 'google_media',
         categoryLabel: 'Google & Portal Verified',
         image: '/images/hotel/gmb_assets/gmb_hotel_reception_hd.jpg',
@@ -1164,8 +1164,8 @@ const hotelContacts = [
                                             class="w-full h-56 object-cover group-hover:scale-103 transition-transform duration-500"
                                         />
                                         <div class="p-3 bg-[#FFFFFF] text-left border-t border-[#EAE4DA]">
-                                            <span class="text-[10px] font-medium text-[#8E744B] uppercase tracking-wider block">Porte-Cochère</span>
-                                            <div class="text-xs font-medium text-[#1A1816]">Main Entrance Portico</div>
+                                            <span class="text-[10px] font-medium text-[#8E744B] uppercase tracking-wider block">Main Entrance</span>
+                                            <div class="text-xs font-medium text-[#1A1816]">Car Drop-Off Porch & Lobby</div>
                                         </div>
                                     </div>
 
