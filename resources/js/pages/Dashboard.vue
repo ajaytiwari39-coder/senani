@@ -88,9 +88,7 @@ const sanitizeRole = (roleCandidate?: string | null): UserRole => {
     return 'superadmin';
 };
 
-const activeRole = ref<UserRole>(
-    sanitizeRole(typeof window !== 'undefined' ? localStorage.getItem('senani_active_role') : null)
-);
+const activeRole = ref<UserRole>(authenticatedRole.value);
 
 const setRole = (r: UserRole) => {
     const valid = sanitizeRole(r);
@@ -332,10 +330,7 @@ const showNotificationDropdown = ref(false);
 const readNotificationVouchers = ref<string[]>([]);
 
 const visibleBanquetInquiries = computed(() => {
-    if (activeRole.value === 'reception') {
-        // Receptionist only sees their intake drafts that have not been pushed to manager yet
-        return banquetInquiries.value.filter(i => i.status === 'draft_reception');
-    }
+    // All roles across front desk reception, manager, MD & admin see full inquiries pipeline
     return banquetInquiries.value;
 });
 
@@ -445,26 +440,10 @@ const checkManagerPendingAlerts = () => {
 let pollTimer: any = null;
 const isSyncingServer = ref(false);
 
-const getDeletedVouchers = (): Set<string> => {
-    if (typeof window === 'undefined') return new Set();
-    try {
-        const stored = localStorage.getItem('senani_deleted_vouchers');
-        if (stored) {
-            const arr = JSON.parse(stored);
-            if (Array.isArray(arr)) {
-                return new Set(arr.map(String));
-            }
-        }
-    } catch (e) {}
-    return new Set();
-};
-
-const recordDeletedVoucher = (voucherNo: string) => {
+const clearLocalDeletedBlacklist = () => {
     if (typeof window === 'undefined') return;
     try {
-        const set = getDeletedVouchers();
-        set.add(String(voucherNo));
-        localStorage.setItem('senani_deleted_vouchers', JSON.stringify(Array.from(set)));
+        localStorage.removeItem('senani_deleted_vouchers');
     } catch (e) {}
 };
 
@@ -479,10 +458,9 @@ const fetchInquiriesFromServer = async () => {
         if (!res.ok) return;
         const result = await res.json();
         if (result && result.success && Array.isArray(result.data)) {
-            const deletedSet = getDeletedVouchers();
-            // Filter out permanently deleted inquiries and legacy test data
+            // Filter out legacy dummy test data
             const serverList: BanquetInquiry[] = result.data.filter(
-                (i: BanquetInquiry) => !deletedSet.has(String(i.voucherNo)) && !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
+                (i: BanquetInquiry) => !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
             );
             
             // Detect newly arrived manager handovers from other users/devices
@@ -513,9 +491,8 @@ const fetchInquiriesFromServer = async () => {
 };
 
 const batchSyncInquiriesToServer = async (inquiriesToSync: BanquetInquiry[]) => {
-    const deletedSet = getDeletedVouchers();
     const validToSync = inquiriesToSync.filter(
-        i => !deletedSet.has(String(i.voucherNo)) && !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
+        i => !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
     );
     if (validToSync.length === 0) return;
     try {
@@ -531,7 +508,7 @@ const batchSyncInquiriesToServer = async (inquiriesToSync: BanquetInquiry[]) => 
             const result = await res.json();
             if (result && result.data && Array.isArray(result.data)) {
                 const filteredServer = result.data.filter(
-                    (i: BanquetInquiry) => !deletedSet.has(String(i.voucherNo)) && !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
+                    (i: BanquetInquiry) => !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
                 );
                 banquetInquiries.value = filteredServer;
                 try {
@@ -636,7 +613,6 @@ const requestDeleteInquiry = (inq: BanquetInquiry) => {
 const confirmDeleteInquiry = async () => {
     if (!inquiryToDelete.value) return;
     const vNo = String(inquiryToDelete.value.voucherNo);
-    recordDeletedVoucher(vNo);
     banquetInquiries.value = banquetInquiries.value.filter(i => String(i.voucherNo) !== vNo);
     if (typeof window !== 'undefined') {
         try {
@@ -659,9 +635,8 @@ const handleStorageEvent = (e: StorageEvent) => {
         try {
             const list = JSON.parse(e.newValue);
             if (Array.isArray(list)) {
-                const deletedSet = getDeletedVouchers();
                 banquetInquiries.value = list.filter(
-                    (i: BanquetInquiry) => !deletedSet.has(String(i.voucherNo)) && !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
+                    (i: BanquetInquiry) => !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
                 );
             }
         } catch (err) {
@@ -686,6 +661,9 @@ const handleDocumentClick = (e: MouseEvent) => {
 
 onMounted(() => {
     if (typeof window !== 'undefined') {
+        // Clean up legacy local blacklist if present
+        clearLocalDeletedBlacklist();
+
         // Load read vouchers history
         try {
             const rawRead = localStorage.getItem('senani_read_manager_vouchers');
@@ -710,10 +688,12 @@ onMounted(() => {
             if (raw) {
                 const list = JSON.parse(raw);
                 if (Array.isArray(list) && list.length > 0) {
-                    const deletedSet = getDeletedVouchers();
-                    banquetInquiries.value = list.filter(
-                        (i: BanquetInquiry) => !deletedSet.has(String(i.voucherNo)) && !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
+                    const validList = list.filter(
+                        (i: BanquetInquiry) => !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
                     );
+                    banquetInquiries.value = validList;
+                    // Batch sync local list with server so any locally-created entries are pushed to central database
+                    batchSyncInquiriesToServer(validList);
                 }
             }
         } catch (e) {
