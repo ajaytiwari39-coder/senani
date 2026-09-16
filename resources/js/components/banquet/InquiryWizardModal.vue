@@ -81,7 +81,7 @@ export interface BanquetInquiry {
     isEngagementPackage: boolean;
     engagementPackageType: 'none' | 'swarnim' | 'swarnmahal';
     isMeetingSetup: boolean;
-    menuRateTier: 499 | 799 | 999 | 1199;
+    menuRateTier: 0 | 499 | 799 | 999 | 1199;
     effectiveMenuRate: number;
     menuRate?: number;
     menuTitle: string;
@@ -247,17 +247,17 @@ const createBlankInquiry = (): BanquetInquiry => ({
     email: '',
     functionDateFrom: '',
     functionDateTo: '',
-    timeFrom: '19:00',
-    timeTo: '23:30',
-    eventType: 'Wedding Reception',
-    paxGuaranteed: 100,
-    selectedVenues: ['swarnim'],
+    timeFrom: '',
+    timeTo: '',
+    eventType: '',
+    paxGuaranteed: 0,
+    selectedVenues: [],
     isEngagementPackage: false,
     engagementPackageType: 'none',
     isMeetingSetup: false,
-    menuRateTier: 799,
-    effectiveMenuRate: 799,
-    menuTitle: 'Royal Deluxe Buffet',
+    menuRateTier: 0,
+    effectiveMenuRate: 0,
+    menuTitle: '',
     isQuotationMode: false,
     selectedMenuCatalogItems: [],
     engagementBreakfastPax: 0,
@@ -265,10 +265,10 @@ const createBlankInquiry = (): BanquetInquiry => ({
     bainaBoxes: 0,
     mandapServingsPax: 0,
     roomsNeeded: 0,
-    roomArrival: '16:00',
-    roomDeparture: '09:00',
+    roomArrival: '',
+    roomDeparture: '',
     roomRate: 2500,
-    decorPackageType: 'standard',
+    decorPackageType: 'none',
     soundMicSetup: false,
     projectorSetup: false,
     ledWallSetup: false,
@@ -341,7 +341,8 @@ watch(
 // 999 -> 1199
 // -------------------------------------------------------------
 const effectiveMenuRate = computed(() => {
-    let base = Number(form.value.menuRateTier) || 799;
+    let base = Number(form.value.menuRateTier) || 0;
+    if (!base) return 0;
     if (form.value.isMeetingSetup) {
         if (base === 499) return 799;
         if (base === 799) return 999;
@@ -365,14 +366,14 @@ watch(effectiveMenuRate, (rate) => {
 //   ₹20,000 for Banquet hall, ₹5,000 for Mandap hall (6 hr)
 // -------------------------------------------------------------
 const paxRules = computed(() => {
-    const venues = form.value.selectedVenues;
+    const venues = form.value.selectedVenues || [];
     const isMandapOnly = venues.length === 1 && venues.includes('mandap');
     const isDoubleHall = venues.filter(v => v !== 'mandap').length >= 2;
     const isSingleHall = venues.filter(v => v !== 'mandap').length === 1;
 
     let minPax = 80;
     let maxPax = 180;
-    let label = 'Single Hall';
+    let label = venues.length === 0 ? 'No Venue Selected' : 'Single Hall';
 
     if (isMandapOnly) {
         minPax = 15;
@@ -389,8 +390,8 @@ const paxRules = computed(() => {
     }
 
     const currentPax = Number(form.value.paxGuaranteed) || 0;
-    const isBelowMin = currentPax < minPax;
-    const isAboveMax = currentPax > maxPax;
+    const isBelowMin = venues.length > 0 && currentPax > 0 && currentPax < minPax;
+    const isAboveMax = venues.length > 0 && currentPax > maxPax;
 
     // Meeting Surcharge calculation
     let meetingSurcharge = 0;
@@ -2604,7 +2605,7 @@ const shareOnWhatsApp = () => {
                                     </div>
                                     <div>
                                         <span class="font-bold text-slate-600">Catering Tier:</span>
-                                        <span class="font-bold text-slate-900 ml-1.5">₹{{ effectiveMenuRate }}/plate ({{ currentMenuCatalog.title }})</span>
+                                        <span class="font-bold text-slate-900 ml-1.5">{{ effectiveMenuRate > 0 ? ('₹' + effectiveMenuRate + '/plate (' + currentMenuCatalog.title + ')') : 'Pending Manager Costing' }}</span>
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-x-4 gap-y-1">
@@ -2615,7 +2616,7 @@ const shareOnWhatsApp = () => {
                                     <div>
                                         <span class="font-bold text-slate-600">Allocated Area:</span>
                                         <span v-if="form.isEngagementPackage" class="font-bold text-amber-900 ml-1.5">Engagement Package ({{ form.engagementPackageType.toUpperCase() }})</span>
-                                        <span v-else class="font-bold text-slate-900 ml-1.5">{{ form.selectedVenues.map(v => v.toUpperCase()).join(', ') }}</span>
+                                        <span v-else class="font-bold text-slate-900 ml-1.5">{{ form.selectedVenues && form.selectedVenues.length > 0 ? form.selectedVenues.map(v => v.toUpperCase()).join(', ') : 'Pending Allocation' }}</span>
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-x-4 gap-y-1">
@@ -2626,7 +2627,7 @@ const shareOnWhatsApp = () => {
                                     </div>
                                     <div>
                                         <span class="font-bold text-slate-600">Room Stay:</span>
-                                        <span class="text-slate-800 ml-1.5">{{ form.roomArrival }} to {{ form.roomDeparture }}</span>
+                                        <span class="text-slate-800 ml-1.5">{{ form.roomArrival && form.roomDeparture ? (form.roomArrival + ' to ' + form.roomDeparture) : 'N/A' }}</span>
                                     </div>
                                 </div>
                             </div>
