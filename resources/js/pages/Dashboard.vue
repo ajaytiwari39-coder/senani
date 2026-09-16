@@ -259,6 +259,17 @@ const inquiryDefaultStep = ref(queryStep);
 
 const banquetInquiries = ref<BanquetInquiry[]>([]);
 
+// Dynamic sequential voucher number calculated from existing inquiries (e.g. 101, 102, ...)
+const nextVoucherNo = computed(() => {
+    const nums = banquetInquiries.value
+        .map(i => parseInt(String(i.voucherNo), 10))
+        .filter(n => !isNaN(n) && n > 0 && n < 100000);
+    if (nums.length > 0) {
+        return String(Math.max(...nums) + 1);
+    }
+    return '101';
+});
+
 const inquiryOpenPrintPreview = ref(queryPrint);
 
 const openNewInquiry = (step: number = 1) => {
@@ -437,36 +448,31 @@ const fetchInquiriesFromServer = async () => {
         if (!res.ok) return;
         const result = await res.json();
         if (result && result.success && Array.isArray(result.data)) {
-            const serverList: BanquetInquiry[] = result.data;
+            // Filter out any legacy test data from earlier verification
+            const serverList: BanquetInquiry[] = result.data.filter(
+                (i: BanquetInquiry) => !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
+            );
             
-            // Check if there are locally stored inquiries not yet uploaded to the server
-            const serverVouchers = new Set(serverList.map(i => String(i.voucherNo)));
-            const localUnsynced = banquetInquiries.value.filter(i => i.voucherNo && !serverVouchers.has(String(i.voucherNo)));
-            
-            if (localUnsynced.length > 0) {
-                await batchSyncInquiriesToServer(localUnsynced);
-            } else {
-                // Detect newly arrived manager handovers from other users/devices
-                const oldVouchers = new Set(banquetInquiries.value.map(i => String(i.voucherNo)));
-                const newHandovers = serverList.filter(i => i.status === 'pending_manager' && !oldVouchers.has(String(i.voucherNo)));
+            // Detect newly arrived manager handovers from other users/devices
+            const oldVouchers = new Set(banquetInquiries.value.map(i => String(i.voucherNo)));
+            const newHandovers = serverList.filter(i => i.status === 'pending_manager' && !oldVouchers.has(String(i.voucherNo)));
 
-                banquetInquiries.value = serverList;
-                try {
-                    localStorage.setItem('senani_banquet_inquiries', JSON.stringify(serverList));
-                } catch (e) {
-                    console.warn('LocalStorage quota exceeded or unavailable', e);
-                }
+            banquetInquiries.value = serverList;
+            try {
+                localStorage.setItem('senani_banquet_inquiries', JSON.stringify(serverList));
+            } catch (e) {
+                console.warn('LocalStorage quota exceeded or unavailable', e);
+            }
 
-                if (newHandovers.length > 0 && (activeRole.value === 'manager' || activeRole.value === 'superadmin')) {
-                    const latest = newHandovers[0];
-                    showToast(
-                        '🔔 New Reception Handover!',
-                        `Slip #${latest.voucherNo} for ${latest.guestName || 'Guest'} (${latest.paxGuaranteed || latest.paxExpected || 0} Pax) was forwarded by Reception.`,
-                        'warning',
-                        String(latest.voucherNo)
-                    );
-                    playNotificationChime();
-                }
+            if (newHandovers.length > 0 && (activeRole.value === 'manager' || activeRole.value === 'superadmin')) {
+                const latest = newHandovers[0];
+                showToast(
+                    '🔔 New Reception Handover!',
+                    `Slip #${latest.voucherNo} for ${latest.guestName || 'Guest'} (${latest.paxGuaranteed || latest.paxExpected || 0} Pax) was forwarded by Reception.`,
+                    'warning',
+                    String(latest.voucherNo)
+                );
+                playNotificationChime();
             }
         }
     } catch (err) {
@@ -660,7 +666,9 @@ onMounted(() => {
             if (raw) {
                 const list = JSON.parse(raw);
                 if (Array.isArray(list) && list.length > 0) {
-                    banquetInquiries.value = list;
+                    banquetInquiries.value = list.filter(
+                        (i: BanquetInquiry) => !(String(i.voucherNo) === '250' && (i.guestName || '').toLowerCase().includes('rajesh'))
+                    );
                 }
             }
         } catch (e) {
@@ -726,20 +734,114 @@ const recentInvoices = ref<GstInvoice[]>([]);
 // Dynamic Financial & Operational Metrics
 const totalSalesToday = computed(() => recentInvoices.value.reduce((sum, inv) => sum + (Number(inv.totalAmount) || 0), 0));
 const totalGstToday = computed(() => recentInvoices.value.reduce((sum, inv) => sum + (Number(inv.gstAmount) || 0), 0));
-const todayFunctionsCount = computed(() => banquetBookings.value.filter(b => (b.date || '').toLowerCase().includes('today')).length);
-const todayFunctionsPax = computed(() => banquetBookings.value.filter(b => (b.date || '').toLowerCase().includes('today')).reduce((sum, b) => sum + (Number(b.paxCount) || 0), 0));
-const pendingFolioDues = computed(() => banquetBookings.value.reduce((sum, b) => sum + (Number(b.balanceDue) || 0), 0));
-const pendingFolioCount = computed(() => banquetBookings.value.filter(b => (Number(b.balanceDue) || 0) > 0).length);
+const confirmedInquiries = computed(() => banquetInquiries.value.filter(i => i.status === 'approved_md' || i.status === 'pending_md'));
+const todayFunctionsCount = computed(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const fromBookings = banquetBookings.value.filter(b => (b.date || '').toLowerCase().includes('today')).length;
+    const fromInquiries = confirmedInquiries.value.filter(i => i.functionDateFrom === today || (i.functionDateFrom || '').includes(today)).length;
+    return fromBookings + fromInquiries;
+});
+const todayFunctionsPax = computed(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const fromBookings = banquetBookings.value.filter(b => (b.date || '').toLowerCase().includes('today')).reduce((sum, b) => sum + (Number(b.paxCount) || 0), 0);
+    const fromInquiries = confirmedInquiries.value.filter(i => i.functionDateFrom === today || (i.functionDateFrom || '').includes(today)).reduce((sum, i) => sum + (Number(i.paxGuaranteed) || 0), 0);
+    return fromBookings + fromInquiries;
+});
+const pendingFolioDues = computed(() => {
+    const fromBookings = banquetBookings.value.reduce((sum, b) => sum + (Number(b.balanceDue) || 0), 0);
+    const fromInquiries = confirmedInquiries.value.reduce((sum, i) => sum + Math.max(0, (Number(i.totalAmount) || 0) - (Number(i.amountPaid || i.advancePaid) || 0)), 0);
+    return fromBookings + fromInquiries;
+});
+const pendingFolioCount = computed(() => {
+    const fromBookings = banquetBookings.value.filter(b => (Number(b.balanceDue) || 0) > 0).length;
+    const fromInquiries = confirmedInquiries.value.filter(i => Math.max(0, (Number(i.totalAmount) || 0) - (Number(i.amountPaid || i.advancePaid) || 0)) > 0).length;
+    return fromBookings + fromInquiries;
+});
+
+// Senani Official Banquet Venues List
+const banquetHalls = [
+    {
+        name: 'Swarnim (Ground Floor)',
+        code: 'swarnim',
+        capacity: 450,
+        floor: 'Ground Floor (G)',
+        badgeClass: 'bg-purple-50 text-[#673DE6] border-purple-200',
+        btnClass: 'bg-purple-50 hover:bg-purple-100 text-[#673DE6]',
+        rent: 40000,
+        desc: 'Central AC, grand stage, crystal chandelier lighting, attached VIP dining & washrooms.'
+    },
+    {
+        name: 'Swarnmahal (Basement)',
+        code: 'swarnmahal',
+        capacity: 350,
+        floor: 'Basement (-1)',
+        badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
+        btnClass: 'bg-blue-50 hover:bg-blue-100 text-blue-700',
+        rent: 35000,
+        desc: 'Acoustic surround sound, Italian marble flooring, LED stage & attached bridal suite.'
+    },
+    {
+        name: 'Swadhistam (1st Floor)',
+        code: 'swadhistam',
+        capacity: 250,
+        floor: '1st Floor (1)',
+        badgeClass: 'bg-amber-50 text-amber-700 border-amber-200',
+        btnClass: 'bg-amber-50 hover:bg-amber-100 text-amber-700',
+        rent: 30000,
+        desc: 'Ideal for Tilak, Ring Ceremonies, Seminars, Birthdays, and corporate meetups.'
+    },
+    {
+        name: 'Royal Garden Lawn',
+        code: 'lawn',
+        capacity: 800,
+        floor: 'Open Outdoor',
+        badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        btnClass: 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700',
+        rent: 40000,
+        desc: 'Open garden lawn with fountain, gazebo stage, and fairy canopy lighting.'
+    },
+    {
+        name: 'Pisces Rooftop Terrace',
+        code: 'pisces',
+        capacity: 300,
+        floor: 'Rooftop Terrace',
+        badgeClass: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+        btnClass: 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700',
+        rent: 40000,
+        desc: 'Open sky panoramic view, ambient mood lighting, mocktail lounge & live BBQ setup.'
+    },
+    {
+        name: 'Mandap Hall',
+        code: 'mandap',
+        capacity: 100,
+        floor: 'Ritual Area',
+        badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
+        btnClass: 'bg-rose-50 hover:bg-rose-100 text-rose-700',
+        rent: 5000,
+        desc: 'Dedicated sacred mandap ritual zone for traditional wedding & puja ceremonies.'
+    },
+];
 
 // Banquet Slot Availability Checker
-const getSlotStatus = (hallName: string, slotType: 'Morning' | 'Evening') => {
+const getSlotStatus = (hallCodeOrName: string, slotType: 'Morning' | 'Evening') => {
+    const term = hallCodeOrName.toLowerCase();
     const booking = banquetBookings.value.find(b => 
-        b.hallName.toLowerCase().includes(hallName.toLowerCase()) && 
+        (b.hallName.toLowerCase().includes(term) || term.includes(b.hallName.toLowerCase())) && 
         b.slot.toLowerCase().includes(slotType.toLowerCase())
     );
     if (booking) {
         return { isBooked: true, label: `Booked (${booking.clientName})`, booking };
     }
+
+    const inq = banquetInquiries.value.find(i => {
+        const venues = i.selectedVenues || [];
+        const hasVenue = venues.some(v => v.toLowerCase().includes(term) || term.includes(v.toLowerCase()));
+        return hasVenue && (i.status === 'approved_md' || i.status === 'pending_md');
+    });
+    if (inq) {
+        return { isBooked: true, label: `Reserved (${inq.guestName || 'Client'})`, booking: null };
+    }
+
     return { isBooked: false, label: 'Available', booking: null };
 };
 
@@ -2163,7 +2265,7 @@ const submitCheckIn = () => {
                                         3-Stage Event Booking & Inquiry Pipeline
                                     </h2>
                                     <span class="rounded-full bg-purple-50 text-[#673DE6] text-[10px] font-bold px-2 py-0.5 border border-purple-200">
-                                        Physical Voucher #250 System
+                                        Physical Voucher Slip System
                                     </span>
                                 </div>
                                 <p class="text-xs text-slate-500 mt-0.5">
@@ -2408,104 +2510,42 @@ const submitCheckIn = () => {
                         </div>
                     </div>
 
-                    <!-- 3 Master Halls Display -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+                    <!-- Master Banquet Venues Display (6 Senani Halls & Grounds) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <div
+                            v-for="hall in banquetHalls"
+                            :key="hall.code"
+                            class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between"
+                        >
                             <div>
                                 <div class="flex items-center justify-between mb-2">
-                                    <span class="rounded-full bg-purple-50 text-[#673DE6] text-[10px] font-bold px-2.5 py-0.5 border border-purple-200">
-                                        Capacity: 600 Pax
+                                    <span :class="['rounded-full text-[10px] font-bold px-2.5 py-0.5 border', hall.badgeClass]">
+                                        Capacity: {{ hall.capacity }} Pax
                                     </span>
                                     <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
                                 </div>
-                                <h3 class="text-lg font-bold text-slate-900">Grand Ballroom</h3>
-                                <p class="text-xs text-slate-500 mt-1">Central AC, Italian marble flooring, 4K projector, bridal suite attached.</p>
+                                <h3 class="text-base font-bold text-slate-900">{{ hall.name }}</h3>
+                                <p class="text-xs text-slate-500 mt-1">{{ hall.desc }}</p>
                                 <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-600 space-y-1.5">
                                     <div class="flex items-center justify-between">
                                         <span>Morning Slot:</span>
-                                        <span :class="getSlotStatus('Grand Ballroom', 'Morning').isBooked ? 'font-bold text-[#673DE6]' : 'font-bold text-emerald-600'">
-                                            {{ getSlotStatus('Grand Ballroom', 'Morning').label }}
+                                        <span :class="getSlotStatus(hall.code, 'Morning').isBooked ? 'font-bold text-[#673DE6]' : 'font-bold text-emerald-600'">
+                                            {{ getSlotStatus(hall.code, 'Morning').label }}
                                         </span>
                                     </div>
                                     <div class="flex items-center justify-between">
                                         <span>Evening Slot:</span>
-                                        <span :class="getSlotStatus('Grand Ballroom', 'Evening').isBooked ? 'font-bold text-[#673DE6]' : 'font-bold text-emerald-600'">
-                                            {{ getSlotStatus('Grand Ballroom', 'Evening').label }}
+                                        <span :class="getSlotStatus(hall.code, 'Evening').isBooked ? 'font-bold text-[#673DE6]' : 'font-bold text-emerald-600'">
+                                            {{ getSlotStatus(hall.code, 'Evening').label }}
                                         </span>
                                     </div>
                                 </div>
                             </div>
                             <button
-                                @click="posBillType = 'banquet'; posHallRent = 45000; currentTab = 'billing'"
-                                class="mt-4 w-full py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-[#673DE6] font-bold text-xs transition"
+                                @click="posBillType = 'banquet'; posHallRent = hall.rent; currentTab = 'billing'"
+                                :class="['mt-4 w-full py-2 rounded-xl font-bold text-xs transition cursor-pointer', hall.btnClass]"
                             >
-                                Quick Bill This Hall
-                            </button>
-                        </div>
-
-                        <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-                            <div>
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold px-2.5 py-0.5 border border-blue-200">
-                                        Capacity: 250 Pax
-                                    </span>
-                                    <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                                </div>
-                                <h3 class="text-lg font-bold text-slate-900">Sapphire Hall</h3>
-                                <p class="text-xs text-slate-500 mt-1">Ideal for Ring Ceremonies, Seminars, Birthdays, and corporate meetups.</p>
-                                <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-600 space-y-1.5">
-                                    <div class="flex items-center justify-between">
-                                        <span>Morning Slot:</span>
-                                        <span :class="getSlotStatus('Sapphire Hall', 'Morning').isBooked ? 'font-bold text-[#673DE6]' : 'font-bold text-emerald-600'">
-                                            {{ getSlotStatus('Sapphire Hall', 'Morning').label }}
-                                        </span>
-                                    </div>
-                                    <div class="flex items-center justify-between">
-                                        <span>Evening Slot:</span>
-                                        <span :class="getSlotStatus('Sapphire Hall', 'Evening').isBooked ? 'font-bold text-[#673DE6]' : 'font-bold text-emerald-600'">
-                                            {{ getSlotStatus('Sapphire Hall', 'Evening').label }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <button
-                                @click="posBillType = 'banquet'; posHallRent = 25000; currentTab = 'billing'"
-                                class="mt-4 w-full py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition"
-                            >
-                                Quick Bill This Hall
-                            </button>
-                        </div>
-
-                        <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-                            <div>
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-0.5 border border-emerald-200">
-                                        Capacity: 800 Pax
-                                    </span>
-                                    <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-                                </div>
-                                <h3 class="text-lg font-bold text-slate-900">Royal Lawn & Terrace</h3>
-                                <p class="text-xs text-slate-500 mt-1">Open garden lawn with fountain, gazebo stage, and canopy lighting.</p>
-                                <div class="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-600 space-y-1.5">
-                                    <div class="flex items-center justify-between">
-                                        <span>Morning Slot:</span>
-                                        <span :class="getSlotStatus('Royal Lawn & Terrace', 'Morning').isBooked ? 'font-bold text-[#673DE6]' : 'font-bold text-emerald-600'">
-                                            {{ getSlotStatus('Royal Lawn & Terrace', 'Morning').label }}
-                                        </span>
-                                    </div>
-                                    <div class="flex items-center justify-between">
-                                        <span>Evening Slot:</span>
-                                        <span :class="getSlotStatus('Royal Lawn & Terrace', 'Evening').isBooked ? 'font-bold text-[#673DE6]' : 'font-bold text-emerald-600'">
-                                            {{ getSlotStatus('Royal Lawn & Terrace', 'Evening').label }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <button
-                                @click="posBillType = 'banquet'; posHallRent = 55000; currentTab = 'billing'"
-                                class="mt-4 w-full py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition"
-                            >
-                                Quick Bill This Hall
+                                Quick Bill (₹{{ hall.rent.toLocaleString('en-IN') }})
                             </button>
                         </div>
                     </div>
@@ -3083,11 +3123,12 @@ const submitCheckIn = () => {
         </div>
 
         <!-- ========================================================= -->
-        <!-- MODAL 3: 3-STEP BANQUET INQUIRY WIZARD & VOUCHER #250     -->
+        <!-- MODAL 3: 3-STEP BANQUET INQUIRY WIZARD                   -->
         <!-- ========================================================= -->
         <InquiryWizardModal
             :show="showInquiryModal"
             :initialInquiry="selectedInquiry"
+            :suggestedVoucherNo="nextVoucherNo"
             :defaultStep="inquiryDefaultStep"
             :openPrintPreview="inquiryOpenPrintPreview"
             :userRole="activeRole"

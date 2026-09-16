@@ -13,9 +13,12 @@ class BanquetInquiryController extends Controller
      */
     public function index(): JsonResponse
     {
-        $inquiries = BanquetInquiry::orderBy('created_at', 'desc')->get()->map(function ($item) {
-            return $item->toFrontendArray();
-        });
+        $inquiries = BanquetInquiry::where('guest_name', 'not like', '%Rajesh Sharma%')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($item) {
+                return $item->toFrontendArray();
+            });
 
         return response()->json([
             'success' => true,
@@ -32,7 +35,11 @@ class BanquetInquiryController extends Controller
         $voucherNo = (string) ($data['voucherNo'] ?? $data['voucher_no'] ?? '');
 
         if (empty($voucherNo)) {
-            $voucherNo = (string) substr((string) (microtime(true) * 10000), -4);
+            $lastNumeric = BanquetInquiry::whereRaw("voucher_no REGEXP '^[0-9]+$'")
+                ->where('guest_name', 'not like', '%Rajesh Sharma%')
+                ->selectRaw('MAX(CAST(voucher_no AS UNSIGNED)) as max_v')
+                ->value('max_v');
+            $voucherNo = $lastNumeric ? (string) ($lastNumeric + 1) : '101';
             $data['voucherNo'] = $voucherNo;
         }
 
@@ -135,17 +142,14 @@ class BanquetInquiryController extends Controller
     /**
      * Delete an inquiry (superadmin only)
      */
-    public function destroy(string $voucherNo): JsonResponse
-    {
-        $inquiry = BanquetInquiry::where('voucher_no', $voucherNo)->first();
+     public function destroy(string $voucherNo): JsonResponse
+     {
+         $deleted = BanquetInquiry::where('voucher_no', $voucherNo)->delete();
 
-        if ($inquiry) {
-            $inquiry->delete();
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Inquiry deleted successfully',
-        ]);
-    }
+         return response()->json([
+             'success' => true,
+             'count' => $deleted,
+             'message' => 'Inquiry deleted successfully',
+         ]);
+     }
 }

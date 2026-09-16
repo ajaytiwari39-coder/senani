@@ -47,7 +47,9 @@ import {
     Trash2,
     ShieldAlert,
     Users,
-    MessageCircle
+    MessageCircle,
+    Tag,
+    Hash
 } from '@lucide/vue';
 import {
     renderSlimBarcode,
@@ -134,6 +136,7 @@ const props = withDefaults(
     defineProps<{
         show: boolean;
         initialInquiry?: BanquetInquiry | null;
+        suggestedVoucherNo?: string;
         defaultStep?: number;
         openPrintPreview?: boolean;
         userRole?: 'reception' | 'manager' | 'md' | 'superadmin';
@@ -141,9 +144,10 @@ const props = withDefaults(
     {
         show: false,
         initialInquiry: null,
+        suggestedVoucherNo: '101',
         defaultStep: 1,
         openPrintPreview: false,
-        userRole: 'md',
+        userRole: 'superadmin',
     }
 );
 
@@ -238,8 +242,8 @@ const FOODING_RATES = {
 import { menuCatalogs, type MenuCatalogTier } from './menuCatalog';
 export type { MenuCatalogTier };
 
-const createBlankInquiry = (): BanquetInquiry => ({
-    voucherNo: String(Date.now()).slice(-4),
+const createBlankInquiry = (suggestedVoucher?: string): BanquetInquiry => ({
+    voucherNo: suggestedVoucher || props.suggestedVoucherNo || '101',
     inquiryDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
     guestName: '',
     phonePrimary: '',
@@ -309,7 +313,7 @@ watch(
             sanitizeCatalogSelections();
             updateBarcodeAndQr();
         } else {
-            form.value = createBlankInquiry();
+            form.value = createBlankInquiry(props.suggestedVoucherNo);
         }
     },
     { immediate: true }
@@ -319,9 +323,19 @@ watch(
     () => props.show,
     (open) => {
         if (open) {
+            if (!props.initialInquiry) {
+                form.value = createBlankInquiry(props.suggestedVoucherNo);
+            }
             sanitizeCatalogSelections();
             updateBarcodeAndQr();
         }
+    }
+);
+
+watch(
+    () => form.value.voucherNo,
+    () => {
+        updateBarcodeAndQr();
     }
 );
 
@@ -571,9 +585,9 @@ const toggleArrayItem = (arr: string[], item: string) => {
 };
 
 // Stepper Validation & Actions
-const stepErrors = ref<{ guestName?: string; phonePrimary?: string; paxGuaranteed?: string }>({});
+const stepErrors = ref<{ voucherNo?: string; guestName?: string; phonePrimary?: string; paxGuaranteed?: string }>({});
 
-const clearStepError = (field: 'guestName' | 'phonePrimary' | 'paxGuaranteed') => {
+const clearStepError = (field: 'voucherNo' | 'guestName' | 'phonePrimary' | 'paxGuaranteed') => {
     if (stepErrors.value[field]) {
         delete stepErrors.value[field];
     }
@@ -588,6 +602,9 @@ const goToStep = (stepNum: number) => {
 const nextStep = () => {
     if (currentStep.value === 1) {
         stepErrors.value = {};
+        if (!form.value.voucherNo || !String(form.value.voucherNo).trim()) {
+            stepErrors.value.voucherNo = 'Physical Slip / Voucher Number is required.';
+        }
         if (!form.value.guestName || !form.value.guestName.trim()) {
             stepErrors.value.guestName = 'Customer / Host Full Name is required.';
         }
@@ -615,6 +632,9 @@ const prevStep = () => {
 
 const submitReceptionStep1 = () => {
     stepErrors.value = {};
+    if (!form.value.voucherNo || !String(form.value.voucherNo).trim()) {
+        stepErrors.value.voucherNo = 'Physical Slip / Voucher Number is required.';
+    }
     if (!form.value.guestName || !form.value.guestName.trim()) {
         stepErrors.value.guestName = 'Customer / Host Full Name is required.';
     }
@@ -980,10 +1000,11 @@ const clearMenuSelection = () => {
 // Render Barcode & QR Code
 const updateBarcodeAndQr = async () => {
     if (typeof window === 'undefined') return;
-    const verifyUrl = `${window.location.origin}/verify/voucher?v=${form.value.voucherNo}`;
+    const vNo = form.value.voucherNo || '101';
+    const verifyUrl = `${window.location.origin}/verify/voucher?v=${vNo}`;
     qrCodeDataUrl.value = await generateQrCodeDataUrl(verifyUrl, 160);
 
-    const sig = form.value.digitalSignature || `SN-SIG-${form.value.voucherNo}`;
+    const sig = form.value.digitalSignature || `SN-SIG-${vNo}`;
     barcodeDataUrl.value = generateBarcodeDataUrl(sig, 28);
 
     await nextTick();
@@ -1114,8 +1135,8 @@ const shareOnWhatsApp = () => {
             <div class="shrink-0 bg-white border-b border-slate-200 px-4 sm:px-6 py-2.5 select-none">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-3">
-                        <div class="h-8.5 w-8.5 rounded-xl bg-[#F0EBFF] text-[#673DE6] flex items-center justify-center font-black text-sm border border-[#E0D7FE]">
-                            #{{ form.voucherNo }}
+                        <div class="min-w-[42px] px-2.5 h-8.5 rounded-xl bg-[#F0EBFF] text-[#673DE6] flex items-center justify-center font-black text-sm border border-[#E0D7FE] font-mono shrink-0">
+                            #{{ form.voucherNo || '---' }}
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
@@ -1280,11 +1301,53 @@ const shareOnWhatsApp = () => {
                                 <User class="h-4 w-4 text-[#673DE6]" />
                                 Customer / Host Information
                             </h3>
-                            <span class="text-[10px] text-slate-400 font-mono">Voucher #{{ form.voucherNo }}</span>
+                            <span class="text-xs font-mono font-bold text-[#673DE6] bg-purple-50 px-2.5 py-0.5 rounded-md border border-purple-200">
+                                Slip #{{ form.voucherNo || '---' }}
+                            </span>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
                             <div>
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center justify-between">
+                                    <span class="flex items-center gap-1">
+                                        <Tag class="h-3 w-3 text-[#673DE6]" />
+                                        <span>Physical Slip / Voucher # *</span>
+                                    </span>
+                                    <span class="text-[9.5px] text-slate-400 font-normal">Paper slip serial</span>
+                                </label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2 text-xs font-mono font-black text-[#673DE6]">#</span>
+                                    <input
+                                        v-model="form.voucherNo"
+                                        @input="clearStepError('voucherNo')"
+                                        type="text"
+                                        required
+                                        placeholder="e.g. 101, 251"
+                                        :class="[
+                                            'w-full h-8.5 rounded-lg border pl-7 pr-3 text-xs text-slate-900 font-mono font-bold focus:bg-white focus:outline-none transition',
+                                            stepErrors.voucherNo ? 'border-rose-400 bg-rose-50/50 focus:border-rose-500' : 'border-slate-200 bg-slate-50/60 focus:border-[#673DE6]'
+                                        ]"
+                                    />
+                                </div>
+                                <span v-if="stepErrors.voucherNo" class="text-[10px] text-rose-600 font-bold mt-0.5 block">
+                                    {{ stepErrors.voucherNo }}
+                                </span>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
+                                    <Calendar class="h-3 w-3 text-slate-500" />
+                                    <span>Slip Date</span>
+                                </label>
+                                <input
+                                    v-model="form.inquiryDate"
+                                    type="text"
+                                    placeholder="e.g. 16 Sep 2026"
+                                    class="w-full h-8.5 rounded-lg border border-slate-200 bg-slate-50/60 px-3 text-xs text-slate-900 focus:bg-white focus:border-[#673DE6] focus:outline-none transition"
+                                />
+                            </div>
+
+                            <div class="sm:col-span-2">
                                 <label class="block text-[11px] font-bold text-slate-700 mb-1">
                                     Customer / Host Full Name *
                                 </label>
@@ -1375,7 +1438,7 @@ const shareOnWhatsApp = () => {
                                 </span>
                             </div>
 
-                            <div>
+                            <div class="sm:col-span-2">
                                 <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
                                     <Mail class="h-3 w-3 text-blue-500" />
                                     Email Address (Optional)
@@ -1388,7 +1451,7 @@ const shareOnWhatsApp = () => {
                                 />
                             </div>
 
-                            <div class="sm:col-span-2 lg:col-span-3">
+                            <div class="sm:col-span-2">
                                 <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1">
                                     <MapPin class="h-3 w-3 text-rose-500" />
                                     City / Address

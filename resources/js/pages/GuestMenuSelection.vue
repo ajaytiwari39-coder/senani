@@ -135,7 +135,7 @@ const confirmAndLockMenu = () => {
         isGuestEditing.value = false;
 
         // Generate digital seal
-        const sig = generateDigitalSignature(currentInquiry.value.voucherNo || '250', (currentInquiry.value.auditLog?.length || 1) + 1);
+        const sig = generateDigitalSignature(currentInquiry.value.voucherNo || '', (currentInquiry.value.auditLog?.length || 1) + 1);
         currentInquiry.value.digitalSignature = sig;
         currentInquiry.value.barcodeValue = sig;
 

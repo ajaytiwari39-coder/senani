@@ -28,7 +28,7 @@ export interface CompactGuestPayload {
 export function encodeGuestPayload(inquiry: BanquetInquiry): string {
     try {
         const payload: CompactGuestPayload = {
-            v: inquiry.voucherNo || '250',
+            v: inquiry.voucherNo || '',
             g: inquiry.guestName,
             p: inquiry.phonePrimary,
             d: inquiry.functionDateFrom,
@@ -84,7 +84,7 @@ export function decodeGuestPayload(encoded: string): CompactGuestPayload | null 
  * Builds the full guest portal URL with embedded payload for cross-device support
  */
 export function buildGuestPortalUrl(origin: string, inquiry: BanquetInquiry): string {
-    const voucher = inquiry.voucherNo || '250';
+    const voucher = inquiry.voucherNo || '';
     const payload = encodeGuestPayload(inquiry);
     if (payload) {
         return `${origin}/guest/menu-selection?v=${voucher}&d=${payload}`;
