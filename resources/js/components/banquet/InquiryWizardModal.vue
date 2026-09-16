@@ -1790,122 +1790,119 @@ const shareOnWhatsApp = () => {
                         </div>
                     </div>
 
-                    <!-- Manager Catering Control & Deal Lock Bar -->
-                    <div class="p-3 rounded-xl bg-gradient-to-r from-purple-50 via-white to-purple-50 border border-purple-200 flex flex-wrap items-center justify-between gap-3 text-xs shadow-2xs">
-                        <div class="flex flex-wrap items-center gap-2.5">
-                            <!-- Deal Lock / Unlock Status Button with Slim Barcode -->
-                            <div v-if="isBookingFinalized" class="flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-950 font-bold shadow-2xs">
-                                <div class="flex items-center gap-1.5 text-xs">
+                    <!-- Manager Catering Control & Deal Lock Bar: Calibrated Single-Row Layout -->
+                    <div class="p-2.5 rounded-xl bg-gradient-to-r from-purple-50 via-white to-purple-50 border border-purple-200 flex items-center justify-between gap-2 text-xs shadow-2xs overflow-x-auto flex-nowrap">
+                        <div class="flex items-center gap-2 shrink-0">
+                            <!-- Deal Lock / Unlock Status Button -->
+                            <div v-if="isBookingFinalized" class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-300 text-amber-950 font-bold shrink-0">
+                                <div class="flex items-center gap-1 text-xs">
                                     <Lock class="h-3.5 w-3.5 text-amber-700 shrink-0" />
-                                    <span>🔒 {{ form.status === 'approved_md' ? 'CONTRACT FINALIZED' : 'DEAL LOCKED' }}</span>
-                                </div>
-                                <!-- Slim Barcode ("Ptla sa Barcode") -->
-                                <div class="hidden sm:flex flex-col items-center bg-white px-2 py-0.5 rounded border border-slate-200">
-                                    <svg ref="barcodeSvgStep2" class="h-5 w-36"></svg>
-                                    <span class="text-[8.5px] font-mono font-bold text-slate-700">{{ form.digitalSignature || `SN-SIG-${form.voucherNo}` }}</span>
+                                    <span>🔒 {{ form.status === 'approved_md' ? 'Finalized' : 'Locked' }}</span>
                                 </div>
                                 <button
                                     type="button"
                                     @click="showAuditModal = true"
-                                    class="px-2 py-0.5 rounded bg-purple-100 hover:bg-purple-200 text-purple-900 text-[10.5px] font-bold border border-purple-200 cursor-pointer transition flex items-center gap-1"
+                                    class="px-1.5 py-0.5 rounded bg-purple-100 hover:bg-purple-200 text-purple-900 text-[10.5px] font-bold border border-purple-200 cursor-pointer transition flex items-center gap-0.5 shrink-0"
+                                    title="View Audit Log"
                                 >
                                     <History class="h-3 w-3 text-purple-700" />
-                                    <span>Audit Log ({{ form.auditLog?.length || 0 }})</span>
+                                    <span>Audit ({{ form.auditLog?.length || 0 }})</span>
                                 </button>
-                                <span v-if="form.status === 'approved_md'" class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10.5px] font-bold border border-emerald-200">
-                                    Menu Customization Active
+                                <span v-if="form.status === 'approved_md'" class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10.5px] font-bold border border-emerald-200 shrink-0">
+                                    Menu Open
                                 </span>
                                 <button
                                     v-else
                                     type="button"
                                     @click="toggleDealLock"
-                                    class="px-2 py-0.5 rounded bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-black cursor-pointer transition shadow-2xs"
+                                    class="px-2 py-0.5 rounded bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-black cursor-pointer transition shadow-2xs shrink-0"
                                 >
                                     Unlock
                                 </button>
                             </div>
-                            <div v-else class="flex items-center gap-2">
+                            <div v-else class="flex items-center gap-1.5 shrink-0">
                                 <button
                                     type="button"
                                     @click="toggleDealLock"
-                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold transition shadow-2xs cursor-pointer"
+                                    class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs transition shadow-2xs cursor-pointer shrink-0"
                                     title="Freeze catering choices so no further edits can be made"
                                 >
-                                    <Lock class="h-3.5 w-3.5" />
-                                    <span>Lock Deal (Freeze Menu)</span>
+                                    <Lock class="h-3 w-3" />
+                                    <span>Lock Deal</span>
                                 </button>
-                                <span class="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
-                                    🟢 Menu Editing Open
+                                <span class="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200 shrink-0">
+                                    🟢 Menu Open
                                 </span>
                                 <button
                                     v-if="form.auditLog && form.auditLog.length"
                                     type="button"
                                     @click="showAuditModal = true"
-                                    class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10.5px] font-bold border border-slate-300 cursor-pointer transition flex items-center gap-1"
+                                    class="px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10.5px] font-bold border border-slate-300 cursor-pointer transition flex items-center gap-1 shrink-0"
                                 >
                                     <History class="h-3 w-3 text-slate-600" />
-                                    <span>Audit ({{ form.auditLog.length }})</span>
+                                    <span>({{ form.auditLog.length }})</span>
                                 </button>
                             </div>
 
-                            <div class="hidden sm:block text-slate-300">|</div>
+                            <div class="text-slate-300 shrink-0">|</div>
 
                             <!-- Mode Selector Switcher: Quotation Mode vs Confirmed Selection -->
-                            <div class="inline-flex p-0.5 bg-slate-200/90 rounded-lg border border-slate-300 text-xs shadow-2xs" :class="{ 'opacity-60 pointer-events-none': isBookingFinalized }">
+                            <div class="inline-flex p-0.5 bg-slate-200/90 rounded-lg border border-slate-300 text-xs shadow-2xs shrink-0" :class="{ 'opacity-60 pointer-events-none': isBookingFinalized }">
                                 <button
                                     type="button"
                                     @click="setQuotationMode(true)"
                                     :disabled="isBookingFinalized"
-                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-md font-bold transition cursor-pointer"
+                                    class="flex items-center gap-1 px-2.5 py-1 rounded-md font-bold text-xs transition cursor-pointer shrink-0"
                                     :class="form.isQuotationMode 
                                         ? 'bg-purple-700 text-white shadow-xs' 
                                         : 'text-slate-700 hover:text-purple-900 hover:bg-white/60'"
                                     title="Quotation Mode: Prospective offer with all catalog items shown without dish selection"
                                 >
-                                    <FileText class="h-3.5 w-3.5" />
-                                    <span>📋 Quotation Mode</span>
+                                    <FileText class="h-3 w-3" />
+                                    <span>📋 Quotation</span>
                                 </button>
                                 <button
                                     type="button"
                                     @click="setQuotationMode(false)"
                                     :disabled="isBookingFinalized"
-                                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-md font-bold transition cursor-pointer"
+                                    class="flex items-center gap-1 px-2.5 py-1 rounded-md font-bold text-xs transition cursor-pointer shrink-0"
                                     :class="!form.isQuotationMode 
                                         ? 'bg-[#673DE6] text-white shadow-xs' 
                                         : 'text-slate-700 hover:text-purple-900 hover:bg-white/60'"
                                     title="Confirmed Menu Mode: Select specific dishes according to tier quota"
                                 >
-                                    <CheckCircle2 class="h-3.5 w-3.5" />
-                                    <span>🎯 Confirmed Menu Mode</span>
+                                    <CheckCircle2 class="h-3 w-3" />
+                                    <span>🎯 Confirmed Menu</span>
                                 </button>
                             </div>
 
                             <!-- Selected Status / Counter -->
-                            <div v-if="form.isQuotationMode" class="flex items-center gap-1.5 text-[11px] text-purple-900 font-bold bg-purple-100 px-2.5 py-1 rounded-lg border border-purple-200">
-                                <Sparkles class="h-3.5 w-3.5 text-purple-600 shrink-0" />
-                                <span>All {{ totalCatalogItemsCount }} Items Displayed (0 Selected)</span>
+                            <div v-if="form.isQuotationMode" class="flex items-center gap-1 text-[11px] text-purple-900 font-bold bg-purple-100 px-2.5 py-1 rounded-lg border border-purple-200 shrink-0">
+                                <Sparkles class="h-3 w-3 text-purple-600 shrink-0" />
+                                <span>All {{ totalCatalogItemsCount }} Items</span>
                             </div>
-                            <div v-else class="flex items-center gap-1.5 text-[11px] text-slate-700">
+                            <div v-else class="flex items-center gap-1 text-[11px] text-slate-700 shrink-0">
                                 <Utensils class="h-3.5 w-3.5 text-[#673DE6]" />
-                                <span>Dishes Picked:</span>
-                                <strong class="font-mono text-purple-700 font-black">{{ form.selectedMenuCatalogItems?.length || 0 }} Items</strong>
+                                <span>Dishes:</span>
+                                <strong class="font-mono text-purple-700 font-black">{{ form.selectedMenuCatalogItems?.length || 0 }}</strong>
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-2">
+                        <!-- Right Action Buttons in One Row -->
+                        <div class="flex items-center gap-1.5 shrink-0">
                             <template v-if="!form.isQuotationMode">
                                 <button
                                     type="button"
                                     @click="selectAllDefaults"
-                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer"
+                                    class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-bold transition cursor-pointer shrink-0"
                                     title="Auto-select recommended dishes according to official tier quotas"
                                 >
-                                    ✨ Pick Recommended
+                                    ✨ Recommended
                                 </button>
                                 <button
                                     type="button"
                                     @click="clearMenuSelection"
-                                    class="px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-rose-50 hover:text-rose-700 text-slate-500 text-xs font-semibold transition cursor-pointer"
+                                    class="px-2 py-1 rounded-lg bg-white border border-slate-200 hover:bg-rose-50 hover:text-rose-700 text-slate-500 text-xs font-semibold transition cursor-pointer shrink-0"
                                     title="Clear all chosen items"
                                 >
                                     Clear
@@ -1914,20 +1911,20 @@ const shareOnWhatsApp = () => {
                             <button
                                 type="button"
                                 @click="shareOnWhatsApp"
-                                class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-xs cursor-pointer"
+                                class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-xs cursor-pointer shrink-0"
                                 :title="'Send direct WhatsApp link to customer ' + (form.phonePrimary ? '(' + form.phonePrimary + ')' : '')"
                             >
                                 <MessageCircle class="h-3.5 w-3.5" />
-                                <span>WhatsApp to Customer</span>
+                                <span>WhatsApp</span>
                             </button>
                             <button
                                 type="button"
                                 @click="showShareModal = true"
-                                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#673DE6] hover:bg-[#5832D0] text-white font-bold text-xs transition shadow-xs cursor-pointer"
+                                class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#673DE6] hover:bg-[#5832D0] text-white font-bold text-xs transition shadow-xs cursor-pointer shrink-0"
                                 title="Share guest portal link with client to choose dishes"
                             >
                                 <Share2 class="h-3.5 w-3.5" />
-                                <span>Share Options</span>
+                                <span>Share</span>
                             </button>
                         </div>
                     </div>
