@@ -74,9 +74,10 @@ def main():
     sync_folder(os.path.join(LOCAL_DIR, 'public', 'images'), 'images')
     sftp.close()
 
-    print('🚀 Step 6: Running migrations & seeders on live server with PHP 8.4...')
+    print('🚀 Step 6: Running migrations, seeders & voucher reset on live server with PHP 8.4...')
     exec_remote(f'cd {APP_ROOT} && /opt/alt/php84/usr/bin/php artisan migrate --force')
     exec_remote(f'cd {APP_ROOT} && /opt/alt/php84/usr/bin/php artisan db:seed --force')
+    exec_remote(f'cd {APP_ROOT} && /opt/alt/php84/usr/bin/php artisan banquet:reset-vouchers')
 
     print('🚀 Step 7: Clearing remote Laravel caches with PHP 8.4...')
     exec_remote(f'cd {APP_ROOT} && /opt/alt/php84/usr/bin/php artisan optimize:clear')
