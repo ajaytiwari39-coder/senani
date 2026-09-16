@@ -161,7 +161,7 @@ const props = withDefaults(
     {
         show: false,
         initialInquiry: null,
-        suggestedVoucherNo: '101',
+        suggestedVoucherNo: '1',
         defaultStep: 1,
         openPrintPreview: false,
         userRole: 'superadmin',
@@ -260,7 +260,7 @@ import { menuCatalogs, type MenuCatalogTier } from './menuCatalog';
 export type { MenuCatalogTier };
 
 const createBlankInquiry = (suggestedVoucher?: string): BanquetInquiry => ({
-    voucherNo: suggestedVoucher || props.suggestedVoucherNo || '101',
+    voucherNo: suggestedVoucher || props.suggestedVoucherNo || '1',
     inquiryDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
     guestName: '',
     phonePrimary: '',
@@ -1175,7 +1175,7 @@ const clearMenuSelection = () => {
 // Render Barcode & QR Code
 const updateBarcodeAndQr = async () => {
     if (typeof window === 'undefined') return;
-    const vNo = form.value.voucherNo || '101';
+    const vNo = form.value.voucherNo || '1';
     const verifyUrl = `${window.location.origin}/verify/voucher?v=${vNo}`;
     qrCodeDataUrl.value = await generateQrCodeDataUrl(verifyUrl, 160);
 

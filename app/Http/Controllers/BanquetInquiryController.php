@@ -39,7 +39,7 @@ class BanquetInquiryController extends Controller
                 ->where('guest_name', 'not like', '%Rajesh Sharma%')
                 ->selectRaw('MAX(CAST(voucher_no AS UNSIGNED)) as max_v')
                 ->value('max_v');
-            $voucherNo = $lastNumeric ? (string) ($lastNumeric + 1) : '101';
+            $voucherNo = $lastNumeric ? (string) ($lastNumeric + 1) : '1';
             $data['voucherNo'] = $voucherNo;
         }
 

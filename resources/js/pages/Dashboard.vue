@@ -46,7 +46,11 @@ import {
     ExternalLink,
     Eye,
     Trash2,
-    AlertTriangle
+    AlertTriangle,
+    Calculator,
+    BookmarkCheck,
+    Crown,
+    Pencil
 } from '@lucide/vue';
 import { home } from '@/routes';
 import InquiryWizardModal, { type BanquetInquiry } from '@/components/banquet/InquiryWizardModal.vue';
@@ -255,7 +259,7 @@ const inquiryDefaultStep = ref(queryStep);
 
 const banquetInquiries = ref<BanquetInquiry[]>([]);
 
-// Dynamic sequential voucher number calculated from existing inquiries (e.g. 101, 102, ...)
+// Dynamic sequential voucher number calculated from existing inquiries (e.g. 1, 2, 3, ...)
 const nextVoucherNo = computed(() => {
     const nums = banquetInquiries.value
         .map(i => parseInt(String(i.voucherNo), 10))
@@ -263,7 +267,7 @@ const nextVoucherNo = computed(() => {
     if (nums.length > 0) {
         return String(Math.max(...nums) + 1);
     }
-    return '101';
+    return '1';
 });
 
 const inquiryOpenPrintPreview = ref(queryPrint);
@@ -2310,196 +2314,202 @@ const submitCheckIn = () => {
                             </div>
                         </div>
 
-                        <!-- Inquiry Pipeline Table -->
+                        <!-- Inquiry Pipeline Table: Calibrated Single-Row View with Icon Actions -->
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-xs whitespace-nowrap">
                                 <thead>
-                                    <tr class="border-b border-slate-100 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                                        <th class="pb-3 font-semibold">Slip #</th>
-                                        <th class="pb-3 font-semibold">Guest & Contacts</th>
-                                        <th class="pb-3 font-semibold">Event & Date</th>
-                                        <th class="pb-3 font-semibold">Pax & Menu Tier</th>
-                                        <th class="pb-3 font-semibold text-right">Gross Total</th>
-                                        <th class="pb-3 font-semibold text-right">Discount (₹)</th>
-                                        <th class="pb-3 font-semibold text-right">Net Payable</th>
-                                        <th class="pb-3 font-semibold text-right">Advance Paid</th>
-                                        <th class="pb-3 font-semibold text-center">Pipeline Stage</th>
-                                        <th class="pb-3 font-semibold text-right">Actions</th>
+                                    <tr class="border-b border-slate-200 text-[10.5px] font-bold uppercase tracking-wider text-slate-400">
+                                        <th class="pb-2.5 px-2 font-semibold">Slip #</th>
+                                        <th class="pb-2.5 px-2 font-semibold">Guest & Contact</th>
+                                        <th class="pb-2.5 px-2 font-semibold">Event & Date</th>
+                                        <th class="pb-2.5 px-2 font-semibold">Pax & Tier</th>
+                                        <th class="pb-2.5 px-2 font-semibold text-right">Gross</th>
+                                        <th class="pb-2.5 px-2 font-semibold text-right">Discount</th>
+                                        <th class="pb-2.5 px-2 font-semibold text-right">Net</th>
+                                        <th class="pb-2.5 px-2 font-semibold text-right">Advance / Bal</th>
+                                        <th class="pb-2.5 px-2 font-semibold text-center">Stage</th>
+                                        <th class="pb-2.5 px-2 font-semibold text-center">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 text-slate-600 font-medium">
                                     <tr v-for="inq in visibleBanquetInquiries" :key="inq.voucherNo" class="hover:bg-slate-50/80 transition">
-                                        <td class="py-3 font-mono">
-                                            <div class="font-bold text-[#673DE6]">#{{ inq.voucherNo }}</div>
-                                            <div class="mt-0.5">
+                                        <td class="py-2 px-2 font-mono">
+                                            <div class="flex items-center gap-1">
+                                                <span class="font-bold text-[#673DE6] text-xs">#{{ inq.voucherNo }}</span>
                                                 <button
                                                     type="button"
                                                     @click="toggleInquiryLock(inq)"
-                                                    class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold cursor-pointer transition"
-                                                    :class="inq.isLocked ? 'bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200' : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200'"
+                                                    class="p-0.5 rounded text-[9px] font-bold cursor-pointer transition inline-flex items-center"
+                                                    :class="inq.isLocked ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'"
                                                     :title="inq.isLocked ? 'Deal is Locked. Click to unlock.' : 'Deal is Open. Click to lock.'"
                                                 >
-                                                    <Lock v-if="inq.isLocked" class="h-2.5 w-2.5 text-amber-700" />
-                                                    <Unlock v-else class="h-2.5 w-2.5 text-slate-500" />
-                                                    <span>{{ inq.isLocked ? 'Locked' : 'Open' }}</span>
+                                                    <Lock v-if="inq.isLocked" class="h-3 w-3 text-amber-700" />
+                                                    <Unlock v-else class="h-3 w-3 text-slate-400" />
                                                 </button>
                                             </div>
                                         </td>
-                                        <td class="py-3">
-                                            <div class="font-bold text-slate-900">{{ inq.guestName }}</div>
-                                            <div class="text-[11px] text-slate-500 font-mono">{{ inq.phonePrimary }} • {{ inq.address }}</div>
+                                        <td class="py-2 px-2">
+                                            <div class="font-bold text-slate-900 truncate max-w-[140px]">{{ inq.guestName }}</div>
+                                            <div class="text-[10.5px] text-slate-500 font-mono truncate max-w-[140px]">{{ inq.phonePrimary }}</div>
                                         </td>
-                                        <td class="py-3">
-                                            <div class="font-semibold text-slate-800">{{ inq.eventType }}</div>
-                                            <div class="text-[11px] text-slate-500">{{ inq.functionDateFrom }} ({{ inq.timeFrom }}-{{ inq.timeTo }})</div>
+                                        <td class="py-2 px-2">
+                                            <div class="font-semibold text-slate-800 truncate max-w-[120px]">{{ inq.eventType || 'Event' }}</div>
+                                            <div class="text-[10.5px] text-slate-500 font-mono">{{ inq.functionDateFrom || 'TBD' }}</div>
                                         </td>
-                                        <td class="py-3">
+                                        <td class="py-2 px-2">
                                             <div class="font-bold text-slate-900">{{ inq.paxGuaranteed }} Pax</div>
-                                            <div class="text-[11px] text-purple-700">
-                                                ₹{{ inq.effectiveMenuRate || inq.menuRate || 799 }}/plate
-                                                <span v-if="inq.isMeetingSetup" class="text-[9px] text-amber-700 font-bold bg-amber-50 px-1 py-0.5 rounded ml-0.5">Meeting</span>
+                                            <div class="text-[10.5px] text-purple-700 font-semibold">
+                                                ₹{{ inq.effectiveMenuRate || inq.menuRate || 799 }}/pl
                                             </div>
                                         </td>
-                                        <td class="py-3 text-right font-mono font-bold text-slate-900">
+                                        <td class="py-2 px-2 text-right font-mono font-bold text-slate-800 text-[11.5px]">
                                             ₹{{ getInquiryFinancials(inq).gross.toLocaleString('en-IN') }}
                                         </td>
-                                        <td class="py-3 text-right font-mono">
+                                        <td class="py-2 px-2 text-right font-mono text-[11px]">
                                             <div v-if="getInquiryFinancials(inq).discount > 0" class="text-amber-600 font-bold">
                                                 -₹{{ getInquiryFinancials(inq).discount.toLocaleString('en-IN') }}
-                                                <span v-if="inq.discountPercent" class="text-[10px] text-slate-400 font-normal">({{ inq.discountPercent }}%)</span>
                                             </div>
                                             <span v-else class="text-slate-400">₹0</span>
                                         </td>
-                                        <td class="py-3 text-right font-mono font-black text-emerald-700">
+                                        <td class="py-2 px-2 text-right font-mono font-black text-emerald-700 text-xs">
                                             ₹{{ getInquiryFinancials(inq).net.toLocaleString('en-IN') }}
                                         </td>
-                                        <td class="py-3 text-right font-mono text-slate-700">
-                                            <span class="font-bold">₹{{ (Number(inq.amountPaid) || 0).toLocaleString('en-IN') }}</span>
+                                        <td class="py-2 px-2 text-right font-mono text-[11px]">
+                                            <span class="font-bold text-slate-900">₹{{ (Number(inq.amountPaid) || 0).toLocaleString('en-IN') }}</span>
                                             <div class="text-[10px] text-slate-400">
                                                 Bal: ₹{{ getInquiryFinancials(inq).balance.toLocaleString('en-IN') }}
                                             </div>
                                         </td>
-                                        <td class="py-3 text-center">
+                                        <td class="py-2 px-2 text-center">
                                             <span
                                                 v-if="inq.status === 'approved_md'"
-                                                class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1"
+                                                class="px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1"
+                                                title="MD Approved & Contract Sealed"
                                             >
-                                                <CheckCircle2 class="h-3 w-3" /> MD Approved & Sealed
+                                                <CheckCircle2 class="h-2.5 w-2.5" /> Approved
                                             </span>
                                             <span
                                                 v-else-if="inq.status === 'pending_md'"
-                                                class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-blue-50 text-blue-700 border border-blue-200 inline-flex items-center gap-1"
+                                                class="px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase bg-blue-50 text-blue-700 border border-blue-200 inline-flex items-center gap-1"
+                                                title="Awaiting MD Approval"
                                             >
-                                                <Clock class="h-3 w-3" /> Awaiting MD Approval
+                                                <Clock class="h-2.5 w-2.5" /> MD Review
                                             </span>
                                             <span
                                                 v-else-if="inq.status === 'pending_manager'"
-                                                class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-purple-50 text-[#673DE6] border border-purple-200 inline-flex items-center gap-1"
+                                                class="px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase bg-purple-50 text-[#673DE6] border border-purple-200 inline-flex items-center gap-1"
+                                                title="Awaiting Manager Costing Setup"
                                             >
-                                                <Clock class="h-3 w-3" /> Awaiting Manager Setup
+                                                <Clock class="h-2.5 w-2.5" /> In Costing
                                             </span>
                                             <span
                                                 v-else
-                                                class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-1"
+                                                class="px-2 py-0.5 rounded-full text-[9.5px] font-bold uppercase bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-1"
+                                                title="Reception Intake Draft"
                                             >
-                                                Reception Intake Draft
+                                                Draft
                                             </span>
                                         </td>
-                                        <td class="py-3 text-right">
-                                            <div class="flex items-center justify-end gap-1.5">
+                                        <td class="py-2 px-2 text-center">
+                                            <div class="inline-flex items-center justify-center gap-1">
+                                                <!-- Guest Self-Selection Link -->
                                                 <button
                                                     type="button"
                                                     @click="copyGuestLinkForVoucher(inq.voucherNo)"
-                                                    class="rounded-lg bg-purple-50 text-[#673DE6] hover:bg-[#673DE6] hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-purple-200 shadow-2xs cursor-pointer"
-                                                    :title="'Copy guest self-selection link for Voucher #' + inq.voucherNo"
+                                                    class="h-7 w-7 rounded-lg transition flex items-center justify-center border cursor-pointer shadow-2xs"
+                                                    :class="guestLinkCopiedVoucher === inq.voucherNo ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-purple-50 text-[#673DE6] hover:bg-[#673DE6] hover:text-white border-purple-200'"
+                                                    :title="guestLinkCopiedVoucher === inq.voucherNo ? 'Link Copied to Clipboard!' : 'Copy Guest Menu Link (Slip #' + inq.voucherNo + ')'"
                                                 >
-                                                    <Check v-if="guestLinkCopiedVoucher === inq.voucherNo" class="h-3 w-3 text-emerald-600" />
-                                                    <Share2 v-else class="h-3 w-3" />
-                                                    <span>{{ guestLinkCopiedVoucher === inq.voucherNo ? 'Copied!' : 'Link' }}</span>
+                                                    <Check v-if="guestLinkCopiedVoucher === inq.voucherNo" class="h-3.5 w-3.5 text-emerald-600" />
+                                                    <Share2 v-else class="h-3.5 w-3.5" />
                                                 </button>
-                                                <template v-if="activeRole !== 'reception'">
-                                                    <button
-                                                        type="button"
-                                                        @click="openAndPrintInquiry(inq)"
-                                                        class="rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-800 hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-slate-200 shadow-2xs cursor-pointer"
-                                                        title="Print Full Voucher, Package & Menu"
-                                                    >
-                                                        <Printer class="h-3 w-3" />
-                                                        <span>Print</span>
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        @click="openAndPrintInquiry(inq)"
-                                                        class="rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-emerald-200 shadow-2xs cursor-pointer"
-                                                        title="Open Print Preview to Download PDF"
-                                                    >
-                                                        <Download class="h-3 w-3" />
-                                                        <span>PDF</span>
-                                                    </button>
-                                                </template>
+
+                                                <!-- Print Full Voucher -->
+                                                <button
+                                                    v-if="activeRole !== 'reception'"
+                                                    type="button"
+                                                    @click="openAndPrintInquiry(inq)"
+                                                    class="h-7 w-7 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-800 hover:text-white border border-slate-200 transition flex items-center justify-center shadow-2xs cursor-pointer"
+                                                    :title="'Print Voucher (Slip #' + inq.voucherNo + ')'"
+                                                >
+                                                    <Printer class="h-3.5 w-3.5" />
+                                                </button>
+
+                                                <!-- Download PDF Voucher -->
+                                                <button
+                                                    v-if="activeRole !== 'reception'"
+                                                    type="button"
+                                                    @click="openAndPrintInquiry(inq)"
+                                                    class="h-7 w-7 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 transition flex items-center justify-center shadow-2xs cursor-pointer"
+                                                    :title="'Download PDF Voucher (Slip #' + inq.voucherNo + ')'"
+                                                >
+                                                    <Download class="h-3.5 w-3.5" />
+                                                </button>
+
+                                                <!-- Public Digital Verification Certificate -->
                                                 <a
                                                     :href="'/verify/voucher?v=' + inq.voucherNo"
                                                     target="_blank"
-                                                    class="rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-emerald-200 shadow-2xs cursor-pointer"
-                                                    title="View Public Verification Certificate & Audit Trail"
+                                                    class="h-7 w-7 rounded-lg bg-teal-50 text-teal-700 hover:bg-teal-600 hover:text-white border border-teal-200 transition flex items-center justify-center shadow-2xs cursor-pointer"
+                                                    :title="'View Digital Verification Certificate (Slip #' + inq.voucherNo + ')'"
                                                 >
-                                                    <ShieldCheck class="h-3 w-3" />
-                                                    <span>Verify</span>
+                                                    <ShieldCheck class="h-3.5 w-3.5" />
                                                 </a>
 
-                                                <!-- Role-Specific Action Buttons -->
-                                                <template v-if="activeRole === 'reception'">
-                                                    <button
-                                                        @click="openExistingInquiry(inq, 1)"
-                                                        class="rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-600 hover:text-white px-2.5 py-1 text-[11px] font-bold transition cursor-pointer"
-                                                        title="Edit Reception Intake (Step 1)"
-                                                    >
-                                                        Edit Step 1
-                                                    </button>
-                                                </template>
-                                                <template v-else-if="activeRole === 'manager'">
-                                                    <button
-                                                        @click="openExistingInquiry(inq, 2)"
-                                                        class="rounded-lg bg-purple-50 text-[#673DE6] hover:bg-[#673DE6] hover:text-white px-2.5 py-1 text-[11px] font-bold transition cursor-pointer"
-                                                        title="Configure Halls, Pax & Catering Costing (Step 2)"
-                                                    >
-                                                        Costing (Step 2)
-                                                    </button>
-                                                    <button
-                                                        @click="openExistingInquiry(inq, 3)"
-                                                        class="rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white px-2.5 py-1 text-[11px] font-bold transition cursor-pointer"
-                                                        title="Review Specs, Add Advances & Confirm (Step 3)"
-                                                    >
-                                                        Final Booking (Step 3)
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        @click="requestDeleteInquiry(inq)"
-                                                        class="rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-rose-200 shadow-2xs cursor-pointer"
-                                                        title="Permanently Delete Inquiry"
-                                                    >
-                                                        <Trash2 class="h-3 w-3" />
-                                                        <span>Delete</span>
-                                                    </button>
-                                                </template>
-                                                <template v-else>
-                                                    <button
-                                                        @click="openExistingInquiry(inq, 3)"
-                                                        class="rounded-lg bg-[#F0EBFF] text-[#673DE6] hover:bg-[#673DE6] hover:text-white px-2.5 py-1 text-[11px] font-bold transition cursor-pointer"
-                                                        title="MD / Super Admin Full Review, 12% Max Slab Approval & Contract Seal"
-                                                    >
-                                                        👑 MD / Admin #{{ inq.voucherNo }}
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        @click="requestDeleteInquiry(inq)"
-                                                        class="rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white px-2 py-1 text-[11px] font-bold transition flex items-center gap-1 border border-rose-200 shadow-2xs cursor-pointer"
-                                                        title="Permanently Delete Inquiry"
-                                                    >
-                                                        <Trash2 class="h-3 w-3" />
-                                                        <span>Delete</span>
-                                                    </button>
-                                                </template>
+                                                <!-- Reception: Step 1 Intake Edit -->
+                                                <button
+                                                    v-if="activeRole === 'reception'"
+                                                    type="button"
+                                                    @click="openExistingInquiry(inq, 1)"
+                                                    class="h-7 w-7 rounded-lg bg-amber-50 text-amber-700 hover:bg-amber-600 hover:text-white border border-amber-200 transition flex items-center justify-center shadow-2xs cursor-pointer"
+                                                    :title="'Edit Reception Intake - Step 1 (Slip #' + inq.voucherNo + ')'"
+                                                >
+                                                    <Pencil class="h-3.5 w-3.5" />
+                                                </button>
+
+                                                <!-- Manager / MD / Admin: Step 2 Costing & Infrastructure -->
+                                                <button
+                                                    v-if="activeRole === 'manager' || activeRole === 'superadmin' || activeRole === 'md'"
+                                                    type="button"
+                                                    @click="openExistingInquiry(inq, 2)"
+                                                    class="h-7 w-7 rounded-lg bg-purple-50 text-[#673DE6] hover:bg-[#673DE6] hover:text-white border border-purple-200 transition flex items-center justify-center shadow-2xs cursor-pointer"
+                                                    :title="'Manager Costing & Catering Setup - Step 2 (Slip #' + inq.voucherNo + ')'"
+                                                >
+                                                    <Calculator class="h-3.5 w-3.5" />
+                                                </button>
+
+                                                <!-- Manager: Step 3 Final Booking & Advances -->
+                                                <button
+                                                    v-if="activeRole === 'manager'"
+                                                    type="button"
+                                                    @click="openExistingInquiry(inq, 3)"
+                                                    class="h-7 w-7 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 transition flex items-center justify-center shadow-2xs cursor-pointer"
+                                                    :title="'Final Booking & Advance Installments - Step 3 (Slip #' + inq.voucherNo + ')'"
+                                                >
+                                                    <BookmarkCheck class="h-3.5 w-3.5" />
+                                                </button>
+
+                                                <!-- MD / Super Admin: Step 3 Final Approval & Freeze -->
+                                                <button
+                                                    v-else-if="activeRole === 'md' || activeRole === 'superadmin'"
+                                                    type="button"
+                                                    @click="openExistingInquiry(inq, 3)"
+                                                    class="h-7 w-7 rounded-lg bg-[#F0EBFF] text-[#673DE6] hover:bg-[#673DE6] hover:text-white border border-purple-300 transition flex items-center justify-center shadow-2xs cursor-pointer"
+                                                    :title="'MD / Super Admin Review, 12% Max Slab Approval & Contract Seal - Step 3 (Slip #' + inq.voucherNo + ')'"
+                                                >
+                                                    <Crown class="h-3.5 w-3.5" />
+                                                </button>
+
+                                                <!-- Delete Inquiry -->
+                                                <button
+                                                    v-if="activeRole !== 'reception'"
+                                                    type="button"
+                                                    @click="requestDeleteInquiry(inq)"
+                                                    class="h-7 w-7 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-200 transition flex items-center justify-center shadow-2xs cursor-pointer"
+                                                    :title="'Delete Inquiry (Slip #' + inq.voucherNo + ')'"
+                                                >
+                                                    <Trash2 class="h-3.5 w-3.5" />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
