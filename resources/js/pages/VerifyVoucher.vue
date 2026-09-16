@@ -77,17 +77,35 @@ onMounted(async () => {
         const params = new URLSearchParams(window.location.search);
         const voucher = params.get('v');
         if (voucher) {
+            let loadedFromServer = false;
             try {
-                const stored = localStorage.getItem('senani_banquet_inquiries');
-                if (stored) {
-                    const list: VerifyInquiry[] = JSON.parse(stored);
-                    const found = list.find(i => String(i.voucherNo) === String(voucher));
-                    if (found) {
-                        currentInquiry.value = found;
+                const res = await fetch(`/api/banquet-inquiries/${encodeURIComponent(voucher)}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (res.ok) {
+                    const result = await res.json();
+                    if (result && result.success && result.data) {
+                        currentInquiry.value = { ...defaultInquiry, ...result.data };
+                        loadedFromServer = true;
                     }
                 }
-            } catch (e) {
-                console.warn('Error reading stored inquiry:', e);
+            } catch (err) {
+                console.warn('Error fetching inquiry from server:', err);
+            }
+
+            if (!loadedFromServer) {
+                try {
+                    const stored = localStorage.getItem('senani_banquet_inquiries');
+                    if (stored) {
+                        const list: VerifyInquiry[] = JSON.parse(stored);
+                        const found = list.find(i => String(i.voucherNo) === String(voucher));
+                        if (found) {
+                            currentInquiry.value = found;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Error reading stored inquiry:', e);
+                }
             }
         }
 

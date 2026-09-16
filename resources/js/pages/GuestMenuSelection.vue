@@ -166,6 +166,13 @@ const confirmAndLockMenu = () => {
             localStorage.setItem('senani_banquet_inquiries', JSON.stringify(list));
         }
 
+        // Persist to central server database
+        fetch('/api/banquet-inquiries', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify(currentInquiry.value)
+        }).catch(err => console.error('Failed to sync locked menu to server', err));
+
         renderGuestBarcode();
         showLockConfirmModal.value = false;
         saveSuccessMessage.value = 'Catering menu finalized and locked successfully! Only Hotel Management can unlock this voucher.';
@@ -372,18 +379,37 @@ onMounted(async () => {
                 }
             }
         } else if (voucher) {
-            // 2. Fallback to localStorage by voucher number
+            // 2. Fetch directly from central server database API
+            let loadedFromServer = false;
             try {
-                const raw = localStorage.getItem('senani_banquet_inquiries');
-                if (raw) {
-                    const list: BanquetInquiry[] = JSON.parse(raw);
-                    const found = list.find(i => String(i.voucherNo) === String(voucher));
-                    if (found) {
-                        currentInquiry.value = { ...found };
+                const res = await fetch(`/api/banquet-inquiries/${encodeURIComponent(voucher)}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (res.ok) {
+                    const result = await res.json();
+                    if (result && result.success && result.data) {
+                        currentInquiry.value = { ...defaultInquiry, ...result.data };
+                        loadedFromServer = true;
                     }
                 }
-            } catch (e) {
-                console.error('Error loading inquiry from localStorage', e);
+            } catch (err) {
+                console.warn('Could not load voucher from server database', err);
+            }
+
+            // Fallback to localStorage if offline
+            if (!loadedFromServer) {
+                try {
+                    const raw = localStorage.getItem('senani_banquet_inquiries');
+                    if (raw) {
+                        const list: BanquetInquiry[] = JSON.parse(raw);
+                        const found = list.find(i => String(i.voucherNo) === String(voucher));
+                        if (found) {
+                            currentInquiry.value = { ...found };
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error loading inquiry from localStorage', e);
+                }
             }
         }
     }
@@ -421,6 +447,16 @@ const saveGuestPreferences = () => {
             }
             localStorage.setItem('senani_banquet_inquiries', JSON.stringify(list));
         }
+
+        // Persist draft selections to central server database
+        fetch('/api/banquet-inquiries', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify(currentInquiry.value)
+        }).catch(e => console.error('Error saving guest preferences to server', e));
 
         saveSuccessMessage.value = 'Menu preferences saved as draft! Click "Finalize & Lock Menu" when ready to finalize.';
         setTimeout(() => {

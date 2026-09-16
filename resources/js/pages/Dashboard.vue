@@ -420,8 +420,115 @@ const checkManagerPendingAlerts = () => {
     }
 };
 
+// -------------------------------------------------------------
+// Central Server Database Synchronization Engine
+// -------------------------------------------------------------
+let pollTimer: any = null;
+const isSyncingServer = ref(false);
+
+const fetchInquiriesFromServer = async () => {
+    if (typeof window === 'undefined') return;
+    try {
+        const res = await fetch('/api/banquet-inquiries', {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        if (!res.ok) return;
+        const result = await res.json();
+        if (result && result.success && Array.isArray(result.data)) {
+            const serverList: BanquetInquiry[] = result.data;
+            
+            // Check if there are locally stored inquiries not yet uploaded to the server
+            const serverVouchers = new Set(serverList.map(i => String(i.voucherNo)));
+            const localUnsynced = banquetInquiries.value.filter(i => i.voucherNo && !serverVouchers.has(String(i.voucherNo)));
+            
+            if (localUnsynced.length > 0) {
+                await batchSyncInquiriesToServer(localUnsynced);
+            } else {
+                // Detect newly arrived manager handovers from other users/devices
+                const oldVouchers = new Set(banquetInquiries.value.map(i => String(i.voucherNo)));
+                const newHandovers = serverList.filter(i => i.status === 'pending_manager' && !oldVouchers.has(String(i.voucherNo)));
+
+                banquetInquiries.value = serverList;
+                try {
+                    localStorage.setItem('senani_banquet_inquiries', JSON.stringify(serverList));
+                } catch (e) {
+                    console.warn('LocalStorage quota exceeded or unavailable', e);
+                }
+
+                if (newHandovers.length > 0 && (activeRole.value === 'manager' || activeRole.value === 'superadmin')) {
+                    const latest = newHandovers[0];
+                    showToast(
+                        '🔔 New Reception Handover!',
+                        `Slip #${latest.voucherNo} for ${latest.guestName || 'Guest'} (${latest.paxGuaranteed || latest.paxExpected || 0} Pax) was forwarded by Reception.`,
+                        'warning',
+                        String(latest.voucherNo)
+                    );
+                    playNotificationChime();
+                }
+            }
+        }
+    } catch (err) {
+        console.error('Error fetching banquet inquiries from central server', err);
+    }
+};
+
+const batchSyncInquiriesToServer = async (inquiriesToSync: BanquetInquiry[]) => {
+    if (inquiriesToSync.length === 0) return;
+    try {
+        const res = await fetch('/api/banquet-inquiries/batch-sync', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ inquiries: inquiriesToSync })
+        });
+        if (res.ok) {
+            const result = await res.json();
+            if (result && result.data && Array.isArray(result.data)) {
+                banquetInquiries.value = result.data;
+                try {
+                    localStorage.setItem('senani_banquet_inquiries', JSON.stringify(result.data));
+                } catch (e) {}
+            }
+        }
+    } catch (err) {
+        console.error('Error syncing local inquiries to server database', err);
+    }
+};
+
+const saveInquiryToServer = async (inq: BanquetInquiry) => {
+    try {
+        await fetch('/api/banquet-inquiries', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify(inq)
+        });
+    } catch (err) {
+        console.error('Error persisting inquiry to server database', err);
+    }
+};
+
+const deleteInquiryFromServer = async (voucherNo: string) => {
+    try {
+        await fetch(`/api/banquet-inquiries/${encodeURIComponent(voucherNo)}`, {
+            method: 'DELETE',
+            headers: {
+                'Accept': 'application/json',
+            }
+        });
+    } catch (err) {
+        console.error('Error deleting inquiry from server database', err);
+    }
+};
+
 const handleSaveInquiry = (inq: BanquetInquiry) => {
-    const existingIdx = banquetInquiries.value.findIndex(i => i.voucherNo === inq.voucherNo);
+    const existingIdx = banquetInquiries.value.findIndex(i => String(i.voucherNo) === String(inq.voucherNo));
     if (existingIdx > -1) {
         banquetInquiries.value[existingIdx] = inq;
     } else {
@@ -434,6 +541,9 @@ const handleSaveInquiry = (inq: BanquetInquiry) => {
             console.error('Error saving banquet inquiries to localStorage', e);
         }
     }
+
+    // Persist immediately to central server MySQL database
+    saveInquiryToServer(inq);
 
     // Interactive Notification Handover Feedback
     if (inq.status === 'pending_manager') {
@@ -489,6 +599,10 @@ const confirmDeleteInquiry = () => {
             console.error('Error saving banquet inquiries after deletion', e);
         }
     }
+
+    // Delete from central server database
+    deleteInquiryFromServer(vNo);
+
     showDeleteConfirmModal.value = false;
     inquiryToDelete.value = null;
 };
@@ -498,19 +612,7 @@ const handleStorageEvent = (e: StorageEvent) => {
         try {
             const list = JSON.parse(e.newValue);
             if (Array.isArray(list)) {
-                const oldVouchers = banquetInquiries.value.map(i => String(i.voucherNo));
-                const newHandovers = list.filter(i => i.status === 'pending_manager' && !oldVouchers.includes(String(i.voucherNo)));
                 banquetInquiries.value = list;
-                if (newHandovers.length > 0 && (activeRole.value === 'manager' || activeRole.value === 'superadmin')) {
-                    const latest = newHandovers[0];
-                    showToast(
-                        '🔔 New Reception Handover!',
-                        `Slip #${latest.voucherNo} for ${latest.guestName || 'Guest'} (${latest.paxGuaranteed || latest.paxExpected || 0} Pax) was forwarded by Reception.`,
-                        'warning',
-                        String(latest.voucherNo)
-                    );
-                    playNotificationChime();
-                }
             }
         } catch (err) {
             console.error('Failed to parse inquiries from storage event', err);
@@ -550,28 +652,26 @@ onMounted(() => {
         // Multi-tab / cross-tab realtime sync & click-away dismissal
         window.addEventListener('storage', handleStorageEvent);
         document.addEventListener('click', handleDocumentClick);
+        window.addEventListener('focus', fetchInquiriesFromServer);
 
+        // Load local cache immediately so UI shows instantly
         try {
             const raw = localStorage.getItem('senani_banquet_inquiries');
             if (raw) {
                 const list = JSON.parse(raw);
-                if (Array.isArray(list)) {
-                    // Purge stale mock dummy inquiries
-                    const cleanList = list.filter(i => {
-                        const name = (i.guestName || '').toLowerCase();
-                        const vNo = String(i.voucherNo || '');
-                        if (name.includes('tushar') || name.includes('vivek') || name.includes('rameshwar') || vNo === '250' || vNo === '251' || vNo === '249') {
-                            return false;
-                        }
-                        return true;
-                    });
-                    banquetInquiries.value = cleanList;
-                    localStorage.setItem('senani_banquet_inquiries', JSON.stringify(cleanList));
+                if (Array.isArray(list) && list.length > 0) {
+                    banquetInquiries.value = list;
                 }
             }
         } catch (e) {
             console.error('Error loading banquet inquiries from localStorage', e);
         }
+
+        // Fetch from central server MySQL database immediately
+        fetchInquiriesFromServer();
+
+        // Start background polling every 5 seconds to sync entries across different devices/users
+        pollTimer = setInterval(fetchInquiriesFromServer, 5000);
 
         if (queryInquiry) {
             const params = new URLSearchParams(window.location.search);
@@ -595,7 +695,12 @@ onMounted(() => {
 
 onUnmounted(() => {
     if (typeof window !== 'undefined') {
+        if (pollTimer) {
+            clearInterval(pollTimer);
+            pollTimer = null;
+        }
         window.removeEventListener('storage', handleStorageEvent);
+        window.removeEventListener('focus', fetchInquiriesFromServer);
         document.removeEventListener('click', handleDocumentClick);
     }
 });
